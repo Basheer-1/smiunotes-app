@@ -164,7 +164,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
             onChanged: (value) { subject = value ?? ''; filter(); },
           ),
         ),
-      else Wrap(spacing: 8, children: [
+      if (!isNotes) Wrap(spacing: 8, children: [
         for (final value in const ['', 'campus', 'opportunities'])
           ChoiceChip(
             label: Text(value.isEmpty ? 'All' : value == 'campus' ? 'Campus' : 'Opportunities'),
