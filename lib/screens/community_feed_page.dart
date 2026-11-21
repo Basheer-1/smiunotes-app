@@ -1,3 +1,4 @@
+import 'community_thread_page.dart';
 import 'package:material_ui/material_ui.dart';
 import '../services/public_feed_api.dart';
 
@@ -108,27 +109,14 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
                       style: const TextStyle(fontSize: 12)),
                   ],
                 ),
-                onTap: () => showModalBottomSheet<void>(
-                  context: context, showDragHandle: true,
-                  builder: (context) => SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(raw['title']?.toString() ?? 'Discussion',
-                            style: const TextStyle(fontSize: 20,
-                              fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 12),
-                          Text(raw['preview']?.toString() ?? ''),
-                          const SizedBox(height: 16),
-                          const Text('Full thread and replies require the next integration stage.'),
-                        ],
-                      ),
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute<void>(
+                    builder: (_) => CommunityThreadPage(
+                      threadId: raw['id']?.toString() ?? '',
+                      api: widget.api,
                     ),
-                  ),
-                ),
+                  ));
+                },
               ),
             ),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
