@@ -238,6 +238,14 @@ class _HomePage extends StatelessWidget {
         const Text('Everything SMIU,\nin one place.', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1.15, color: ink)),
         const SizedBox(height: 10),
         const Text('Find notes, stay updated and connect with your university community.', style: TextStyle(fontSize: 14, height: 1.5, color: muted)),
+        const SizedBox(height: 12),
+        Text(
+          apiConfigured
+              ? 'M4 testing build • Staging API configured • Student login requires explicit authorization.'
+              : 'M4 testing build • Preview mode: live content and student login are not configured.',
+          key: const Key('testing-build-status'),
+          style: const TextStyle(color: muted, fontSize: 11),
+        ),
         const SizedBox(height: 24),
         _Glass(
           padding: const EdgeInsets.all(22),
@@ -284,13 +292,7 @@ class _HomePage extends StatelessWidget {
           },
         ),
         const SizedBox(height: 20),
-        Text(
-          apiConfigured
-              ? 'M4 testing build • Staging API configured • Student login requires explicit authorization.'
-              : 'M4 testing build • Preview mode: live content and student login are not configured.',
-          key: const Key('testing-build-status'),
-          style: const TextStyle(color: muted, fontSize: 11),
-        ),
+
       ],
     );
   }
