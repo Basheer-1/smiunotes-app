@@ -9,6 +9,14 @@ class FakeApi extends PublicFeedApi {
   Future<Map<String, dynamic>> fetch(
     String kind, {int page = 1, String search = '', String stream = '',
     String department = '', String semester = ''}) async {
+    if (kind == 'filters') {
+      return {
+        'departments': [
+          {'id': 'department-1', 'name': 'Computer Science'},
+        ],
+        'semesters': [1],
+      };
+    }
     if (kind == 'notes') {
       return {
         'page': page, 'total': 1,
@@ -40,7 +48,8 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.text('Introduction to Programming'), findsOneWidget);
-    expect(find.textContaining('Computer Science'), findsOneWidget);
+    expect(find.textContaining('Computer Science'), findsWidgets);
+    expect(find.byKey(const Key('department-filter')), findsOneWidget);
   });
 
   testWidgets('Updates feed shows published announcement', (tester) async {
