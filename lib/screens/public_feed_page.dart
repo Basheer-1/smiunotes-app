@@ -3,9 +3,10 @@ import 'package:material_ui/material_ui.dart';
 import '../services/public_feed_api.dart';
 
 class PublicFeedPage extends StatefulWidget {
-  const PublicFeedPage({super.key, required this.type, this.api = const PublicFeedApi()});
+  const PublicFeedPage({super.key, required this.type, this.api = const PublicFeedApi(), this.onSaveNote});
   final String type;
   final PublicFeedApi api;
+  final Future<bool> Function(String noteId)? onSaveNote;
   @override
   State<PublicFeedPage> createState() => _PublicFeedPageState();
 }
@@ -241,7 +242,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
         const SizedBox(height: 12),
         for (final raw in items)
           if (raw is Map<String, dynamic>)
-            _FeedTile(data: raw, isNote: isNotes, api: widget.api),
+            _FeedTile(data: raw, isNote: isNotes, api: widget.api,
+              onSaveNote: widget.onSaveNote),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           OutlinedButton(
             onPressed: page > 1 ? () { page--; load(); } : null,
@@ -257,10 +259,11 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
 }
 
 class _FeedTile extends StatelessWidget {
-  const _FeedTile({required this.data, required this.isNote, required this.api});
+  const _FeedTile({required this.data, required this.isNote, required this.api, this.onSaveNote});
   final Map<String, dynamic> data;
   final bool isNote;
   final PublicFeedApi api;
+  final Future<bool> Function(String noteId)? onSaveNote;
   @override
   Widget build(BuildContext context) {
     final title = data['title']?.toString() ?? 'Untitled';
@@ -276,7 +279,23 @@ class _FeedTile extends StatelessWidget {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
         subtitle: Text('$subtitle${restricted ? '\nVerified only' : ''}',
           maxLines: 3, overflow: TextOverflow.ellipsis),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: isNote && onSaveNote != null
+          ? IconButton(
+              key: Key('save-note-${data['id']}'),
+              tooltip: 'Save note to bookmarks',
+              icon: const Icon(Icons.bookmark_add_outlined),
+              onPressed: () async {
+                final id = data['id']?.toString() ?? '';
+                final saved = await onSaveNote!(id);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(saved
+                    ? 'Note saved to your account.'
+                    : 'Sign in or retry to save this note.'),
+                ));
+              },
+            )
+          : const Icon(Icons.chevron_right),
         onTap: () {
           if (isNote) {
             if (restricted) {
