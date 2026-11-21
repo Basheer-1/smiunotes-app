@@ -145,7 +145,9 @@ class StagingStudentAccountPageState
 
   void openSavedNotes() {
     if (!mounted || !runtime.coordinator.authenticated ||
-        runtime.controller.accessToken == null) return;
+        runtime.controller.accessToken == null) {
+      return;
+    }
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => MyBookmarksPage(
         api: BookmarkApi(baseUrl: widget.httpsBaseUrl),
@@ -156,7 +158,9 @@ class StagingStudentAccountPageState
 
   Future<bool> saveNote(String noteId) async {
     if (!mounted || !runtime.coordinator.authenticated ||
-        runtime.controller.accessToken == null) return false;
+        runtime.controller.accessToken == null) {
+      return false;
+    }
     try {
       final response = await BookmarkApi(baseUrl: widget.httpsBaseUrl)
           .save(_currentVerifiedToken(), noteId);
