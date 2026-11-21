@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_secure_storage/flutter_securestorage.dart';
 
 import 'mobile_auth_api.dart';
 
@@ -13,15 +13,15 @@ abstract class SessionVault {
 
 class SecureSessionStore implements SessionVault {
   const SecureSessionStore({
-    FlutterSecureStorage storage = const FlutterSecureStorage(),
-  }) : _storage = storage;
+    this.storage = const FlutterSecureStorage(),
+  });
 
   static const _key = 'smiunotes.student_session.v1';
-  final FlutterSecureStorage _storage;
+  final FlutterSecureStorage storage;
 
   @override
   Future<void> save(MobileSession session) async {
-    await _storage.write(
+    await storage.write(
       key: _key,
       value: jsonEncode({
         'version': 1,
@@ -34,7 +34,7 @@ class SecureSessionStore implements SessionVault {
 
   @override
   Future<MobileSession?> read() async {
-    final encoded = await _storage.read(key: _key);
+    final encoded = await storage.read(key: _key);
     if (encoded == null) return null;
     try {
       final payload = jsonDecode(encoded);
@@ -55,7 +55,7 @@ class SecureSessionStore implements SessionVault {
   }
 
   @override
-  Future<void> clear() => _storage.delete(key: _key);
+  Future<void> clear() => storage.delete(key: _key);
 }
 
 /// Only an OS-backed storage engine may receive a live credential.
