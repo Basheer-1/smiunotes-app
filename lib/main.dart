@@ -154,12 +154,6 @@ class _AppShellState extends State<AppShell> {
   }
 }
 
-void _comingSoon(BuildContext context, String feature) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('$feature will be available in a future milestone.')),
-  );
-}
-
 class _Backdrop extends StatelessWidget {
   const _Backdrop();
 
