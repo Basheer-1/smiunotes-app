@@ -16,6 +16,7 @@ class StudentAccountGateway extends StatefulWidget {
     required this.loadValidatedProfile,
     required this.signOut,
     this.onCreateDiscussion,
+    this.onOpenVerifiedNote,
   });
 
   final MobileAuthApi api;
@@ -25,6 +26,7 @@ class StudentAccountGateway extends StatefulWidget {
   final StudentProfile? Function() loadValidatedProfile;
   final Future<void> Function() signOut;
   final VoidCallback? onCreateDiscussion;
+  final VoidCallback? onOpenVerifiedNote;
 
   @override
   State<StudentAccountGateway> createState() => _StudentAccountGatewayState();
@@ -141,6 +143,14 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                       Text('Department: ${_profile!.department}'),
                     Text('Verification: ${_profile!.verificationStatus}'),
                     const SizedBox(height: 16),
+                    if (widget.onOpenVerifiedNote != null)
+                      OutlinedButton.icon(
+                        key: const Key('account-open-verified-note'),
+                        onPressed: _busy ? null : widget.onOpenVerifiedNote,
+                        icon: const Icon(Icons.menu_book_outlined),
+                        label: const Text('Open a verified note (QA)'),
+                      ),
+                    const SizedBox(height: 8),
                     if (widget.onCreateDiscussion != null)
                       OutlinedButton.icon(
                         key: const Key('account-create-discussion'),
