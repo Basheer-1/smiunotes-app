@@ -6,11 +6,13 @@ class CommunityComposerPage extends StatefulWidget {
   const CommunityComposerPage({
     super.key,
     required this.api,
-    required this.accessToken,
+    this.accessToken,
+    this.tokenProvider,
     this.threadId,
   });
   final CommunityWriteApi api;
-  final String accessToken;
+  final String? accessToken;
+  final String Function()? tokenProvider;
   final String? threadId;
 
   @override
@@ -34,15 +36,18 @@ class _CommunityComposerPageState extends State<CommunityComposerPage> {
     if (saving) return;
     setState(() { saving = true; error = ''; });
     try {
+      // Resolve at submit time, not at route creation, to honor logout/rotation.
+      final token = widget.tokenProvider?.call() ?? widget.accessToken;
+      if (token == null) throw StateError('Student sign-in required.');
       if (widget.threadId != null) {
         await widget.api.reply(
-          accessToken: widget.accessToken,
+          accessToken: token,
           threadId: widget.threadId!,
           message: body.text,
         );
       } else {
         await widget.api.createDiscussion(
-          accessToken: widget.accessToken,
+          accessToken: token,
           title: title.text,
           message: body.text,
           category: category,
