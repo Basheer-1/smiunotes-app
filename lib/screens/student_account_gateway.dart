@@ -15,6 +15,7 @@ class StudentAccountGateway extends StatefulWidget {
     required this.restoreAndVerify,
     required this.loadValidatedProfile,
     required this.signOut,
+    this.onCreateDiscussion,
   });
 
   final MobileAuthApi api;
@@ -23,6 +24,7 @@ class StudentAccountGateway extends StatefulWidget {
   final Future<bool> Function() restoreAndVerify;
   final StudentProfile? Function() loadValidatedProfile;
   final Future<void> Function() signOut;
+  final VoidCallback? onCreateDiscussion;
 
   @override
   State<StudentAccountGateway> createState() => _StudentAccountGatewayState();
@@ -139,6 +141,14 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                       Text('Department: ${_profile!.department}'),
                     Text('Verification: ${_profile!.verificationStatus}'),
                     const SizedBox(height: 16),
+                    if (widget.onCreateDiscussion != null)
+                      OutlinedButton.icon(
+                        key: const Key('account-create-discussion'),
+                        onPressed: _busy ? null : widget.onCreateDiscussion,
+                        icon: const Icon(Icons.forum_outlined),
+                        label: const Text('New Community discussion'),
+                      ),
+                    const SizedBox(height: 8),
                     FilledButton.icon(
                       key: const Key('account-signout'),
                       onPressed: _busy ? null : _logout,
