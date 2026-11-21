@@ -1,0 +1,69 @@
+name: Android Signed Release Candidate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signed-aab:
+    # Release must be manually approved using a protected GitHub Environment.
+    environment: android-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate release identity and credential availability
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.SMIUNOTES_RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.SMIUNOTES_RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.SMIUNOTES_RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.SMIUNOTES_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if grep -q 'applicationId = "com.example.' android/app/build.gradle.kts; then
+            echo 'BLOCKED: assign the approved permanent applicationId before building a signed bundle.' >&2
+            exit 1
+          fi
+          if [[ -z "$RELEASE_KEYSTORE_BASE64" || -z "$RELEASE_STORE_PASSWORD" ||
+                -z "$RELEASE_KEY_ALIAS" || -z "$RELEASE_KEY_PASSWORD" ]]; then
+            echo 'BLOCKED: release signing credentials are not configured.' >&2
+            exit 1
+          fi
+          echo 'Release identity and secret presence checks passed.'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.1'
+          channel: stable
+          cache: true
+      - uses: gradle/actions/setup-gradle@v4
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - name: Build Android App Bundle (release signing)
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.SMIUNOTES_RELEASE_KEYSTORE_BASE64 }}
+          SMIUNOTES_RELEASE_STORE_PASSWORD: ${{ secrets.SMIUNOTES_RELEASE_STORE_PASSWORD }}
+          SMIUNOTES_RELEASE_KEY_ALIAS: ${{ secrets.SMIUNOTES_RELEASE_KEY_ALIAS }}
+          SMIUNOTES_RELEASE_KEY_PASSWORD: ${{ secrets.SMIUNOTES_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          trap 'rm -f "$RUNNER_TEMP/smiunotes-upload.jks"' EXIT
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/smiunotes-upload.jks"
+          chmod 600 "$RUNNER_TEMP/smiunotes-upload.jks"
+          export SMIUNOTES_RELEASE_KEYSTORE="$RUNNER_TEMP/smiunotes-upload.jks"
+          flutter build appbundle --release
+          test -s build/app/outputs/bundle/release/app-release.aab
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smiunotes-signed-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 7
