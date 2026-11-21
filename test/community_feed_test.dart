@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smiunotes_mobile/screens/community_feed_page.dart';
@@ -40,7 +41,63 @@ class FakeCommunityApi extends PublicFeedApi {
   }
 }
 
+class DelayedCommunityApi extends PublicFeedApi {
+  DelayedCommunityApi();
+  final requests = <String, Completer<Map<String, dynamic>>>{};
+
+  @override
+  Future<Map<String, dynamic>> fetch(
+    String kind, {
+    int page = 1,
+    String search = '',
+    String stream = '',
+    String department = '',
+    String semester = '',
+    String subject = '',
+    String category = '',
+  }) {
+    final pending = Completer<Map<String, dynamic>>();
+    requests[category] = pending;
+    return pending.future;
+  }
+}
+
+
+class AlternativeCommunityApi extends FakeCommunityApi {
+  const AlternativeCommunityApi();
+
+  @override
+  Future<Map<String, dynamic>> fetch(
+    String kind, {
+    int page = 1, String search = '', String stream = '',
+    String department = '', String semester = '',
+    String subject = '', String category = '',
+  }) async => {
+    'page': page,
+    'has_more': false,
+    'items': [
+      {
+        'id': 'discussion-2', 'title': 'Alternative staging discussion',
+        'preview': 'Changed origin', 'author_name': 'Student', 'replies': 0,
+      },
+    ],
+  };
+}
+
 void main() {
+  testWidgets('Community search restricts query length to API limit',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: CommunityFeedPage(api: FakeCommunityApi())),
+    ));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(find.byKey(const Key('community-search')))
+          .maxLength,
+      100,
+    );
+  });
+
   testWidgets('Read-only community feed shows discussions', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(body: CommunityFeedPage(api: FakeCommunityApi())),
@@ -53,4 +110,50 @@ void main() {
     expect(find.text('Full discussion body'), findsOneWidget);
     expect(find.text('Helpful reply'), findsOneWidget);
   });
+  testWidgets('Slow old category response cannot overwrite the new feed',
+      (tester) async {
+    final api = DelayedCommunityApi();
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: CommunityFeedPage(api: api)),
+    ));
+    await tester.pump();
+    await tester.tap(find.text('Study'));
+    await tester.pump();
+    api.requests['study']!.complete({
+      'has_more': false,
+      'items': [
+        {'id': 'new-discussion', 'title': 'Current study posts',
+         'preview': 'New content', 'author_name': 'Student', 'replies': 0},
+      ],
+    });
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('Current study posts'), findsOneWidget);
+    api.requests['']!.complete({
+      'has_more': false,
+      'items': [
+        {'id': 'stale-discussion', 'title': 'Old response',
+         'preview': 'Old content', 'author_name': 'Student', 'replies': 0},
+      ],
+    });
+    await tester.pumpAndSettle();
+    expect(find.text('Current study posts'), findsOneWidget);
+    expect(find.text('Old response'), findsNothing);
+  });
+
+  testWidgets('Switching Community API clears old discussions',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: CommunityFeedPage(api: FakeCommunityApi())),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Study group'), findsOneWidget);
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: CommunityFeedPage(api: AlternativeCommunityApi())),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Alternative staging discussion'), findsOneWidget);
+    expect(find.text('Study group'), findsNothing);
+  });
+
 }

@@ -15,31 +15,45 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
   List<dynamic> threads = [];
   int page = 1;
   bool loading = false, hasMore = false;
+  int _requestGeneration = 0;
   String category = '', error = '';
   @override
   void initState() { super.initState(); load(); }
   @override
+  void didUpdateWidget(covariant CommunityFeedPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.api != widget.api) {
+      page = 1;
+      category = '';
+      query.clear();
+      load();
+    }
+  }
+  @override
   void dispose() { query.dispose(); super.dispose(); }
 
   Future<void> load() async {
+    final generation = ++_requestGeneration;
     setState(() { loading = true; error = ''; });
     try {
       final data = await widget.api.fetch(
         'community', search: query.text, page: page, category: category,
       );
-      if (!mounted) return;
+      if (!mounted || generation != _requestGeneration) return;
       setState(() {
         threads = (data['items'] as List<dynamic>?) ?? [];
         hasMore = data['has_more'] == true;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || generation != _requestGeneration) return;
       setState(() {
         threads = [];
         error = 'Community feed is unavailable. Retry after staging deployment.';
       });
     } finally {
-      if (mounted) { setState(() => loading = false); }
+      if (mounted && generation == _requestGeneration) {
+        setState(() => loading = false);
+      }
     }
   }
 
@@ -57,6 +71,8 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
       const Text('Read student discussions. Sign-in and posting are coming later.'),
       const SizedBox(height: 18),
       TextField(
+        key: const Key('community-search'),
+        maxLength: 100,
         controller: query,
         onSubmitted: (_) => apply(),
         decoration: InputDecoration(

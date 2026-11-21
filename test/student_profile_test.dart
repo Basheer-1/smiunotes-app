@@ -101,4 +101,23 @@ void main() {
     expect(calls, 2);
   });
 
+  testWidgets('Inactive profile hides own account identity', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: StudentProfilePage(
+        profileLoader: () async => const StudentProfile(
+          studentName: 'Must Not Display',
+          studentId: 'CSC-INACTIVE-001',
+          department: 'Computer Science',
+          role: 'student',
+          accountStatus: 'suspended',
+          verificationStatus: 'verified',
+        ),
+      )),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('inactive-profile')), findsOneWidget);
+    expect(find.text('Must Not Display'), findsNothing);
+    expect(find.textContaining('CSC-INACTIVE-001'), findsNothing);
+  });
+
 }

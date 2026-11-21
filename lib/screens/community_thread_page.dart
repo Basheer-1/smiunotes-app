@@ -26,6 +26,15 @@ class _CommunityThreadPageState extends State<CommunityThreadPage> {
     detail = widget.api.fetchThread(widget.threadId);
   }
 
+  @override
+  void didUpdateWidget(covariant CommunityThreadPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.threadId != widget.threadId || oldWidget.api != widget.api) {
+      page = 1;
+      detail = widget.api.fetchThread(widget.threadId);
+    }
+  }
+
   void load() {
     setState(() => detail = widget.api.fetchThread(widget.threadId, page: page));
   }

@@ -15,6 +15,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   List<dynamic> items = [];
   String? error;
   bool loading = false;
+  int _feedGeneration = 0;
+  int _filterGeneration = 0;
   int total = 0, page = 1;
   String stream = '', semester = '', department = '', subject = '';
   List<Map<String, dynamic>> departments = [];
@@ -29,10 +31,31 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
     load();
   }
 
+  @override
+  void didUpdateWidget(covariant PublicFeedPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.type != widget.type || oldWidget.api != widget.api) {
+      page = 1;
+      search.clear();
+      stream = '';
+      department = '';
+      semester = '';
+      subject = '';
+      departments = [];
+      subjects = [];
+      semesters = [];
+      // Switching between Notes and Updates must never reuse old filter data.
+      _filterGeneration++;
+      if (isNotes) loadFilters();
+      load();
+    }
+  }
+
   Future<void> loadFilters() async {
+    final generation = ++_filterGeneration;
     try {
       final data = await widget.api.fetch('filters');
-      if (!mounted) return;
+      if (!mounted || generation != _filterGeneration) return;
       setState(() {
         departments = (data['departments'] as List<dynamic>? ?? [])
             .whereType<Map<String, dynamic>>().toList();
@@ -49,24 +72,27 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   void dispose() { search.dispose(); super.dispose(); }
 
   Future<void> load() async {
+    final generation = ++_feedGeneration;
     setState(() { loading = true; error = null; });
     try {
       final data = await widget.api.fetch(widget.type, page: page,
         search: search.text, stream: stream, semester: semester,
         department: department, subject: subject);
-      if (mounted) { setState(() {
+      if (mounted && generation == _feedGeneration) { setState(() {
         items = (data['items'] as List<dynamic>?) ?? [];
         total = (data['total'] as num?)?.toInt() ?? 0;
       }); }
     } catch (_) {
-      if (mounted) {
+      if (mounted && generation == _feedGeneration) {
         setState(() {
           items = []; total = 0;
           error = 'Feed unavailable. Check internet or staging API deployment.';
         });
       }
     } finally {
-      if (mounted) { setState(() => loading = false); }
+      if (mounted && generation == _feedGeneration) {
+        setState(() => loading = false);
+      }
     }
   }
   void filter() { page = 1; load(); }
@@ -98,6 +124,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
       const SizedBox(height: 20),
       TextField(
         key: Key('search-${widget.type}'),
+        maxLength: 100,
         controller: search,
         onSubmitted: (_) => filter(),
         decoration: InputDecoration(
@@ -109,9 +136,10 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
       const SizedBox(height: 12),
       if (isNotes && departments.isNotEmpty)
         Padding(
+          key: const Key('department-filter'),
           padding: const EdgeInsets.only(bottom: 12),
           child: DropdownButtonFormField<String>(
-            key: const Key('department-filter'),
+            key: ValueKey('department-${identityHashCode(widget.api)}'),
             initialValue: department,
             isExpanded: true,
             decoration: const InputDecoration(labelText: 'Department'),
@@ -134,6 +162,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
         ),
       if (isNotes)
         DropdownButtonFormField<String>(
+          key: ValueKey('semester-$department'),
           initialValue: semester,
           decoration: const InputDecoration(labelText: 'Semester'),
           items: [
@@ -145,9 +174,10 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
         ),
       if (isNotes && availableSubjects.isNotEmpty)
         Padding(
+          key: const Key('subject-filter'),
           padding: const EdgeInsets.only(top: 12),
           child: DropdownButtonFormField<String>(
-            key: const Key('subject-filter'),
+            key: ValueKey('subject-$department-$semester'),
             initialValue: subject,
             isExpanded: true,
             decoration: const InputDecoration(labelText: 'Subject'),
@@ -186,7 +216,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
         const SizedBox(height: 12),
         for (final raw in items)
           if (raw is Map<String, dynamic>)
-            _FeedTile(data: raw, isNote: isNotes),
+            _FeedTile(data: raw, isNote: isNotes, api: widget.api),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           OutlinedButton(
             onPressed: page > 1 ? () { page--; load(); } : null,
@@ -202,9 +232,10 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
 }
 
 class _FeedTile extends StatelessWidget {
-  const _FeedTile({required this.data, required this.isNote});
+  const _FeedTile({required this.data, required this.isNote, required this.api});
   final Map<String, dynamic> data;
   final bool isNote;
+  final PublicFeedApi api;
   @override
   Widget build(BuildContext context) {
     final title = data['title']?.toString() ?? 'Untitled';
@@ -230,7 +261,9 @@ class _FeedTile extends StatelessWidget {
               return;
             }
             Navigator.of(context).push(MaterialPageRoute<void>(
-              builder: (_) => NoteReaderPage(noteId: data['id']?.toString() ?? ''),
+              builder: (_) => NoteReaderPage(
+                noteId: data['id']?.toString() ?? '', api: api,
+              ),
             ));
             return;
           }
@@ -248,6 +281,15 @@ class _FeedTile extends StatelessWidget {
                     fontSize: 23, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   Text(subtitle),
+                  if (!isNote) ...[
+                    const SizedBox(height: 8),
+                    if ((data['category']?.toString() ?? '').isNotEmpty)
+                      Text('Category: ${data['category']}'),
+                    if ((data['event_date']?.toString() ?? '').isNotEmpty)
+                      Text('Event: ${data['event_date']}'),
+                    if ((data['deadline_date']?.toString() ?? '').isNotEmpty)
+                      Text('Deadline: ${data['deadline_date']}'),
+                  ],
                   const Divider(height: 32),
                   if (isNote) ...[
                     if (restricted)
