@@ -257,6 +257,15 @@ class _FeedTile extends StatelessWidget {
                     fontSize: 23, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   Text(subtitle),
+                  if (!isNote) ...[
+                    const SizedBox(height: 8),
+                    if ((data['category']?.toString() ?? '').isNotEmpty)
+                      Text('Category: ${data['category']}'),
+                    if ((data['event_date']?.toString() ?? '').isNotEmpty)
+                      Text('Event: ${data['event_date']}'),
+                    if ((data['deadline_date']?.toString() ?? '').isNotEmpty)
+                      Text('Deadline: ${data['deadline_date']}'),
+                  ],
                   const Divider(height: 32),
                   if (isNote) ...[
                     if (restricted)
