@@ -54,3 +54,11 @@ These are design/acceptance requirements, not claims that the native login is al
 - Flutter has `AuthenticatedReaderApi`, a token-scoped HTTPS client with strict note ID/page checks. Unit tests verify invalid tokens, invalid IDs, oversized pages and HTTP endpoints are rejected before network access.
 - **Not connected to login UI and not deployed to production.** Native session persistence, refresh, revocation and verification-role tests still gate activation. Do not use unverified student credentials in staging.
 - CI passed on website commit `f178bd82` and Flutter commit `ef419b79`. Live preview disabled-state check should be logged separately when deployed.
+
+## Native login UI scaffold (current branch)
+
+- `StudentLoginPage` includes Student ID/password, first-time email registration, OTP verification, new password entry, and a clear availability notice.
+- The default `Profile` tab links to a login status preview. It **never** displays credential inputs unless all three conditions hold: mobile auth capability reports enabled, a trusted CAPTCHA callback is provided, and a secure session receiver is injected.
+- No production CAPTCHA callback or secure session receiver is wired into the app. Therefore **real login is not yet available**. Do not ask students to enter real credentials into this build.
+- `test/student_login_test.dart` checks the disabled server case and the server-enabled-but-missing-secure-hooks case. These checks guard against accidental credential collection.
+- Before enabling, integrate verified Turnstile proof generation, OS-backed encrypted session persistence and refresh/revocation, then rerun device-level session and verified-card checks.
