@@ -8,13 +8,17 @@ class FakeApi extends PublicFeedApi {
   @override
   Future<Map<String, dynamic>> fetch(
     String kind, {int page = 1, String search = '', String stream = '',
-    String department = '', String semester = ''}) async {
+    String department = '', String semester = '', String subject = ''}) async {
     if (kind == 'filters') {
       return {
         'departments': [
           {'id': 'department-1', 'name': 'Computer Science'},
         ],
         'semesters': [1],
+        'subjects': [
+          {'id': 'subject-1', 'department_id': 'department-1',
+           'semester': 1, 'code': 'CSC101', 'name': 'Programming'},
+        ],
       };
     }
     if (kind == 'notes') {
@@ -50,6 +54,7 @@ void main() {
     expect(find.text('Introduction to Programming'), findsOneWidget);
     expect(find.textContaining('Computer Science'), findsWidgets);
     expect(find.byKey(const Key('department-filter')), findsOneWidget);
+    expect(find.byKey(const Key('subject-filter')), findsOneWidget);
   });
 
   testWidgets('Updates feed shows published announcement', (tester) async {
