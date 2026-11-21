@@ -42,6 +42,27 @@ void main() {
     expect(find.byKey(const Key('notifications-empty')), findsOneWidget);
     expect(tries, 2);
   });
+  test('Invalid read timestamps fail closed', () {
+    Map<String, dynamic> notification(Object? readAt) => {
+      'id': 'n-1', 'category': 'verification',
+      'title': 'Verified', 'message': 'Complete',
+      'created_at': '2026-11-21T10:00:00Z', 'read_at': readAt,
+    };
+    for (final invalid in [true, 123, 'not-a-date']) {
+      expect(
+        () => MemberNotification.fromJson(notification(invalid)),
+        throwsFormatException,
+      );
+    }
+    expect(MemberNotification.fromJson(notification(null)).isRead, isFalse);
+    expect(
+      MemberNotification.fromJson(
+        notification('2026-11-21T10:01:00Z'),
+      ).isRead,
+      isTrue,
+    );
+  });
+
   test('Missing notification fields fail closed', () {
     expect(() => MemberNotificationInbox.fromJson({
       'unread': 1, 'items': [{'title': 'Missing fields'}],
