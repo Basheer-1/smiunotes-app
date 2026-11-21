@@ -115,6 +115,16 @@ class _SignedNotePageState extends State<_SignedNotePage> {
     super.initState();
     signedUrl = widget.api.fetchSignedPageUrl(widget.noteId, widget.number);
   }
+  @override
+  void didUpdateWidget(covariant _SignedNotePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.api != widget.api ||
+        oldWidget.noteId != widget.noteId ||
+        oldWidget.number != widget.number) {
+      signedUrl = widget.api.fetchSignedPageUrl(widget.noteId, widget.number);
+    }
+  }
+
   void retry() {
     setState(() => signedUrl =
       widget.api.fetchSignedPageUrl(widget.noteId, widget.number));
