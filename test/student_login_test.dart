@@ -15,6 +15,32 @@ class FakeEnabledAuth extends MobileAuthApi {
   Future<bool> isEnabled() async => true;
 }
 
+
+class FakeLoginAuth extends MobileAuthApi {
+  FakeLoginAuth() : super(baseUrl: 'https://staging.example.com');
+  String? submittedStudentId;
+  int passwordCalls = 0;
+
+  @override
+  Future<bool> isEnabled() async => true;
+
+  @override
+  Future<MobileSession> passwordLogin({
+    required String studentId,
+    required String password,
+    required String turnstileToken,
+  }) async {
+    passwordCalls++;
+    submittedStudentId = studentId;
+    if (turnstileToken != 'mock-proof') throw StateError('Missing proof');
+    return const MobileSession(
+      accessToken: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      refreshToken: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      verificationStatus: 'verified',
+    );
+  }
+}
+
 void main() {
   testWidgets('Server-disabled login never shows credential fields',
       (tester) async {
@@ -35,4 +61,27 @@ void main() {
     expect(find.byKey(const Key('login-disabled')), findsOneWidget);
     expect(find.byKey(const Key('password')), findsNothing);
   });
+  testWidgets('Enabled mock login sends proof and hands session to receiver',
+      (tester) async {
+    final api = FakeLoginAuth();
+    MobileSession? delivered;
+    await tester.pumpWidget(MaterialApp(
+      home: StudentLoginPage(
+        api: api,
+        challengeProvider: () async => 'mock-proof',
+        onSession: (session) async { delivered = session; },
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('login-disabled')), findsNothing);
+    await tester.enterText(find.byKey(const Key('student-id')), 'csc-test-001');
+    await tester.enterText(find.byKey(const Key('password')), 'test-password');
+    await tester.ensureVisible(find.byKey(const Key('login-submit')));
+    await tester.tap(find.byKey(const Key('login-submit')));
+    await tester.pumpAndSettle();
+    expect(api.submittedStudentId, 'CSC-TEST-001');
+    expect(api.passwordCalls, 1);
+    expect(delivered?.verificationStatus, 'verified');
+  });
+
 }
