@@ -33,3 +33,7 @@ The URL must be an HTTPS deployment of the cyphernotes feature branch with the a
 - Published Updates article detail and public Community summaries are wired in code. Student login is not connected.
 - Community public reading is implemented; posting/replies and authenticated Profile remain pending.
 - No live integration or device build has been verified in this branch.
+
+## Preview protection and device testing
+
+The isolated Vercel preview may enforce Vercel Authentication/SSO. A temporary share link used for automated server-side verification is **not** a permanent mobile API endpoint. Never hardcode a Vercel protection-bypass secret, private share link, or server secret into the APK. Keep the API base unset until there is an approved device-accessible staging endpoint. Mobile integration tests with fake API clients can run now; live device tests require an explicitly permitted HTTPS staging URL.
