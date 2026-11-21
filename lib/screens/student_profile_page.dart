@@ -1,3 +1,5 @@
+import 'student_login_page.dart';
+import '../services/mobile_auth_api.dart';
 import 'package:material_ui/material_ui.dart';
 import '../models/student_profile.dart';
 
@@ -71,5 +73,23 @@ class StudentProfilePage extends StatelessWidget {
           },
         ),
     ],
+  );
+}
+
+class _LoginPreviewButton extends StatelessWidget {
+  const _LoginPreviewButton();
+
+  @override
+  Widget build(BuildContext context) => OutlinedButton.icon(
+    key: const Key('open-login-preview'),
+    onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => const StudentLoginPage(
+        api: MobileAuthApi(
+          baseUrl: String.fromEnvironment('SMIUNOTES_API_BASE', defaultValue: ''),
+        ),
+      ),
+    )),
+    icon: const Icon(Icons.login),
+    label: const Text('View mobile sign-in status'),
   );
 }
