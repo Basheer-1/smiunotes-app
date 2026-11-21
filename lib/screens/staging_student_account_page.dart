@@ -84,7 +84,9 @@ class StagingStudentAccountPageState
   /// Returns false if sign-in is needed; callers can open the Profile tab.
   bool openNotifications() {
     if (!runtime.coordinator.authenticated ||
-        runtime.controller.accessToken == null) return false;
+        runtime.controller.accessToken == null) {
+      return false;
+    }
     final api = MobileNotificationApi(baseUrl: widget.httpsBaseUrl);
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => NotificationInboxPage(
