@@ -3,14 +3,34 @@ import '../models/member_notification.dart';
 
 /// No account data is fetched without an authenticated injected loader.
 class NotificationInboxPage extends StatefulWidget {
-  const NotificationInboxPage({super.key, this.loader});
+  const NotificationInboxPage({
+    super.key, this.loader, this.markRead, this.clearOwn,
+  });
   final Future<MemberNotificationInbox> Function()? loader;
+  final Future<void> Function(String id)? markRead;
+  final Future<int> Function()? clearOwn;
   @override
   State<NotificationInboxPage> createState() => _NotificationInboxPageState();
 }
 
 class _NotificationInboxPageState extends State<NotificationInboxPage> {
   Future<MemberNotificationInbox>? _future;
+  bool _mutating = false;
+  String? _actionError;
+
+  Future<void> _change(Future<void> Function() action) async {
+    if (_mutating) return;
+    setState(() { _mutating = true; _actionError = null; });
+    try {
+      await action();
+      if (mounted) setState(_reload);
+    } catch (_) {
+      if (mounted) setState(() => _actionError =
+          'Unable to update notifications. Please retry.');
+    } finally {
+      if (mounted) setState(() => _mutating = false);
+    }
+  }
   @override
   void initState() { super.initState(); _reload(); }
   @override
@@ -37,6 +57,8 @@ class _NotificationInboxPageState extends State<NotificationInboxPage> {
         const Text('University updates, verification decisions and important '
           'account activity. New-note broadcasts are disabled.'),
         const SizedBox(height: 24),
+        if (_actionError != null)
+          Text(_actionError!, key: const Key('notification-action-error')),
         if (_future == null)
           const Card(child: Padding(
             padding: EdgeInsets.all(20),
@@ -79,8 +101,24 @@ class _NotificationInboxPageState extends State<NotificationInboxPage> {
                     Card(child: ListTile(
                       title: Text(item.title),
                       subtitle: Text(item.message),
-                      trailing: Text(item.isRead ? 'Read' : 'New'),
+                      trailing: item.isRead || widget.markRead == null
+                          ? Text(item.isRead ? 'Read' : 'New')
+                          : TextButton(
+                              key: Key('notification-read-${item.id}'),
+                              onPressed: _mutating ? null : () => _change(
+                                () => widget.markRead!(item.id)),
+                              child: const Text('Mark read'),
+                            ),
                     )),
+                  if (widget.clearOwn != null)
+                    TextButton.icon(
+                      key: const Key('notifications-clear'),
+                      onPressed: _mutating ? null : () => _change(() async {
+                        await widget.clearOwn!();
+                      }),
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Clear my inbox'),
+                    ),
                   OutlinedButton.icon(
                     key: const Key('notifications-refresh'),
                     onPressed: () => setState(_reload),
