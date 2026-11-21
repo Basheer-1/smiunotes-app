@@ -43,7 +43,7 @@ class _NotificationInboxPageState extends State<NotificationInboxPage> {
 
   void _reload() {
     final loader = widget.loader;
-    _future = loader == null ? null : Future<MemberNotificationInbox>.sync(loader);
+    _future = loader == null ? null : Future<MemberNotificationInbox>.microtask(loader);
   }
 
   @override
