@@ -1,3 +1,4 @@
+import 'student_recovery_page.dart';
 import 'package:material_ui/material_ui.dart';
 import '../services/mobile_auth_api.dart';
 
@@ -225,6 +226,19 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                     ? challenge == null ? 'Send code' : 'Verify code'
                     : 'Sign in'),
               ),
+              if (!registration)
+                TextButton(
+                  key: const Key('open-account-recovery'),
+                  onPressed: busy ? null : () {
+                    Navigator.of(context).push(MaterialPageRoute<void>(
+                      builder: (_) => StudentRecoveryPage(
+                        api: widget.api,
+                        challengeProvider: widget.challengeProvider!,
+                      ),
+                    ));
+                  },
+                  child: const Text('Forgot password? Recover account'),
+                ),
               TextButton(
                 onPressed: busy ? null : () => setState(() {
                   registration = !registration;
