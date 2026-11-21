@@ -109,3 +109,32 @@ jobs:
             build/app/outputs/flutter-apk/SHA256SUMS.txt
           retention-days: 7
           if-no-files-found: error
+
+  staging-backend-smoke:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify public QA alias reaches app security gates, not Vercel SSO
+        shell: bash
+        env:
+          STAGING_BASE: https://cyphernotes-student-staging-git-e1aba6-muhammadbasheer600-1622.vercel.app
+        run: |
+          set -euo pipefail
+          # No student identity, credentials, challenge, OTP request or device token.
+          curl -fsS --max-time 15 --retry 2 --retry-delay 2 \
+            -H 'Accept: application/json' \
+            "$STAGING_BASE/api/mobile/v1/auth" > "$RUNNER_TEMP/mobile-auth.json"
+          node -e "const fs=require('fs');const obj=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/mobile-auth.json','utf8'));if(obj.enabled!==true)process.exit(1);console.log('PASS: app-level mobile auth readiness (no credentials exposed)')"
+          curl -fsS --max-time 15 --retry 2 --retry-delay 2 \
+            "$STAGING_BASE/api/mobile/v1/challenge" > "$RUNNER_TEMP/turnstile-challenge.html"
+          node -e "const fs=require('fs');const html=fs.readFileSync(process.env.RUNNER_TEMP+'/turnstile-challenge.html','utf8');if(!html.includes('challenges.cloudflare.com/turnstile')||!html.includes('mobile_login'))process.exit(1);console.log('PASS: mobile Turnstile challenge available')"
+          status="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 -X POST \
+            -H 'Content-Type: application/json' --data '{"op":"register","platform":"android","deviceId":"invalid"}' \
+            "$STAGING_BASE/api/mobile/v1/push")"
+          if [[ "$status" != 400 ]]; then echo 'FAIL: push registration rejected in unexpected way' >&2; exit 1; fi
+          echo 'PASS: untrusted device input rejected at API boundary'
+          status="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 -X POST \
+            "$STAGING_BASE/api/mobile/v1/internal/push-dispatch")"
+          if [[ "$status" != 503 ]]; then echo 'FAIL: FCM delivery gate is not disabled' >&2; exit 1; fi
+          echo 'PASS: FCM delivery remains off'
