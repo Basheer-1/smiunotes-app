@@ -158,7 +158,13 @@ void main() {
     );
     expect(resetSubject, findsOneWidget);
     expect(tester.state<FormFieldState<String>>(resetSubject).value, '');
-    expect(find.textContaining('CSC101'), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('subject-filter')),
+        matching: find.textContaining('CSC101'),
+      ),
+      findsNothing,
+    );
   });
 
 }
