@@ -62,3 +62,11 @@ These are design/acceptance requirements, not claims that the native login is al
 - No production CAPTCHA callback or secure session receiver is wired into the app. Therefore **real login is not yet available**. Do not ask students to enter real credentials into this build.
 - `test/student_login_test.dart` checks the disabled server case and the server-enabled-but-missing-secure-hooks case. These checks guard against accidental credential collection.
 - Before enabling, integrate verified Turnstile proof generation, OS-backed encrypted session persistence and refresh/revocation, then rerun device-level session and verified-card checks.
+
+## Mobile account recovery and staging grants (November 21, 2026)
+
+- The website mobile auth broker now supports an optional `recover` request protected by the same server-verified Turnstile challenge and existing `student-auth` recovery RPC. It deliberately returns generic eligibility information and never changes account ownership or recovery email directly.
+- The Flutter `MobileAuthApi.requestRecovery` client and guarded `StudentRecoveryPage` permit a recovery request only when server capability is enabled and a trusted challenge callback supplies proof. The default app still does not activate these credentials screens.
+- Synthetic widget tests verify the recovery UI is hidden when disabled, successful mock submission, and denial when CAPTCHA proof is missing.
+- **Staging database inspection** confirmed `revoke_student_sessions`, `account_profile`, `student_verification_status`, and `student_reader_profile`, but `register_student_password_session` was **absent**. No migration was applied. Before activation, additively migrate the correct, reviewed device-grant RPC and verify it matches production rules.
+- A new server-only readiness variable, `MOBILE_AUTH_GRANTS_VERIFIED=true`, is required in addition to the original mobile auth, Turnstile, broker and OTP gates. Do not set it until database parity and device-limit tests actually pass. The gate remains off in all current staging tests.
