@@ -112,7 +112,24 @@ class _AppShellState extends State<AppShell> {
                           ),
                           const PublicFeedPage(type: 'notes'),
                           const PublicFeedPage(type: 'updates'),
-                          const CommunityFeedPage(),
+                          CommunityFeedPage(
+                            onReply: (threadId) async {
+                              if (!accountAuthEnabled || stagingApiBase.isEmpty) {
+                                if (mounted) setState(() => selectedIndex = 4);
+                                return false;
+                              }
+                              final state = _studentAccountKey.currentState;
+                              if (state == null) {
+                                if (mounted) setState(() => selectedIndex = 4);
+                                return false;
+                              }
+                              final posted = await state.openCommunityReply(threadId);
+                              if (!posted && mounted && !state.runtime.coordinator.authenticated) {
+                                setState(() => selectedIndex = 4);
+                              }
+                              return posted;
+                            },
+                          ),
                           if (accountAuthEnabled && stagingApiBase.isNotEmpty)
                             StagingStudentAccountPage(
                               key: _studentAccountKey,
