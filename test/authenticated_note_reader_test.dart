@@ -50,4 +50,40 @@ void main() {
     expect(find.textContaining('verification has expired'), findsOneWidget);
     expect(find.text('Verified QA notes'), findsNothing);
   });
+  testWidgets('Changing a student or note reloads the authorized manifest',
+      (tester) async {
+    final seen = <String>[];
+    Future<Map<String, dynamic>> loader({
+      required String accessToken,
+      required String noteId,
+      required bool manifest,
+      int? page,
+    }) async {
+      seen.add(noteId);
+      return {
+        'title': noteId == id ? 'Original protected note' : 'Replacement note',
+        'pages': <dynamic>[],
+      };
+    }
+
+    await tester.pumpWidget(MaterialApp(home: AuthenticatedNoteReaderPage(
+      noteId: id,
+      accessToken: token,
+      request: loader,
+    )));
+    await tester.pumpAndSettle();
+    expect(find.text('Original protected note'), findsOneWidget);
+
+    const another = '22222222-2222-4222-8222-222222222222';
+    await tester.pumpWidget(MaterialApp(home: AuthenticatedNoteReaderPage(
+      noteId: another,
+      accessToken: token,
+      request: loader,
+    )));
+    await tester.pumpAndSettle();
+    expect(seen, [id, another]);
+    expect(find.text('Original protected note'), findsNothing);
+    expect(find.text('Replacement note'), findsOneWidget);
+  });
+
 }
