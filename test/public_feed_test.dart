@@ -62,7 +62,47 @@ class FakeApi extends PublicFeedApi {
   }
 }
 
+class CapturingApi extends FakeApi {
+  String lastCategory = '';
+  String lastStream = '';
+  @override
+  Future<Map<String, dynamic>> fetch(
+    String kind, {int page = 1, String search = '', String stream = '',
+    String department = '', String semester = '', String subject = '',
+    String category = ''}) async {
+    if (kind == 'updates') {
+      lastCategory = category;
+      lastStream = stream;
+    }
+    return super.fetch(kind, page: page, search: search, stream: stream,
+      department: department, semester: semester, subject: subject,
+      category: category);
+  }
+}
+
 void main() {
+  testWidgets('Updates category filter is sent to the API', (tester) async {
+    final api = CapturingApi();
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: PublicFeedPage(type: 'updates', api: api)),
+    ));
+    await tester.pumpAndSettle();
+    final picker = find.byKey(const ValueKey('update-category-'));
+    await tester.ensureVisible(picker);
+    await tester.tap(picker);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Scholarships').last);
+    await tester.pumpAndSettle();
+    expect(api.lastCategory, 'scholarships');
+
+    final campusChip = find.byKey(const Key('update-stream-campus'));
+    await tester.ensureVisible(campusChip);
+    await tester.tap(campusChip);
+    await tester.pumpAndSettle();
+    expect(api.lastStream, 'campus');
+    expect(api.lastCategory, isEmpty);
+  });
+
   testWidgets('Notes feed displays published metadata', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(body: PublicFeedPage(type: 'notes', api: FakeApi())),
