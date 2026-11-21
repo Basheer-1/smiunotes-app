@@ -141,7 +141,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
               DropdownMenuItem(value: i.toString(), child: Text('Semester $i')),
           ],
           onChanged: (value) { semester = value ?? ''; subject = ''; filter(); },
-        )
+        ),
       if (isNotes && availableSubjects.isNotEmpty)
         Padding(
           padding: const EdgeInsets.only(top: 12),
