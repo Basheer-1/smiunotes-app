@@ -43,3 +43,10 @@ The isolated Vercel preview may enforce Vercel Authentication/SSO. A temporary s
 - New public read-only `kind=thread&id=<uuid>&page=<n>` uses the existing `forum_thread` RPC on a scoped anonymous Supabase client. Archived/hidden discussion and malformed or missing IDs are not exposed.
 - Public Flutter Community cards open a full thread and visible replies page with pagination; a fake API test covers feed-to-thread navigation.
 - Staging preview returned HTTP 400 for malformed ID/page, HTTP 404 for nonexistent thread and HTTP 200 for public community list. There is currently no public staging discussion, so successful thread/replies positive-path live verification remains pending.
+
+## Authenticated profile foundation (not yet activated)
+
+- The website feature branch now includes `GET /api/mobile/v1/me`, which accepts an HTTPS bearer access token from an authenticated student, validates it with Supabase Auth and checks the live `student_reader_profile` grant before returning **only the caller's own** limited profile and Student Card verification status.
+- Flutter now has `StudentProfile`, an HTTPS-only `StudentProfileApi` and a Profile tab with explicit logged-out behaviour. The profile loader is deliberately **not wired to a login session** until a secure native OTP/password exchange and encrypted OS session storage are implemented.
+- Staging API build and automated CI passed for the website, but a direct unauthenticated endpoint test was blocked by Vercel preview authentication, so do not claim a successful 401 negative-path check.
+- Do not use test tokens in `--dart-define`, source code, tests that get published, logs or shared URLs.
