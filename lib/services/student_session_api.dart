@@ -19,7 +19,7 @@ class StudentSessionApi {
   }
 
   Future<Map<String, dynamic>> _send(
-    Map<String, String> body, {String? bearer},
+    Map<String, String> body, {String? bearer}
   ) async {
     final url = _endpoint();
     final client = HttpClient()..connectionTimeout = const Duration(seconds: 8);
