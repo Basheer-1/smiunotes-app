@@ -8,7 +8,7 @@ class FakeApi extends PublicFeedApi {
   @override
   Future<Map<String, dynamic>> fetch(
     String kind, {int page = 1, String search = '', String stream = '',
-    String department = '', String semester = '', String subject = ''}) async {
+    String department = '', String semester = '', String subject = '', String category = ''}) async {
     if (kind == 'filters') {
       return {
         'departments': [
