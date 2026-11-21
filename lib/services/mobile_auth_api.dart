@@ -106,114 +106,8 @@ class MobileAuthApi {
     required String details,
     required String turnstileToken,
   }) async {
-    if (!RegExp(r'^[A-Za-z0-9][A-Za-z0-9-]{0,31}
-    required String studentId,
-    required String password,
-    required String turnstileToken,
-  }) async {
-    if (studentId.isEmpty || password.isEmpty || turnstileToken.isEmpty) {
-      throw const FormatException('Complete all sign-in fields.');
-    }
-    final data = await _post({
-      'op': 'password', 'studentId': studentId,
-      'password': password, 'turnstileToken': turnstileToken,
-    });
-    return MobileSession.fromJson(data);
-  }
-
-  Future<String> startOtp({
-    required String studentId,
-    String email = '',
-    required String turnstileToken,
-  }) async {
-    if (studentId.isEmpty || turnstileToken.isEmpty) {
-      throw const FormatException('Complete the verification fields.');
-    }
-    final data = await _post({
-      'op': 'send', 'studentId': studentId,
-      'email': email, 'turnstileToken': turnstileToken,
-    });
-    final challenge = data['challenge'];
-    if (challenge is! String ||
-        !RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(challenge)) {
-      throw const FormatException('Invalid OTP challenge.');
-    }
-    return challenge;
-  }
-
-  Future<MobileSession> verifyOtp({
-    required String challenge,
-    required String code,
-    required String newPassword,
-  }) async {
-    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(challenge) ||
-        !RegExp(r'^\d{6}$').hasMatch(code) ||
-        newPassword.length < 12 || newPassword.length > 128) {
-      throw const FormatException('Invalid verification input.');
-    }
-    final data = await _post({
-      'op': 'verify', 'challenge': challenge,
-      'code': code, 'newPassword': newPassword,
-    });
-    return MobileSession.fromJson(data);
-  }
-}
-)
-            .hasMatch(studentId.trim()) ||
-        !RegExp(r'^[^\\s@]+@[^\\s@]+\\.[^\\s@]+
-    required String studentId,
-    required String password,
-    required String turnstileToken,
-  }) async {
-    if (studentId.isEmpty || password.isEmpty || turnstileToken.isEmpty) {
-      throw const FormatException('Complete all sign-in fields.');
-    }
-    final data = await _post({
-      'op': 'password', 'studentId': studentId,
-      'password': password, 'turnstileToken': turnstileToken,
-    });
-    return MobileSession.fromJson(data);
-  }
-
-  Future<String> startOtp({
-    required String studentId,
-    String email = '',
-    required String turnstileToken,
-  }) async {
-    if (studentId.isEmpty || turnstileToken.isEmpty) {
-      throw const FormatException('Complete the verification fields.');
-    }
-    final data = await _post({
-      'op': 'send', 'studentId': studentId,
-      'email': email, 'turnstileToken': turnstileToken,
-    });
-    final challenge = data['challenge'];
-    if (challenge is! String ||
-        !RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(challenge)) {
-      throw const FormatException('Invalid OTP challenge.');
-    }
-    return challenge;
-  }
-
-  Future<MobileSession> verifyOtp({
-    required String challenge,
-    required String code,
-    required String newPassword,
-  }) async {
-    if (!RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(challenge) ||
-        !RegExp(r'^\d{6}$').hasMatch(code) ||
-        newPassword.length < 12 || newPassword.length > 128) {
-      throw const FormatException('Invalid verification input.');
-    }
-    final data = await _post({
-      'op': 'verify', 'challenge': challenge,
-      'code': code, 'newPassword': newPassword,
-    });
-    return MobileSession.fromJson(data);
-  }
-}
-)
-            .hasMatch(email.trim()) ||
+    if (!RegExp(r'^[A-Za-z0-9][A-Za-z0-9-]{0,31}$').hasMatch(studentId.trim()) ||
+        !email.contains('@') || email.length > 254 ||
         details.trim().length < 10 || details.trim().length > 2000 ||
         turnstileToken.isEmpty) {
       throw const FormatException('Invalid recovery request.');
@@ -229,7 +123,6 @@ class MobileAuthApi {
       throw const FormatException('Recovery unavailable.');
     }
   }
-
   Future<MobileSession> passwordLogin({
     required String studentId,
     required String password,
