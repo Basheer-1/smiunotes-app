@@ -62,6 +62,28 @@ class DelayedCommunityApi extends PublicFeedApi {
   }
 }
 
+
+class AlternativeCommunityApi extends FakeCommunityApi {
+  const AlternativeCommunityApi();
+
+  @override
+  Future<Map<String, dynamic>> fetch(
+    String kind, {
+    int page = 1, String search = '', String stream = '',
+    String department = '', String semester = '',
+    String subject = '', String category = '',
+  }) async => {
+    'page': page,
+    'has_more': false,
+    'items': [
+      {
+        'id': 'discussion-2', 'title': 'Alternative staging discussion',
+        'preview': 'Changed origin', 'author_name': 'Student', 'replies': 0,
+      },
+    ],
+  };
+}
+
 void main() {
   testWidgets('Read-only community feed shows discussions', (tester) async {
     await tester.pumpWidget(const MaterialApp(
@@ -104,6 +126,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Current study posts'), findsOneWidget);
     expect(find.text('Old response'), findsNothing);
+  });
+
+  testWidgets('Switching Community API clears old discussions',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: CommunityFeedPage(api: FakeCommunityApi())),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Study group'), findsOneWidget);
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: CommunityFeedPage(api: AlternativeCommunityApi())),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Alternative staging discussion'), findsOneWidget);
+    expect(find.text('Study group'), findsNothing);
   });
 
 }
