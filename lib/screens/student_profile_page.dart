@@ -57,14 +57,14 @@ class StudentProfilePage extends StatelessWidget {
                       fontSize: 22, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 12),
                   if (profile.studentId != null)
-                    Text('Student ID: ' + profile.studentId!),
+                    Text('Student ID: ${profile.studentId}'),
                   if (profile.department != null)
-                    Text('Department: ' + profile.department!),
-                  Text('Role: ' + profile.role),
-                  Text('Account: ' + profile.accountStatus),
-                  Text('Verification: ' + profile.verificationStatus),
+                    Text('Department: ${profile.department}'),
+                  Text('Role: ${profile.role}'),
+                  Text('Account: ${profile.accountStatus}'),
+                  Text('Verification: ${profile.verificationStatus}'),
                   if (profile.verifiedEmail != null)
-                    Text('Email: ' + profile.verifiedEmail!),
+                    Text('Email: ${profile.verifiedEmail}'),
                 ],
               ),
             ));
