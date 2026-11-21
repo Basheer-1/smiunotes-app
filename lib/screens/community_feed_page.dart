@@ -15,6 +15,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
   List<dynamic> threads = [];
   int page = 1;
   bool loading = false, hasMore = false;
+  int _requestGeneration = 0;
   String category = '', error = '';
   @override
   void initState() { super.initState(); load(); }
@@ -22,24 +23,27 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
   void dispose() { query.dispose(); super.dispose(); }
 
   Future<void> load() async {
+    final generation = ++_requestGeneration;
     setState(() { loading = true; error = ''; });
     try {
       final data = await widget.api.fetch(
         'community', search: query.text, page: page, category: category,
       );
-      if (!mounted) return;
+      if (!mounted || generation != _requestGeneration) return;
       setState(() {
         threads = (data['items'] as List<dynamic>?) ?? [];
         hasMore = data['has_more'] == true;
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || generation != _requestGeneration) return;
       setState(() {
         threads = [];
         error = 'Community feed is unavailable. Retry after staging deployment.';
       });
     } finally {
-      if (mounted) { setState(() => loading = false); }
+      if (mounted && generation == _requestGeneration) {
+        setState(() => loading = false);
+      }
     }
   }
 
