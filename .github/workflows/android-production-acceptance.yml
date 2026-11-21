@@ -1,14 +1,16 @@
-name: Android Login Diagnostics QA APK
+name: Android M6 Production QA APK (Not Release)
 
 on:
   push:
-    branches: [fix/mobile-login-error-diagnostics]
+    branches: [main]
     paths:
       - '.github/workflows/android-production-acceptance.yml'
       - 'lib/**'
       - 'test/**'
       - 'pubspec.yaml'
       - 'pubspec.lock'
+      - 'android/app/src/main/**'
+      - 'android/app/build.gradle.kts'
   pull_request:
     branches: [main]
     paths:
@@ -16,6 +18,8 @@ on:
       - 'test/**'
       - 'pubspec.yaml'
       - 'pubspec.lock'
+      - 'android/app/src/main/**'
+      - 'android/app/build.gradle.kts'
       - '.github/workflows/android-production-acceptance.yml'
   workflow_dispatch:
 
@@ -62,7 +66,7 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
-      - name: Build login diagnostic DEBUG APK
+      - name: Build M6 production-connected DEBUG QA APK
         shell: bash
         run: |
           set -euo pipefail
@@ -76,7 +80,7 @@ jobs:
           (cd build/app/outputs/flutter-apk && sha256sum app-debug.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
-          name: smiunotes-login-diagnostics-debug-apk
+          name: smiunotes-m6-production-qa-debug-apk
           path: |
             build/app/outputs/flutter-apk/app-debug.apk
             build/app/outputs/flutter-apk/PRODUCTION-QA-INFO.txt

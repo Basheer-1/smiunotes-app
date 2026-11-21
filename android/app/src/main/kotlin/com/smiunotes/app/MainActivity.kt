@@ -41,6 +41,8 @@ class MainActivity : FlutterActivity() {
                         }
                     }
                     "disablePush" -> {
+                        getSharedPreferences(SmiuNotesMessagingService.PREFS, MODE_PRIVATE)
+                            .edit().putBoolean(SmiuNotesMessagingService.OPTED_IN, false).apply()
                         FirebaseMessaging.getInstance().isAutoInitEnabled = false
                         FirebaseMessaging.getInstance().deleteToken()
                             .addOnCompleteListener { task ->
@@ -54,11 +56,14 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun obtainToken(result: MethodChannel.Result) {
+        SmiuNotesMessagingService.createChannel(this)
         FirebaseMessaging.getInstance().isAutoInitEnabled = true
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (!task.isSuccessful || task.result.isNullOrBlank()) {
                 result.error("FCM_UNAVAILABLE", "Push token unavailable.", null)
             } else {
+                getSharedPreferences(SmiuNotesMessagingService.PREFS, MODE_PRIVATE)
+                    .edit().putBoolean(SmiuNotesMessagingService.OPTED_IN, true).apply()
                 result.success(task.result)
             }
         }
