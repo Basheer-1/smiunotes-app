@@ -25,7 +25,7 @@ class SwitchingReaderApi extends PublicFeedApi {
   @override
   Future<Map<String, dynamic>> fetchManifest(String noteId) async {
     requested.add(noteId);
-    return {'title': 'Note ${noteId}', 'pages': <dynamic>[]};
+    return {'title': 'Note $noteId', 'pages': <dynamic>[]};
   }
 }
 
@@ -51,14 +51,14 @@ void main() {
       home: NoteReaderPage(noteId: first, api: api),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('Note ${first}'), findsOneWidget);
+    expect(find.text('Note $first'), findsOneWidget);
 
     await tester.pumpWidget(MaterialApp(
       home: NoteReaderPage(noteId: second, api: api),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('Note ${first}'), findsNothing);
-    expect(find.text('Note ${second}'), findsOneWidget);
+    expect(find.text('Note $first'), findsNothing);
+    expect(find.text('Note $second'), findsOneWidget);
     expect(api.requested, [first, second]);
   });
 
