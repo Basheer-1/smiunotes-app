@@ -45,6 +45,8 @@ class _AppShellState extends State<AppShell> {
   static const String stagingApiBase = String.fromEnvironment(
     'SMIUNOTES_API_BASE', defaultValue: '',
   );
+  final GlobalKey<StagingStudentAccountPageState> _studentAccountKey =
+      GlobalKey<StagingStudentAccountPageState>();
   int selectedIndex = 0;
   static const labels = ['Home', 'Notes', 'Updates', 'Community', 'Profile'];
   static const icons = [
@@ -79,11 +81,18 @@ class _AppShellState extends State<AppShell> {
                           const Spacer(),
                           IconButton(
                             tooltip: 'Notifications',
-                            onPressed: () => Navigator.of(context).push(
-                              MaterialPageRoute<void>(
+                            onPressed: () {
+                              if (stagingAuthEnabled && stagingApiBase.isNotEmpty) {
+                                if (_studentAccountKey.currentState?.openNotifications() == true) {
+                                  return;
+                                }
+                                setState(() => selectedIndex = 4);
+                                return;
+                              }
+                              Navigator.of(context).push(MaterialPageRoute<void>(
                                 builder: (_) => const NotificationInboxPage(),
-                              ),
-                            ),
+                              ));
+                            },
                             icon: const Icon(Icons.notifications_none_rounded, color: archiveBlue),
                           ),
                         ],
@@ -101,7 +110,10 @@ class _AppShellState extends State<AppShell> {
                           const PublicFeedPage(type: 'updates'),
                           const CommunityFeedPage(),
                           if (stagingAuthEnabled && stagingApiBase.isNotEmpty)
-                            const StagingStudentAccountPage(httpsBaseUrl: stagingApiBase)
+                            StagingStudentAccountPage(
+                              key: _studentAccountKey,
+                              httpsBaseUrl: stagingApiBase,
+                            )
                           else
                             const StudentProfilePage(),
                         ],
