@@ -143,7 +143,8 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                       Text('Department: ${_profile!.department}'),
                     Text('Verification: ${_profile!.verificationStatus}'),
                     const SizedBox(height: 16),
-                    if (widget.onOpenVerifiedNote != null)
+                    if (_profile!.verificationStatus == 'verified' &&
+                        widget.onOpenVerifiedNote != null)
                       OutlinedButton.icon(
                         key: const Key('account-open-verified-note'),
                         onPressed: _busy ? null : widget.onOpenVerifiedNote,
@@ -151,7 +152,8 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                         label: const Text('Open a verified note (QA)'),
                       ),
                     const SizedBox(height: 8),
-                    if (widget.onCreateDiscussion != null)
+                    if (_profile!.verificationStatus == 'verified' &&
+                        widget.onCreateDiscussion != null)
                       OutlinedButton.icon(
                         key: const Key('account-create-discussion'),
                         onPressed: _busy ? null : widget.onCreateDiscussion,
