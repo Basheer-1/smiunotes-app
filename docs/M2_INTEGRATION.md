@@ -2,7 +2,7 @@
 
 ## Implemented on feature branches
 
-- Website: GET /api/mobile/v1?kind=notes|updates|filters|community|manifest
+- Website: GET /api/mobile/v1?kind=notes|updates|filters|community|thread|manifest
 - Flutter: HTTPS-only client, API-driven department/semester/subject filters, Updates and Community search, pagination, full published Update article body, public note manifests and on-demand signed WebP page reader.
 - Site API only returns public published metadata. It does not return R2 object keys, pre-signed reader URLs, student records, or credentials.
 - Both codebases are kept on feature branches until tests and staging checks pass.
@@ -30,10 +30,16 @@ The URL must be an HTTPS deployment of the cyphernotes feature branch with the a
 ## Current limits
 
 - Public note reader now implemented on feature branch but not yet staging-tested. Verified-only notes remain locked until native authentication is built.
-- Published Updates article detail and public Community summaries are wired in code. Student login is not connected.
+- Published Updates article detail and public Community summaries and full public thread/replies details are wired in code. Student login is not connected.
 - Community public reading is implemented; posting/replies and authenticated Profile remain pending.
 - No live integration or device build has been verified in this branch.
 
 ## Preview protection and device testing
 
 The isolated Vercel preview may enforce Vercel Authentication/SSO. A temporary share link used for automated server-side verification is **not** a permanent mobile API endpoint. Never hardcode a Vercel protection-bypass secret, private share link, or server secret into the APK. Keep the API base unset until there is an approved device-accessible staging endpoint. Mobile integration tests with fake API clients can run now; live device tests require an explicitly permitted HTTPS staging URL.
+
+## Verified Community detail behavior
+
+- New public read-only `kind=thread&id=<uuid>&page=<n>` uses the existing `forum_thread` RPC on a scoped anonymous Supabase client. Archived/hidden discussion and malformed or missing IDs are not exposed.
+- Public Flutter Community cards open a full thread and visible replies page with pagination; a fake API test covers feed-to-thread navigation.
+- Staging preview returned HTTP 400 for malformed ID/page, HTTP 404 for nonexistent thread and HTTP 200 for public community list. There is currently no public staging discussion, so successful thread/replies positive-path live verification remains pending.
