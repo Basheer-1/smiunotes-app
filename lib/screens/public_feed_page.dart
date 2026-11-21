@@ -181,20 +181,34 @@ class _FeedTile extends StatelessWidget {
           maxLines: 3, overflow: TextOverflow.ellipsis),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => showModalBottomSheet<void>(
-          context: context, showDragHandle: true,
-          builder: (context) => SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          context: context,
+          isScrollControlled: true,
+          showDragHandle: true,
+          builder: (sheetContext) => SafeArea(
+            child: FractionallySizedBox(
+              heightFactor: 0.78,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+                children: [
+                  Text(title, style: const TextStyle(
+                    fontSize: 23, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   Text(subtitle),
-                  const SizedBox(height: 16),
-                  Text(isNote
-                    ? 'Secure page reader and verified sign-in will follow mobile auth integration.'
-                    : (data['body']?.toString() ?? 'No article body available.')),
-                ]),
+                  const Divider(height: 32),
+                  if (isNote) ...[
+                    if (restricted)
+                      const Text('Verified Student Card access is required.'),
+                    const Text(
+                      'The native secure note reader is not available yet. '
+                      'It will use the same server-side permissions as the website.',
+                    ),
+                  ] else
+                    SelectableText(
+                      data['body']?.toString() ?? 'No article body available.',
+                      style: const TextStyle(height: 1.55),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
