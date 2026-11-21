@@ -36,6 +36,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.type != widget.type || oldWidget.api != widget.api) {
       page = 1;
+      search.clear();
       stream = '';
       department = '';
       semester = '';
@@ -123,6 +124,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
       const SizedBox(height: 20),
       TextField(
         key: Key('search-${widget.type}'),
+        maxLength: 100,
         controller: search,
         onSubmitted: (_) => filter(),
         decoration: InputDecoration(

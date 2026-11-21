@@ -102,6 +102,25 @@ void main() {
       findsOneWidget);
   });
 
+  testWidgets('Changing feed kind clears search from the previous tab',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: PublicFeedPage(type: 'updates', api: FakeApi())),
+    ));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('search-updates')), 'exam');
+    await tester.pump();
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: PublicFeedPage(type: 'notes', api: FakeApi())),
+    ));
+    await tester.pumpAndSettle();
+    final field = tester.widget<TextField>(
+      find.byKey(const Key('search-notes')),
+    );
+    expect(field.controller!.text, isEmpty);
+    expect(field.maxLength, 100);
+  });
+
   testWidgets('Switching Updates to Notes refreshes content and filters',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(

@@ -71,6 +71,8 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
       const Text('Read student discussions. Sign-in and posting are coming later.'),
       const SizedBox(height: 18),
       TextField(
+        key: const Key('community-search'),
+        maxLength: 100,
         controller: query,
         onSubmitted: (_) => apply(),
         decoration: InputDecoration(

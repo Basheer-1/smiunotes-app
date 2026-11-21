@@ -85,6 +85,19 @@ class AlternativeCommunityApi extends FakeCommunityApi {
 }
 
 void main() {
+  testWidgets('Community search restricts query length to API limit',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: CommunityFeedPage(api: FakeCommunityApi())),
+    ));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(find.byKey(const Key('community-search')))
+          .maxLength,
+      100,
+    );
+  });
+
   testWidgets('Read-only community feed shows discussions', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(body: CommunityFeedPage(api: FakeCommunityApi())),
