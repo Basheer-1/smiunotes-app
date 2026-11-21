@@ -21,11 +21,11 @@ class StagingStudentAccountPage extends StatefulWidget {
   final String httpsBaseUrl;
 
   @override
-  State<StagingStudentAccountPage> createState() =>
-      _StagingStudentAccountPageState();
+  StagingStudentAccountPageState createState() =>
+      StagingStudentAccountPageState();
 }
 
-class _StagingStudentAccountPageState
+class StagingStudentAccountPageState
     extends State<StagingStudentAccountPage> {
   late final StudentAuthRuntime runtime =
       StudentAuthRuntime.forStaging(httpsBaseUrl: widget.httpsBaseUrl);
@@ -71,9 +71,10 @@ class _StagingStudentAccountPageState
     ));
   }
 
-  void openNotifications() {
+  /// Returns false if sign-in is needed; callers can open the Profile tab.
+  bool openNotifications() {
     final token = runtime.controller.accessToken;
-    if (!runtime.coordinator.authenticated || token == null) return;
+    if (!runtime.coordinator.authenticated || token == null) return false;
     final api = MobileNotificationApi(baseUrl: widget.httpsBaseUrl);
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => NotificationInboxPage(
@@ -82,6 +83,7 @@ class _StagingStudentAccountPageState
         clearOwn: () => api.clearOwn(token),
       ),
     ));
+    return true;
   }
 
   void openCommunityComposer() {
