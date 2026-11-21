@@ -1,0 +1,125 @@
+import 'package:material_ui/material_ui.dart';
+import '../services/bookmark_api.dart';
+
+/// Reads the signed-in student's bookmarks from the server on every visit.
+/// No account IDs, access tokens or bookmark lists are persisted on device.
+class MyBookmarksPage extends StatefulWidget {
+  const MyBookmarksPage({
+    super.key,
+    required this.api,
+    required this.currentAccessToken,
+  });
+
+  final BookmarkApi api;
+  final String Function() currentAccessToken;
+
+  @override
+  State<MyBookmarksPage> createState() => _MyBookmarksPageState();
+}
+
+class _MyBookmarksPageState extends State<MyBookmarksPage> {
+  late Future<Map<String, dynamic>> _result;
+  String? _actionError;
+  final Set<String> _removing = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _reload();
+  }
+
+  void _reload() {
+    // Fetches current session at request time (supports rotation/sign-out).
+    _result = Future.sync(
+      () => widget.api.list(widget.currentAccessToken()),
+    );
+  }
+
+  void _refresh() {
+    setState(() {
+      _actionError = null;
+      _reload();
+    });
+  }
+
+  Future<void> _remove(String noteId) async {
+    if (_removing.contains(noteId)) return;
+    setState(() {
+      _removing.add(noteId);
+      _actionError = null;
+    });
+    try {
+      final response = await widget.api.remove(
+        widget.currentAccessToken(), noteId,
+      );
+      if (response['ok'] != true || response['bookmarked'] != false) {
+        throw const FormatException('Remove not confirmed.');
+      }
+      if (mounted) _refresh();
+    } catch (_) {
+      if (mounted) {
+        setState(() => _actionError =
+          'Unable to remove saved note. Check your sign-in and retry.');
+      }
+    } finally {
+      if (mounted) setState(() => _removing.remove(noteId));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('My saved notes'),
+      actions: [IconButton(
+        icon: const Icon(Icons.refresh),
+        tooltip: 'Refresh bookmarks',
+        onPressed: _refresh,
+      )]),
+    body: FutureBuilder<Map<String, dynamic>>(
+      future: _result,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError || !snapshot.hasData) {
+          return Center(child: OutlinedButton.icon(
+            onPressed: _refresh,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Unable to load saved notes. Retry'),
+          ));
+        }
+        final raw = snapshot.data!['items'];
+        if (raw is! List<dynamic>) {
+          return const Center(child: Text('Invalid saved notes response.'));
+        }
+        return ListView(
+          key: const Key('my-bookmarks'),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+          children: [
+            const Text('Saved to your student account',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            if (_actionError != null)
+              Text(_actionError!, key: const Key('bookmark-action-error')),
+            if (raw.isEmpty)
+              const Padding(padding: EdgeInsets.all(20),
+                child: Text('No bookmarked notes yet.')),
+            for (final entry in raw)
+              if (entry is Map<String, dynamic> &&
+                  entry['note_id'] is String)
+                Card(child: ListTile(
+                  title: Text(entry['title']?.toString() ?? 'Saved note'),
+                  subtitle: const Text('Saved note'),
+                  trailing: IconButton(
+                    key: Key('remove-bookmark-${entry['note_id']}'),
+                    tooltip: 'Remove bookmark',
+                    icon: const Icon(Icons.bookmark_remove_outlined),
+                    onPressed: _removing.contains(entry['note_id'])
+                        ? null : () => _remove(entry['note_id'] as String),
+                  ),
+                )),
+          ],
+        );
+      },
+    ),
+  );
+}
