@@ -148,7 +148,7 @@ class _FeedTile extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(isNote
                     ? 'Secure page reader and verified sign-in will follow mobile auth integration.'
-                    : 'Full update article view will follow detailed content integration.'),
+                    : (data['body']?.toString() ?? 'No article body available.')),
                 ]),
             ),
           ),
