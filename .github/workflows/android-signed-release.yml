@@ -48,8 +48,12 @@ jobs:
             echo 'BLOCKED: production mobile authentication acceptance has not been recorded.' >&2
             exit 1
           fi
-          if grep -q "SMIUNOTES_ENABLE_STAGING_AUTH" lib/main.dart; then
-            echo 'BLOCKED: the app shell still uses staging-only student authentication. Ship a separately approved production auth mode first.' >&2
+          if ! grep -q "SMIUNOTES_ENABLE_PRODUCTION_AUTH" lib/main.dart; then
+            echo 'BLOCKED: production authentication build mode is missing.' >&2
+            exit 1
+          fi
+          if ! grep -q 'applicationId = "com.smiunotes.app"' android/app/build.gradle.kts; then
+            echo 'BLOCKED: approved SMIUNotes package identity mismatch.' >&2
             exit 1
           fi
           echo 'Release identity, production auth acceptance, API origin and secret presence checks passed.'
@@ -84,7 +88,10 @@ jobs:
           printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/smiunotes-upload.jks"
           chmod 600 "$RUNNER_TEMP/smiunotes-upload.jks"
           export SMIUNOTES_RELEASE_KEYSTORE="$RUNNER_TEMP/smiunotes-upload.jks"
-          flutter build appbundle --release --dart-define=SMIUNOTES_API_BASE="$RELEASE_API_BASE"
+          flutter build appbundle --release \
+            --dart-define=SMIUNOTES_API_BASE="$RELEASE_API_BASE" \
+            --dart-define=SMIUNOTES_ENABLE_PRODUCTION_AUTH=true \
+            --dart-define=SMIUNOTES_ENABLE_STAGING_AUTH=false
           # Student auth requires independent live backend approval and is not enabled by this workflow.
           test -s build/app/outputs/bundle/release/app-release.aab
       - uses: actions/upload-artifact@v4
