@@ -1,3 +1,5 @@
+import '../services/community_write_api.dart';
+import 'community_composer_page.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../services/mobile_auth_api.dart';
@@ -36,5 +38,15 @@ class _StagingStudentAccountPageState extends State<StagingStudentAccountPage> {
     restoreAndVerify: runtime.coordinator.restoreAndVerify,
     loadValidatedProfile: () => runtime.coordinator.profile,
     signOut: runtime.coordinator.signOut,
+    onCreateDiscussion: () {
+      final token = runtime.controller.accessToken;
+      if (!runtime.coordinator.authenticated || token == null) return;
+      Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => CommunityComposerPage(
+          api: CommunityWriteApi(baseUrl: widget.httpsBaseUrl),
+          accessToken: token,
+        ),
+      ));
+    },
   );
 }
