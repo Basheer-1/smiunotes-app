@@ -1,3 +1,4 @@
+import 'screens/public_feed_page.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
@@ -79,18 +80,8 @@ class _AppShellState extends State<AppShell> {
                         index: selectedIndex,
                         children: [
                           _HomePage(onNavigate: (index) => setState(() => selectedIndex = index)),
-                          const _FeaturePage(
-                            icon: Icons.menu_book_outlined,
-                            title: 'Browse notes',
-                            subtitle: 'Your departments, semesters and subjects — all in one place.',
-                            feature: 'Notes catalogue integration is coming in M2.',
-                          ),
-                          const _FeaturePage(
-                            icon: Icons.campaign_outlined,
-                            title: 'University updates',
-                            subtitle: 'Timetables, announcements, events and deadlines.',
-                            feature: 'Staging updates feed is coming in M2.',
-                          ),
+                          const PublicFeedPage(type: 'notes'),
+                          const PublicFeedPage(type: 'updates'),
                           const _FeaturePage(
                             icon: Icons.forum_outlined,
                             title: 'Community',
