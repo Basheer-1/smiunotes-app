@@ -50,12 +50,16 @@ class MobileNotificationApi {
         // Never include response bodies, URLs or tokens in error messages.
         throw const HttpException('Notification request unavailable.');
       }
-      final raw = await utf8.decoder.bind(response).join().timeout(
-        const Duration(seconds: 12));
-      if (raw.length > 131072) {
-        throw const FormatException('Notification response too large.');
+      // Bound bytes while streaming, not after receiving an unbounded body.
+      const maxResponseBytes = 131072;
+      final bytes = <int>[];
+      await for (final chunk in response.timeout(const Duration(seconds: 12))) {
+        if (bytes.length + chunk.length > maxResponseBytes) {
+          throw const FormatException('Notification response too large.');
+        }
+        bytes.addAll(chunk);
       }
-      final data = jsonDecode(raw);
+      final data = jsonDecode(utf8.decode(bytes, allowMalformed: false));
       if (data is! Map<String, dynamic>) {
         throw const FormatException('Invalid notification response.');
       }
