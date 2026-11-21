@@ -18,7 +18,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   int _feedGeneration = 0;
   int _filterGeneration = 0;
   int total = 0, page = 1;
-  String stream = '', semester = '', department = '', subject = '';
+  String stream = '', category = '', semester = '', department = '', subject = '';
   List<Map<String, dynamic>> departments = [];
   List<Map<String, dynamic>> subjects = [];
   List<int> semesters = [];
@@ -38,6 +38,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
       page = 1;
       search.clear();
       stream = '';
+      category = '';
       department = '';
       semester = '';
       subject = '';
@@ -77,7 +78,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
     try {
       final data = await widget.api.fetch(widget.type, page: page,
         search: search.text, stream: stream, semester: semester,
-        department: department, subject: subject);
+        department: department, subject: subject,
+        category: isNotes ? '' : category);
       if (mounted && generation == _feedGeneration) { setState(() {
         items = (data['items'] as List<dynamic>?) ?? [];
         total = (data['total'] as num?)?.toInt() ?? 0;
@@ -195,14 +197,37 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
             onChanged: (value) { subject = value ?? ''; filter(); },
           ),
         ),
-      if (!isNotes) Wrap(spacing: 8, children: [
-        for (final value in const ['', 'campus', 'opportunities'])
-          ChoiceChip(
-            label: Text(value.isEmpty ? 'All' : value == 'campus' ? 'Campus' : 'Opportunities'),
-            selected: stream == value,
-            onSelected: (_) { stream = value; filter(); },
-          ),
-      ]),
+      if (!isNotes) ...[
+        Wrap(spacing: 8, children: [
+          for (final value in const ['', 'campus', 'opportunities'])
+            ChoiceChip(
+              key: Key('update-stream-${value.isEmpty ? 'all' : value}'),
+              label: Text(value.isEmpty ? 'All' : value == 'campus' ? 'Campus' : 'Opportunities'),
+              selected: stream == value,
+              onSelected: (_) { stream = value; category = ''; filter(); },
+            ),
+        ]),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          key: ValueKey('update-category-$stream'),
+          initialValue: category,
+          isExpanded: true,
+          decoration: const InputDecoration(labelText: 'Category'),
+          items: const [
+            DropdownMenuItem(value: '', child: Text('All categories')),
+            DropdownMenuItem(value: 'academics', child: Text('Academics')),
+            DropdownMenuItem(value: 'exams', child: Text('Exams')),
+            DropdownMenuItem(value: 'admissions', child: Text('Admissions')),
+            DropdownMenuItem(value: 'fees', child: Text('Fees')),
+            DropdownMenuItem(value: 'events', child: Text('Events')),
+            DropdownMenuItem(value: 'scholarships', child: Text('Scholarships')),
+            DropdownMenuItem(value: 'campus', child: Text('Campus')),
+            DropdownMenuItem(value: 'opportunities', child: Text('Opportunities')),
+            DropdownMenuItem(value: 'other', child: Text('Other')),
+          ],
+          onChanged: (value) { category = value ?? ''; filter(); },
+        ),
+      ],
       const SizedBox(height: 18),
       if (loading) const Center(child: CircularProgressIndicator())
       else if (error != null) ...[
