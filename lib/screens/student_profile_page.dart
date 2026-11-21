@@ -94,6 +94,15 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
               ));
             }
             final profile = snapshot.data!;
+            if (profile.accountStatus != 'active') {
+              return const Card(child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Text(
+                  'Student account is not active. Profile details are unavailable.',
+                  key: Key('inactive-profile'),
+                ),
+              ));
+            }
             return Card(child: Padding(
               padding: const EdgeInsets.all(22),
               child: Column(
