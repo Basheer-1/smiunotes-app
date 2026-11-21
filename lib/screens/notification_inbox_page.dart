@@ -90,8 +90,19 @@ class _NotificationInboxPageState extends State<NotificationInboxPage> {
               }
               final inbox = snapshot.data!;
               if (inbox.items.isEmpty) {
-                return const Text('No notifications yet.',
-                  key: Key('notifications-empty'));
+                return Column(
+                  children: [
+                    const Text('No notifications yet.',
+                      key: Key('notifications-empty')),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      key: const Key('notifications-refresh'),
+                      onPressed: () => setState(_reload),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Refresh'),
+                    ),
+                  ],
+                );
               }
               final unread = inbox.unread;
               return Column(
