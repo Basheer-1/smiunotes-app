@@ -25,8 +25,10 @@ class _NotificationInboxPageState extends State<NotificationInboxPage> {
       await action();
       if (mounted) setState(_reload);
     } catch (_) {
-      if (mounted) setState(() => _actionError =
-          'Unable to update notifications. Please retry.');
+      if (mounted) {
+        setState(() => _actionError =
+            'Unable to update notifications. Please retry.');
+      }
     } finally {
       if (mounted) setState(() => _mutating = false);
     }
