@@ -19,6 +19,14 @@ class _NoteReaderPageState extends State<NoteReaderPage> {
     super.initState();
     manifest = widget.api.fetchManifest(widget.noteId);
   }
+  @override
+  void didUpdateWidget(covariant NoteReaderPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.noteId != widget.noteId || oldWidget.api != widget.api) {
+      manifest = widget.api.fetchManifest(widget.noteId);
+    }
+  }
+
   void retry() {
     setState(() => manifest = widget.api.fetchManifest(widget.noteId));
   }
@@ -76,7 +84,7 @@ class _NoteReaderPageState extends State<NoteReaderPage> {
             final width = (raw['width'] as num?)?.toDouble() ?? 800;
             final height = (raw['height'] as num?)?.toDouble() ?? 1100;
             return _SignedNotePage(
-              key: ValueKey(number),
+              key: ValueKey('${widget.noteId}-$number'),
               api: widget.api, noteId: widget.noteId, number: number,
               aspectRatio: width > 0 && height > 0 ? width / height : 0.72,
             );
