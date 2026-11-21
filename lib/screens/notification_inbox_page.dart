@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import '../models/member_notification.dart';
 
@@ -43,7 +44,22 @@ class _NotificationInboxPageState extends State<NotificationInboxPage> {
 
   void _reload() {
     final loader = widget.loader;
-    _future = loader == null ? null : Future<MemberNotificationInbox>.microtask(loader);
+    if (loader == null) {
+      _future = null;
+      return;
+    }
+    // Install the FutureBuilder listener first. A revoked session can fail
+    // immediately; launching in setState would race the widget subscription.
+    final pending = Completer<MemberNotificationInbox>();
+    _future = pending.future;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      try {
+        pending.complete(await loader());
+      } catch (error, stack) {
+        pending.completeError(error, stack);
+      }
+    });
   }
 
   @override
