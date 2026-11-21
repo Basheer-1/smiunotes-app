@@ -7,11 +7,13 @@ typedef RenewStudentSession = Future<MobileSession> Function(String refreshToken
 typedef RevokeStudentSession = Future<void> Function(String accessToken);
 
 class StudentSessionController {
-  StudentSessionController({
+  factory StudentSessionController({
     required SessionVault vault,
     required RenewStudentSession renew,
     required RevokeStudentSession revoke,
-  }) : _vault = vault, _renew = renew, _revoke = revoke;
+  }) => StudentSessionController._(vault, renew, revoke);
+
+  StudentSessionController._(this._vault, this._renew, this._revoke);
 
   final SessionVault _vault;
   final RenewStudentSession _renew;
