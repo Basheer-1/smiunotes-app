@@ -61,7 +61,7 @@ class _NoteReaderPageState extends State<NoteReaderPage> {
                       style: const TextStyle(
                         fontSize: 24, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 8),
-                    Text('Pages: ' + pages.length.toString()),
+                    Text('Pages: ${pages.length}'),
                     if ((data['description']?.toString() ?? '').isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Text(data['description'].toString()),
@@ -118,7 +118,7 @@ class _SignedNotePageState extends State<_SignedNotePage> {
     clipBehavior: Clip.antiAlias,
     child: Column(children: [
       Padding(padding: const EdgeInsets.all(10),
-        child: Text('Page ' + widget.number.toString())),
+        child: Text('Page ${widget.number}')),
       AspectRatio(
         aspectRatio: widget.aspectRatio,
         child: FutureBuilder<String>(
