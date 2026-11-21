@@ -64,6 +64,7 @@ void main() {
       controller: controller,
       loadProfile: (_) async => const StudentProfile(
         studentName: 'Blocked Student',
+        department: null,
         role: 'student',
         accountStatus: 'suspended',
         verificationStatus: 'rejected',
