@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -59,6 +60,13 @@ android {
             }
         }
     }
+}
+
+dependencies {
+    // Firebase is used ONLY to deliver Android push notifications.
+    // Authentication, accounts, and notification data remain in Supabase.
+    implementation(platform("com.google.firebase:firebase-bom:35.2.0"))
+    implementation("com.google.firebase:firebase-messaging")
 }
 
 kotlin {
