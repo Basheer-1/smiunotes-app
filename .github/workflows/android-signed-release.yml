@@ -53,6 +53,10 @@ jobs:
             exit 1
           fi
           echo 'Release identity, production auth acceptance, API origin and secret presence checks passed.'
+      - name: Smoke-test production mobile API before signing
+        env:
+          SMIUNOTES_RELEASE_API_BASE: ${{ vars.SMIUNOTES_RELEASE_API_BASE }}
+        run: node scripts/check-release-api.mjs
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
