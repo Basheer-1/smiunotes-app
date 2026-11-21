@@ -9,6 +9,14 @@ on:
       - 'test/**'
       - 'pubspec.yaml'
       - 'pubspec.lock'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - '.github/workflows/android-production-acceptance.yml'
   workflow_dispatch:
 
 permissions:
