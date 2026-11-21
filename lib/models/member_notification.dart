@@ -11,15 +11,19 @@ class MemberNotification {
   factory MemberNotification.fromJson(Map<String, dynamic> json) {
     final id = json['id'], category = json['category'];
     final title = json['title'], message = json['message'];
-    final created = DateTime.tryParse(json['created_at']?.toString() ?? '');
+    final createdRaw = json['created_at'];
+    final readRaw = json['read_at'];
+    final created = createdRaw is String ? DateTime.tryParse(createdRaw) : null;
+    final readAt = readRaw is String ? DateTime.tryParse(readRaw) : null;
     if (id is! String || id.isEmpty || category is! String ||
         category.isEmpty || title is! String || title.trim().isEmpty ||
-        message is! String || message.trim().isEmpty || created == null) {
+        message is! String || message.trim().isEmpty || created == null ||
+        (readRaw != null && readAt == null)) {
       throw const FormatException('Invalid notification.');
     }
     return MemberNotification(
       id: id, category: category, title: title, message: message,
-      createdAt: created, isRead: json['read_at'] != null,
+      createdAt: created, isRead: readAt != null,
     );
   }
 }
