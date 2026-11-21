@@ -110,7 +110,26 @@ class _AppShellState extends State<AppShell> {
                             onNavigate: (index) => setState(() => selectedIndex = index),
                             apiConfigured: stagingApiBase.isNotEmpty,
                           ),
-                          const PublicFeedPage(type: 'notes'),
+                          PublicFeedPage(
+                            type: 'notes',
+                            onSaveNote: (noteId) async {
+                              if (!accountAuthEnabled || stagingApiBase.isEmpty) {
+                                if (mounted) setState(() => selectedIndex = 4);
+                                return false;
+                              }
+                              final account = _studentAccountKey.currentState;
+                              if (account == null) {
+                                if (mounted) setState(() => selectedIndex = 4);
+                                return false;
+                              }
+                              final saved = await account.saveNote(noteId);
+                              if (!saved && mounted &&
+                                  !account.runtime.coordinator.authenticated) {
+                                setState(() => selectedIndex = 4);
+                              }
+                              return saved;
+                            },
+                          ),
                           const PublicFeedPage(type: 'updates'),
                           CommunityFeedPage(
                             onReply: (threadId) async {
