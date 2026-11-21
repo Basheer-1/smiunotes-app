@@ -66,7 +66,9 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
       } else {
         final proof = await widget.challengeProvider!();
         if (proof == null || proof.isEmpty) {
-          if (mounted) setState(() => error = 'Security challenge was not completed.');
+          if (mounted) {
+            setState(() => error = 'Security challenge was not completed.');
+          }
           return;
         }
         if (registration) {
@@ -74,7 +76,9 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
             studentId: studentId.text.trim().toUpperCase(),
             email: email.text.trim(), turnstileToken: proof,
           );
-          if (mounted) setState(() => challenge = newChallenge);
+          if (mounted) {
+            setState(() => challenge = newChallenge);
+          }
         } else {
           final session = await widget.api.passwordLogin(
             studentId: studentId.text.trim().toUpperCase(),
@@ -84,11 +88,15 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
         }
       }
     } catch (_) {
-      if (mounted) setState(() {
-        error = 'Unable to sign in. Please check your details or try again.';
-      });
+      if (mounted) {
+        setState(() {
+          error = 'Unable to sign in. Please check your details or try again.';
+        });
+      }
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) {
+        setState(() => busy = false);
+      }
     }
   }
 
