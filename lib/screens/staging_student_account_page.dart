@@ -71,16 +71,26 @@ class StagingStudentAccountPageState
     ));
   }
 
+  /// Retrieve the current token for every request. Never retain a bearer
+  /// captured when a route opens: sign-out/rotation may invalidate it.
+  String _currentVerifiedToken() {
+    final token = runtime.controller.accessToken;
+    if (!mounted || !runtime.coordinator.authenticated || token == null) {
+      throw StateError('Student sign-in required.');
+    }
+    return token;
+  }
+
   /// Returns false if sign-in is needed; callers can open the Profile tab.
   bool openNotifications() {
-    final token = runtime.controller.accessToken;
-    if (!runtime.coordinator.authenticated || token == null) return false;
+    if (!runtime.coordinator.authenticated ||
+        runtime.controller.accessToken == null) return false;
     final api = MobileNotificationApi(baseUrl: widget.httpsBaseUrl);
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => NotificationInboxPage(
-        loader: () => api.loadOwn(token),
-        markRead: (id) => api.markRead(token, id),
-        clearOwn: () => api.clearOwn(token),
+        loader: () => api.loadOwn(_currentVerifiedToken()),
+        markRead: (id) => api.markRead(_currentVerifiedToken(), id),
+        clearOwn: () => api.clearOwn(_currentVerifiedToken()),
       ),
     ));
     return true;
