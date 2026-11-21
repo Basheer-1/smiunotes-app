@@ -17,6 +17,18 @@ class FakeReaderApi extends PublicFeedApi {
   }
 }
 
+
+class SwitchingReaderApi extends PublicFeedApi {
+  SwitchingReaderApi();
+  final List<String> requested = [];
+
+  @override
+  Future<Map<String, dynamic>> fetchManifest(String noteId) async {
+    requested.add(noteId);
+    return {'title': 'Note ' + noteId, 'pages': <dynamic>[]};
+  }
+}
+
 void main() {
   testWidgets('Public note reader displays authorized manifest metadata', (tester) async {
     await tester.pumpWidget(const MaterialApp(
@@ -30,4 +42,24 @@ void main() {
     expect(find.text('Read online only.'), findsOneWidget);
     expect(find.byKey(const Key('note-reader')), findsOneWidget);
   });
+  testWidgets('Changing note identity refreshes the public manifest',
+      (tester) async {
+    const first = '11111111-1111-4111-8111-111111111111';
+    const second = '22222222-2222-4222-8222-222222222222';
+    final api = SwitchingReaderApi();
+    await tester.pumpWidget(MaterialApp(
+      home: NoteReaderPage(noteId: first, api: api),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Note ' + first), findsOneWidget);
+
+    await tester.pumpWidget(MaterialApp(
+      home: NoteReaderPage(noteId: second, api: api),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Note ' + first), findsNothing);
+    expect(find.text('Note ' + second), findsOneWidget);
+    expect(api.requested, [first, second]);
+  });
+
 }
