@@ -18,6 +18,7 @@ class PublicFeedApi {
     String stream = '',
     String department = '',
     String semester = '',
+    String subject = '',
   }) async {
     final origin = Uri.tryParse(baseUrl);
     if (origin == null || origin.scheme != 'https' || origin.host.isEmpty ||
@@ -30,6 +31,7 @@ class PublicFeedApi {
     if (stream.isNotEmpty) params['stream'] = stream;
     if (department.isNotEmpty) params['department'] = department;
     if (semester.isNotEmpty) params['semester'] = semester;
+    if (subject.isNotEmpty) params['subject'] = subject;
     final url = origin.resolve('/api/mobile/v1').replace(queryParameters: params);
     final client = HttpClient()..connectionTimeout = const Duration(seconds: 8);
     try {
