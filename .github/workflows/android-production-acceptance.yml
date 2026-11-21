@@ -1,0 +1,73 @@
+name: Android Production Acceptance QA (Not Release)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/android-production-acceptance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production-api-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify public mobile API security boundaries
+        env:
+          SMIUNOTES_RELEASE_API_BASE: https://smiunotes.com
+        run: node scripts/check-release-api.mjs
+      - name: Check challenge page and push delivery OFF
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 20 \
+            https://smiunotes.com/api/mobile/v1/challenge > "$RUNNER_TEMP/challenge.html"
+          grep -q 'challenges.cloudflare.com/turnstile' "$RUNNER_TEMP/challenge.html"
+          status="$(curl --silent --show-error --max-time 15 -o /dev/null -w '%{http_code}' \
+            -X POST https://smiunotes.com/api/mobile/v1/internal/push-dispatch)"
+          test "$status" = 503
+          echo 'PASS: production challenge and disabled push dispatcher'
+  production-qa-apk:
+    needs: production-api-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.1'
+          channel: stable
+          cache: true
+      - uses: gradle/actions/setup-gradle@v4
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - name: Build production-connected DEBUG acceptance APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build apk --debug \
+            --dart-define=SMIUNOTES_API_BASE=https://smiunotes.com \
+            --dart-define=SMIUNOTES_ENABLE_PRODUCTION_AUTH=true \
+            --dart-define=SMIUNOTES_ENABLE_STAGING_AUTH=false \
+            --dart-define=SMIUNOTES_ENABLE_NATIVE_PUSH=true
+          test -s build/app/outputs/flutter-apk/app-debug.apk
+          printf 'SMIUNotes PRODUCTION API TESTER APK, DEBUG SIGNED - NOT A STORE RELEASE\nCommit: %s\nServer: https://smiunotes.com\nFCM delivery is OFF until live device acceptance\n' "$GITHUB_SHA" > build/app/outputs/flutter-apk/PRODUCTION-QA-INFO.txt
+          (cd build/app/outputs/flutter-apk && sha256sum app-debug.apk > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smiunotes-production-connected-debug-qa-apk
+          path: |
+            build/app/outputs/flutter-apk/app-debug.apk
+            build/app/outputs/flutter-apk/PRODUCTION-QA-INFO.txt
+            build/app/outputs/flutter-apk/SHA256SUMS.txt
+          retention-days: 7
+          if-no-files-found: error
