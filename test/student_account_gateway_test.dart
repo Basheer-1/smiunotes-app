@@ -94,4 +94,36 @@ void main() {
     expect(find.text('QA Student'), findsNothing);
     expect(find.byKey(const Key('account-open-login')), findsOneWidget);
   });
+  testWidgets('Protected actions appear only for a verified Student Card',
+      (tester) async {
+    for (final status in ['provisional', 'verified']) {
+      final candidate = StudentProfile(
+        studentName: 'QA Student',
+        studentId: 'CSC-TEST-001',
+        department: 'Computer Science',
+        role: 'student',
+        accountStatus: 'active',
+        verificationStatus: status,
+      );
+      await tester.pumpWidget(MaterialApp(
+        key: ValueKey(status),
+        home: Scaffold(body: StudentAccountGateway(
+          api: const FakeGatewayApi(),
+          challengeProvider: () async => 'mock-proof',
+          acceptAndVerify: (_) async {},
+          restoreAndVerify: () async => true,
+          loadValidatedProfile: () => candidate,
+          signOut: () async {},
+          onCreateDiscussion: () {},
+          onOpenVerifiedNote: () {},
+        )),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('account-create-discussion')),
+        status == 'verified' ? findsOneWidget : findsNothing);
+      expect(find.byKey(const Key('account-open-verified-note')),
+        status == 'verified' ? findsOneWidget : findsNothing);
+    }
+  });
+
 }
