@@ -7,10 +7,12 @@ class CommunityThreadPage extends StatefulWidget {
     super.key,
     required this.threadId,
     this.api = const PublicFeedApi(),
+    this.onReply,
   });
 
   final String threadId;
   final PublicFeedApi api;
+  final Future<bool> Function(String threadId)? onReply;
 
   @override
   State<CommunityThreadPage> createState() => _CommunityThreadPageState();
@@ -133,10 +135,30 @@ class _CommunityThreadPageState extends State<CommunityThreadPage> {
               ],
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Replying requires a verified student account. Mobile replies are being added in M5.',
-              textAlign: TextAlign.center,
-            ),
+            if (thread['locked'] == true)
+              const Text('Replies are disabled while this discussion is locked.',
+                textAlign: TextAlign.center)
+            else if (widget.onReply != null)
+              FilledButton.icon(
+                key: const Key('community-reply-button'),
+                icon: const Icon(Icons.reply),
+                label: const Text('Reply'),
+                onPressed: () async {
+                  final posted = await widget.onReply!(widget.threadId);
+                  if (!mounted) return;
+                  if (posted) {
+                    page = 1;
+                    load();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Sign in as a verified student to reply, or cancel the composer.'),
+                    ));
+                  }
+                },
+              )
+            else
+              const Text('Sign in as a verified student to reply.',
+                textAlign: TextAlign.center),
           ],
         );
       },
