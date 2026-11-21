@@ -104,8 +104,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
                     Text(raw['preview']?.toString() ?? ''),
                     const SizedBox(height: 8),
                     Text(
-                      (raw['author_name']?.toString() ?? 'Student') +
-                      ' · ' + (raw['replies']?.toString() ?? '0') + ' replies',
+                      "${raw['author_name'] ?? 'Student'} · ${raw['replies'] ?? 0} replies",
                       style: const TextStyle(fontSize: 12)),
                   ],
                 ),
