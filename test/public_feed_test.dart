@@ -99,4 +99,21 @@ void main() {
       findsOneWidget);
   });
 
+  testWidgets('Switching Updates to Notes refreshes content and filters',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: PublicFeedPage(type: 'updates', api: FakeApi())),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Exam timetable'), findsOneWidget);
+
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: PublicFeedPage(type: 'notes', api: FakeApi())),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Introduction to Programming'), findsOneWidget);
+    expect(find.text('Exam timetable'), findsNothing);
+    expect(find.byKey(const Key('department-filter')), findsOneWidget);
+  });
+
 }
