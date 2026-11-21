@@ -33,10 +33,12 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
         total = (data['total'] as num?)?.toInt() ?? 0;
       }); }
     } catch (_) {
-      if (mounted) setState(() {
-        items = []; total = 0;
-        error = 'Feed unavailable. Check internet or staging API deployment.';
-      }); }
+      if (mounted) {
+        setState(() {
+          items = []; total = 0;
+          error = 'Feed unavailable. Check internet or staging API deployment.';
+        });
+      }
     } finally {
       if (mounted) { setState(() => loading = false); }
     }
