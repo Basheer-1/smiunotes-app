@@ -17,6 +17,7 @@ class StudentAccountGateway extends StatefulWidget {
     required this.signOut,
     this.onCreateDiscussion,
     this.onOpenVerifiedNote,
+    this.onOpenNotifications,
   });
 
   final MobileAuthApi api;
@@ -27,6 +28,7 @@ class StudentAccountGateway extends StatefulWidget {
   final Future<void> Function() signOut;
   final VoidCallback? onCreateDiscussion;
   final VoidCallback? onOpenVerifiedNote;
+  final VoidCallback? onOpenNotifications;
 
   @override
   State<StudentAccountGateway> createState() => _StudentAccountGatewayState();
@@ -159,6 +161,13 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                         onPressed: _busy ? null : widget.onCreateDiscussion,
                         icon: const Icon(Icons.forum_outlined),
                         label: const Text('New Community discussion'),
+                      ),
+                    if (widget.onOpenNotifications != null)
+                      OutlinedButton.icon(
+                        key: const Key('account-open-notifications'),
+                        onPressed: _busy ? null : widget.onOpenNotifications,
+                        icon: const Icon(Icons.notifications_outlined),
+                        label: const Text('My notifications'),
                       ),
                     const SizedBox(height: 8),
                     FilledButton.icon(
