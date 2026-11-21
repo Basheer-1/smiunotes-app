@@ -186,7 +186,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
         const SizedBox(height: 12),
         for (final raw in items)
           if (raw is Map<String, dynamic>)
-            _FeedTile(data: raw, isNote: isNotes),
+            _FeedTile(data: raw, isNote: isNotes, api: widget.api),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           OutlinedButton(
             onPressed: page > 1 ? () { page--; load(); } : null,
@@ -202,9 +202,10 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
 }
 
 class _FeedTile extends StatelessWidget {
-  const _FeedTile({required this.data, required this.isNote});
+  const _FeedTile({required this.data, required this.isNote, required this.api});
   final Map<String, dynamic> data;
   final bool isNote;
+  final PublicFeedApi api;
   @override
   Widget build(BuildContext context) {
     final title = data['title']?.toString() ?? 'Untitled';
@@ -230,7 +231,9 @@ class _FeedTile extends StatelessWidget {
               return;
             }
             Navigator.of(context).push(MaterialPageRoute<void>(
-              builder: (_) => NoteReaderPage(noteId: data['id']?.toString() ?? ''),
+              builder: (_) => NoteReaderPage(
+                noteId: data['id']?.toString() ?? '', api: api,
+              ),
             ));
             return;
           }
