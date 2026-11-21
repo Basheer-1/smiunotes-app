@@ -1,3 +1,4 @@
+import 'note_reader_page.dart';
 import 'package:material_ui/material_ui.dart';
 import '../services/public_feed_api.dart';
 
@@ -220,7 +221,20 @@ class _FeedTile extends StatelessWidget {
         subtitle: Text('$subtitle${restricted ? '\nVerified only' : ''}',
           maxLines: 3, overflow: TextOverflow.ellipsis),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => showModalBottomSheet<void>(
+        onTap: () {
+          if (isNote) {
+            if (restricted) {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Verified student access is required for this note.'),
+              ));
+              return;
+            }
+            Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => NoteReaderPage(noteId: data['id']?.toString() ?? ''),
+            ));
+            return;
+          }
+          showModalBottomSheet<void>(
           context: context,
           isScrollControlled: true,
           showDragHandle: true,
@@ -251,7 +265,8 @@ class _FeedTile extends StatelessWidget {
               ),
             ),
           ),
-        ),
+        );
+        },
       ),
     );
   }
