@@ -8,10 +8,12 @@ typedef LoadMyProfile = Future<StudentProfile> Function(String accessToken);
 /// Validation is always performed by the server. This class is NOT wired to
 /// app startup until staging auth and challenge verification are approved.
 class StudentSessionCoordinator {
-  StudentSessionCoordinator({
+  factory StudentSessionCoordinator({
     required StudentSessionController controller,
     required LoadMyProfile loadProfile,
-  }) : _controller = controller, _loadProfile = loadProfile;
+  }) => StudentSessionCoordinator._(controller, loadProfile);
+
+  StudentSessionCoordinator._(this._controller, this._loadProfile);
 
   final StudentSessionController _controller;
   final LoadMyProfile _loadProfile;
