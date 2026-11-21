@@ -1,0 +1,21 @@
+name: Flutter M2 validation
+
+on:
+  push:
+    branches: [main, feat/m2-public-feeds]
+  pull_request:
+
+jobs:
+  flutter-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.50.1'
+          cache: true
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib/screens/public_feed_page.dart lib/services/public_feed_api.dart test/public_feed_test.dart
+      - run: flutter analyze
+      - run: flutter test
