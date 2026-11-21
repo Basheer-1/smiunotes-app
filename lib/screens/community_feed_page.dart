@@ -4,8 +4,9 @@ import '../services/public_feed_api.dart';
 
 /// Public discussions only. Posting requires a verified student session.
 class CommunityFeedPage extends StatefulWidget {
-  const CommunityFeedPage({super.key, this.api = const PublicFeedApi()});
+  const CommunityFeedPage({super.key, this.api = const PublicFeedApi(), this.onReply});
   final PublicFeedApi api;
+  final Future<bool> Function(String threadId)? onReply;
   @override
   State<CommunityFeedPage> createState() => _CommunityFeedPageState();
 }
@@ -130,6 +131,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
                     builder: (_) => CommunityThreadPage(
                       threadId: raw['id']?.toString() ?? '',
                       api: widget.api,
+                      onReply: widget.onReply,
                     ),
                   ));
                 },
