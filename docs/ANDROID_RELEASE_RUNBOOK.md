@@ -9,7 +9,7 @@
 ## Operator setup (never send credentials to ChatGPT or commit them)
 1. In GitHub Settings > Environments, create `android-release` and require manual reviewers.
 2. Use an approved release upload key and store the private key and passwords in a secure password manager with backups.
-3. Configure environment secrets:
+3. Configure the `SMIUNOTES_RELEASE_API_BASE` environment variable to `https://smiunotes.com` **only after** the public production mobile API passes acceptance. A website homepage is not proof of API readiness. Configure environment secrets:
    - `SMIUNOTES_RELEASE_KEYSTORE_BASE64`: base64 of upload keystore JKS file
    - `SMIUNOTES_RELEASE_STORE_PASSWORD`
    - `SMIUNOTES_RELEASE_KEY_ALIAS`
@@ -18,10 +18,11 @@
 5. Test Android device QA with real staging accounts, cross-account notifications, revoked/expired sessions, four-device cap, protected notes and Community.
 6. Configure and test native push opt-in and per-device unregister if push is required at launch. New-note alerts remain disabled.
 7. Verify icon, privacy notice, package identity, build version, and permissions.
-8. After approval, run Actions > Android Signed Release Candidate > Run workflow. Verify signing and Play Console upload checks before rollout.
+8. After the approved changes are merged to `main`, run Actions > Android Signed Release Candidate > Run workflow **on main**, entering `RELEASE_APPROVED` only after real-device and security QA. Verify bundle signing and Play Console upload checks before rollout.
 
 ## Fail-safe behavior
-- Workflow refuses `com.example.*` application ID and absent signing secrets.
+- Workflow signs only on `main` with explicit `RELEASE_APPROVED` confirmation. A GitHub Environment name is not an approval control by itself: configure required reviewers in Environment settings.
+- Workflow refuses `com.example.*` application IDs, unapproved API origin, and absent signing secrets.
 - `flutter analyze` and `flutter test` run before signing.
 - Keystore exists only temporarily on CI runner and is deleted after the build; artifact contains only AAB.
 - Without prerequisites, no production release should be issued.
