@@ -6,7 +6,7 @@ import 'dart:io';
 class PublicFeedApi {
   const PublicFeedApi({this.baseUrl = const String.fromEnvironment(
     'SMIUNOTES_API_BASE',
-    defaultValue: 'https://smiunotes.com',
+    defaultValue: '',
   )});
 
   final String baseUrl;
@@ -22,7 +22,7 @@ class PublicFeedApi {
     final origin = Uri.tryParse(baseUrl);
     if (origin == null || origin.scheme != 'https' || origin.host.isEmpty ||
         origin.userInfo.isNotEmpty || origin.hasQuery || origin.hasFragment) {
-      throw const FormatException('Use an HTTPS API base URL.');
+      throw const FormatException('Configure an HTTPS staging API base URL.');
     }
     final params = <String, String>{'kind': kind};
     if (page > 1) params['page'] = '$page';
