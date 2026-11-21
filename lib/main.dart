@@ -1,3 +1,4 @@
+import 'screens/community_feed_page.dart';
 import 'screens/public_feed_page.dart';
 import 'dart:ui';
 import 'package:material_ui/material_ui.dart';
@@ -82,12 +83,7 @@ class _AppShellState extends State<AppShell> {
                           _HomePage(onNavigate: (index) => setState(() => selectedIndex = index)),
                           const PublicFeedPage(type: 'notes'),
                           const PublicFeedPage(type: 'updates'),
-                          const _FeaturePage(
-                            icon: Icons.forum_outlined,
-                            title: 'Community',
-                            subtitle: 'Learn, ask and share with fellow SMIU students.',
-                            feature: 'Discussions and moderation are coming in M2.',
-                          ),
+                          const CommunityFeedPage(),
                           const _FeaturePage(
                             icon: Icons.person_outline,
                             title: 'Your profile',
