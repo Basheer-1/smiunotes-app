@@ -32,6 +32,7 @@ class AuthenticatedNoteReaderPage extends StatefulWidget {
 
 class _AuthenticatedNoteReaderPageState extends State<AuthenticatedNoteReaderPage> {
   late Future<Map<String, dynamic>> manifest;
+  int _sessionRevision = 0;
 
   Future<Map<String, dynamic>> fetch({bool isManifest = true, int? page}) {
     final call = widget.request ?? widget.api?.request;
@@ -50,6 +51,18 @@ class _AuthenticatedNoteReaderPageState extends State<AuthenticatedNoteReaderPag
   void initState() {
     super.initState();
     manifest = fetch();
+  }
+
+  @override
+  void didUpdateWidget(covariant AuthenticatedNoteReaderPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.noteId != widget.noteId ||
+        oldWidget.accessToken != widget.accessToken ||
+        oldWidget.request != widget.request ||
+        oldWidget.api != widget.api) {
+      _sessionRevision++;
+      manifest = fetch();
+    }
   }
 
   void retry() => setState(() => manifest = fetch());
@@ -105,7 +118,7 @@ class _AuthenticatedNoteReaderPageState extends State<AuthenticatedNoteReaderPag
             final w = (item['width'] as num?)?.toDouble() ?? 800;
             final h = (item['height'] as num?)?.toDouble() ?? 1100;
             return _AuthorizedPage(
-              key: ValueKey(number),
+              key: ValueKey('protected-${widget.noteId}-$number-$_sessionRevision'),
               number: number,
               aspect: w > 0 && h > 0 ? w / h : 0.72,
               loader: () => fetch(isManifest: false, page: number),
