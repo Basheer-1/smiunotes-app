@@ -20,10 +20,7 @@ jobs:
           flutter-version: '3.50.1'
           cache: true
       - run: flutter pub get
-      - name: Show resolved lockfile for dependency review
-        run: |
-          echo 'M2_LOCKFILE_BEGIN'
-          cat pubspec.lock
-          echo 'M2_LOCKFILE_END'
+      - name: Verify pubspec.lock has not changed
+        run: git diff --exit-code -- pubspec.lock
       - run: flutter analyze
       - run: flutter test
