@@ -3,7 +3,7 @@
 ## Implemented on feature branches
 
 - Website: GET /api/mobile/v1?kind=notes|updates|filters
-- Flutter: HTTPS-only feed client, search, semester/stream filters, pagination, loading/error/retry states.
+- Flutter: HTTPS-only feed client, search, API-driven department/semester filters, Updates stream filters, pagination, loading/error/retry states, and scrollable published Update article body.
 - Site API only returns public published metadata. It does not return R2 object keys, pre-signed reader URLs, student records, or credentials.
 - Both codebases are kept on feature branches until tests and staging checks pass.
 
@@ -13,7 +13,7 @@ Flutter development command after a staging deployment:
 
 flutter run -d linux --dart-define=SMIUNOTES_API_BASE=https://YOUR_STAGING_DEPLOYMENT
 
-The URL must be an HTTPS deployment of the cyphernotes feature branch with the appropriate staging Supabase environment. Never use secret or service-role keys in a Flutter build. The default site URL points to public production host, where this new API does **not** yet exist until safely merged/deployed.
+The URL must be an HTTPS deployment of the cyphernotes feature branch with the appropriate staging Supabase environment. Never use secret or service-role keys in a Flutter build. There is no default API URL: the app requires an explicit HTTPS staging URL. Without it, feeds show a recoverable error. Production is never used as a fallback.
 
 ## Before M2 acceptance
 
