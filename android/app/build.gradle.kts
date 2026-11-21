@@ -29,11 +29,34 @@ android {
         versionName = flutter.versionName
     }
 
+    // Release credentials must come from the operator environment / CI secrets.
+    // Never ship a production build signed by the shared debug keystore.
+    val releaseKeystore = System.getenv("SMIUNOTES_RELEASE_KEYSTORE")
+    val releaseStorePassword = System.getenv("SMIUNOTES_RELEASE_STORE_PASSWORD")
+    val releaseKeyAlias = System.getenv("SMIUNOTES_RELEASE_KEY_ALIAS")
+    val releaseKeyPassword = System.getenv("SMIUNOTES_RELEASE_KEY_PASSWORD")
+    val releaseCredentialsPresent = listOf(
+        releaseKeystore, releaseStorePassword, releaseKeyAlias, releaseKeyPassword,
+    ).all { !it.isNullOrBlank() }
+
+    if (releaseCredentialsPresent) {
+        signingConfigs.create("release") {
+            storeFile = file(releaseKeystore!!)
+            storePassword = releaseStorePassword!!
+            keyAlias = releaseKeyAlias!!
+            keyPassword = releaseKeyPassword!!
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // Without a dedicated keystore this build intentionally stays unsigned.
+            // A release artifact must never silently inherit debug signing.
+            if (releaseCredentialsPresent) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = null
+            }
         }
     }
 }
