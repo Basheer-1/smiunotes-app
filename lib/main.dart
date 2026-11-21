@@ -1,5 +1,10 @@
+import 'screens/notification_inbox_page.dart';
+import 'screens/staging_student_account_page.dart';
+import 'screens/student_profile_page.dart';
+import 'screens/community_feed_page.dart';
+import 'screens/public_feed_page.dart';
 import 'dart:ui';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() => runApp(const SmiuNotesApp());
 
@@ -34,6 +39,18 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
+  static const bool stagingAuthEnabled = bool.fromEnvironment(
+    'SMIUNOTES_ENABLE_STAGING_AUTH', defaultValue: false,
+  );
+  static const bool productionAuthEnabled = bool.fromEnvironment(
+    'SMIUNOTES_ENABLE_PRODUCTION_AUTH', defaultValue: false,
+  );
+  static const bool accountAuthEnabled = stagingAuthEnabled || productionAuthEnabled;
+  static const String stagingApiBase = String.fromEnvironment(
+    'SMIUNOTES_API_BASE', defaultValue: '',
+  );
+  final GlobalKey<StagingStudentAccountPageState> _studentAccountKey =
+      GlobalKey<StagingStudentAccountPageState>();
   int selectedIndex = 0;
   static const labels = ['Home', 'Notes', 'Updates', 'Community', 'Profile'];
   static const icons = [
@@ -67,8 +84,19 @@ class _AppShellState extends State<AppShell> {
                           const Text('SMIUNotes', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: ink)),
                           const Spacer(),
                           IconButton(
-                            tooltip: 'Notifications (coming soon)',
-                            onPressed: () => _comingSoon(context, 'Notifications'),
+                            tooltip: 'Notifications',
+                            onPressed: () {
+                              if (accountAuthEnabled && stagingApiBase.isNotEmpty) {
+                                if (_studentAccountKey.currentState?.openNotifications() == true) {
+                                  return;
+                                }
+                                setState(() => selectedIndex = 4);
+                                return;
+                              }
+                              Navigator.of(context).push(MaterialPageRoute<void>(
+                                builder: (_) => const NotificationInboxPage(),
+                              ));
+                            },
                             icon: const Icon(Icons.notifications_none_rounded, color: archiveBlue),
                           ),
                         ],
@@ -78,31 +106,20 @@ class _AppShellState extends State<AppShell> {
                       child: IndexedStack(
                         index: selectedIndex,
                         children: [
-                          _HomePage(onNavigate: (index) => setState(() => selectedIndex = index)),
-                          const _FeaturePage(
-                            icon: Icons.menu_book_outlined,
-                            title: 'Browse notes',
-                            subtitle: 'Your departments, semesters and subjects — all in one place.',
-                            feature: 'Notes catalogue integration is coming in M2.',
+                          _HomePage(
+                            onNavigate: (index) => setState(() => selectedIndex = index),
+                            apiConfigured: stagingApiBase.isNotEmpty,
                           ),
-                          const _FeaturePage(
-                            icon: Icons.campaign_outlined,
-                            title: 'University updates',
-                            subtitle: 'Timetables, announcements, events and deadlines.',
-                            feature: 'Staging updates feed is coming in M2.',
-                          ),
-                          const _FeaturePage(
-                            icon: Icons.forum_outlined,
-                            title: 'Community',
-                            subtitle: 'Learn, ask and share with fellow SMIU students.',
-                            feature: 'Discussions and moderation are coming in M2.',
-                          ),
-                          const _FeaturePage(
-                            icon: Icons.person_outline,
-                            title: 'Your profile',
-                            subtitle: 'A personalised space for your SMIUNotes experience.',
-                            feature: 'Secure student sign-in is coming in M2.',
-                          ),
+                          const PublicFeedPage(type: 'notes'),
+                          const PublicFeedPage(type: 'updates'),
+                          const CommunityFeedPage(),
+                          if (accountAuthEnabled && stagingApiBase.isNotEmpty)
+                            StagingStudentAccountPage(
+                              key: _studentAccountKey,
+                              httpsBaseUrl: stagingApiBase,
+                            )
+                          else
+                            const StudentProfilePage(),
                         ],
                       ),
                     ),
@@ -154,12 +171,6 @@ class _AppShellState extends State<AppShell> {
       ),
     );
   }
-}
-
-void _comingSoon(BuildContext context, String feature) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('$feature will be available in a future milestone.')),
-  );
 }
 
 class _Backdrop extends StatelessWidget {
@@ -225,8 +236,12 @@ class _Glass extends StatelessWidget {
 }
 
 class _HomePage extends StatelessWidget {
-  const _HomePage({required this.onNavigate});
+  const _HomePage({
+    required this.onNavigate,
+    required this.apiConfigured,
+  });
   final ValueChanged<int> onNavigate;
+  final bool apiConfigured;
 
   @override
   Widget build(BuildContext context) {
@@ -239,6 +254,14 @@ class _HomePage extends StatelessWidget {
         const Text('Everything SMIU,\nin one place.', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1.15, color: ink)),
         const SizedBox(height: 10),
         const Text('Find notes, stay updated and connect with your university community.', style: TextStyle(fontSize: 14, height: 1.5, color: muted)),
+        const SizedBox(height: 12),
+        Text(
+          apiConfigured
+              ? 'SMIUNotes mobile • Connected API • Verified student access is required.'
+              : 'M4 testing build • Preview mode: live content and student login are not configured.',
+          key: const Key('testing-build-status'),
+          style: const TextStyle(color: muted, fontSize: 11),
+        ),
         const SizedBox(height: 24),
         _Glass(
           padding: const EdgeInsets.all(22),
@@ -285,7 +308,7 @@ class _HomePage extends StatelessWidget {
           },
         ),
         const SizedBox(height: 20),
-        const Text('M1 • UI preview only — no live student data', style: TextStyle(color: muted, fontSize: 11)),
+
       ],
     );
   }
@@ -318,35 +341,3 @@ class _QuickLink extends StatelessWidget {
   );
 }
 
-class _FeaturePage extends StatelessWidget {
-  const _FeaturePage({required this.icon, required this.title, required this.subtitle, required this.feature});
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String feature;
-
-  @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.fromLTRB(20, 24, 20, 112),
-    children: [
-      const Text('SMIUNOTES', style: TextStyle(letterSpacing: 2, fontSize: 11, fontWeight: FontWeight.w800, color: archiveBlue)),
-      const SizedBox(height: 14),
-      Text(title, style: const TextStyle(fontSize: 29, fontWeight: FontWeight.w900, color: ink)),
-      const SizedBox(height: 9),
-      Text(subtitle, style: const TextStyle(color: muted, height: 1.5)),
-      const SizedBox(height: 26),
-      _Glass(
-        padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 42),
-        child: Column(
-          children: [
-            Icon(icon, size: 54, color: archiveBlue),
-            const SizedBox(height: 17),
-            const Text('Coming soon', style: TextStyle(fontSize: 21, color: ink, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 9),
-            Text(feature, textAlign: TextAlign.center, style: const TextStyle(color: muted, height: 1.5)),
-          ],
-        ),
-      ),
-    ],
-  );
-}

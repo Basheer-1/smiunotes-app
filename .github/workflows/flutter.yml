@@ -1,0 +1,27 @@
+name: Flutter M2 validation
+
+on:
+  push:
+    branches: [main, feat/m2-public-feeds]
+  pull_request:
+
+concurrency:
+  group: flutter-m2-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  flutter-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.50.1'
+          cache: true
+      - run: flutter pub get
+      - name: Verify pubspec.lock has not changed
+        run: git diff --exit-code -- pubspec.lock
+      - run: node --check scripts/check-release-api.mjs && node --test test/release_api_gate.test.mjs
+      - run: flutter analyze
+      - run: flutter test

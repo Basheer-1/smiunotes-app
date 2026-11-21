@@ -1,0 +1,104 @@
+import 'package:material_ui/material_ui.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:smiunotes_mobile/screens/note_reader_page.dart';
+import 'package:smiunotes_mobile/services/public_feed_api.dart';
+
+class FakeReaderApi extends PublicFeedApi {
+  const FakeReaderApi();
+
+  @override
+  Future<Map<String, dynamic>> fetchManifest(String noteId) async {
+    return {
+      'title': 'Sample Published Note',
+      'description': 'Read online only.',
+      'pageCount': 0,
+      'pages': <Map<String, dynamic>>[],
+    };
+  }
+}
+
+
+class SwitchingReaderApi extends PublicFeedApi {
+  SwitchingReaderApi();
+  final List<String> requested = [];
+
+  @override
+  Future<Map<String, dynamic>> fetchManifest(String noteId) async {
+    requested.add(noteId);
+    return {'title': 'Note $noteId', 'pages': <dynamic>[]};
+  }
+}
+
+
+class SignedPageTrackingApi extends PublicFeedApi {
+  SignedPageTrackingApi();
+  int pageRequests = 0;
+
+  @override
+  Future<Map<String, dynamic>> fetchManifest(String noteId) async => {
+    'title': 'Public signed note',
+    'pages': <Map<String, dynamic>>[
+      {'page_number': 1, 'width': 800, 'height': 1100},
+    ],
+  };
+
+  @override
+  Future<String> fetchSignedPageUrl(String noteId, int page) async {
+    pageRequests++;
+    return 'https://example.invalid/signed-page.webp';
+  }
+}
+
+void main() {
+  testWidgets('Public note reader displays authorized manifest metadata', (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: NoteReaderPage(
+        noteId: '11111111-1111-4111-8111-111111111111',
+        api: FakeReaderApi(),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Sample Published Note'), findsOneWidget);
+    expect(find.text('Read online only.'), findsOneWidget);
+    expect(find.byKey(const Key('note-reader')), findsOneWidget);
+  });
+  testWidgets('Changing note identity refreshes the public manifest',
+      (tester) async {
+    const first = '11111111-1111-4111-8111-111111111111';
+    const second = '22222222-2222-4222-8222-222222222222';
+    final api = SwitchingReaderApi();
+    await tester.pumpWidget(MaterialApp(
+      home: NoteReaderPage(noteId: first, api: api),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Note $first'), findsOneWidget);
+
+    await tester.pumpWidget(MaterialApp(
+      home: NoteReaderPage(noteId: second, api: api),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Note $first'), findsNothing);
+    expect(find.text('Note $second'), findsOneWidget);
+    expect(api.requested, [first, second]);
+  });
+
+  testWidgets('Changing API origin refetches signed page instead of reusing URL',
+      (tester) async {
+    final firstApi = SignedPageTrackingApi();
+    final secondApi = SignedPageTrackingApi();
+    const id = '11111111-1111-4111-8111-111111111111';
+    await tester.pumpWidget(MaterialApp(
+      home: NoteReaderPage(noteId: id, api: firstApi),
+    ));
+    await tester.pumpAndSettle();
+    expect(firstApi.pageRequests, 1);
+
+    await tester.pumpWidget(MaterialApp(
+      home: NoteReaderPage(noteId: id, api: secondApi),
+    ));
+    await tester.pumpAndSettle();
+    expect(secondApi.pageRequests, 1);
+    expect(firstApi.pageRequests, 1);
+  });
+
+}

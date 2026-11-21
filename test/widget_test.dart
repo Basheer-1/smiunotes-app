@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smiunotes_mobile/main.dart';
 
@@ -8,6 +8,7 @@ void main() {
 
     expect(find.text('Everything SMIU,\nin one place.'), findsOneWidget);
     expect(find.byKey(const Key('home-page')), findsOneWidget);
+    expect(find.textContaining('Preview mode:'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('explore-notes')));
     await tester.pumpAndSettle();
@@ -16,5 +17,12 @@ void main() {
     await tester.tap(find.byKey(const Key('tab-2')));
     await tester.pumpAndSettle();
     expect(find.text('University updates'), findsOneWidget);
+  });
+  testWidgets('Guest bell opens restricted notifications preview', (tester) async {
+    await tester.pumpWidget(const SmiuNotesApp());
+    await tester.tap(find.byTooltip('Notifications'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('notifications-auth-required')), findsOneWidget);
+    expect(find.text('Notifications'), findsOneWidget);
   });
 }

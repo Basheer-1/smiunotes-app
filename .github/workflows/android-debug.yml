@@ -1,0 +1,140 @@
+name: Android M4 QA Debug APK
+
+on:
+  push:
+    branches: [feat/m2-public-feeds]
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'lib/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'test/**'
+      - 'scripts/**'
+      - '.github/workflows/android-signed-release.yml'
+      - '.github/workflows/android-staging-acceptance.yml'
+      - '.github/workflows/android-debug.yml'
+
+concurrency:
+  group: android-qa-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  android-debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.1'
+          channel: stable
+          cache: true
+      - uses: gradle/actions/setup-gradle@v4
+      - run: flutter pub get
+      - name: Build Android debug APK with limited network retry
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            if flutter build apk --debug; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo 'Android build failed after 3 attempts.' >&2
+              exit 1
+            fi
+            echo 'Gradle artifact fetch may be rate-limited; retrying...' >&2
+            sleep $((attempt * 20))
+          done
+      - name: Record APK build provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s build/app/outputs/flutter-apk/app-debug.apk
+          printf 'SMIUNotes M4 DEBUG QA ONLY\nCommit: %s\nWorkflow Run: %s\nProduction signing: NO\nBackend URL: NOT CONFIGURED\nNative push: NOT ENABLED\n' \
+            "$GITHUB_SHA" "$GITHUB_RUN_ID" > build/app/outputs/flutter-apk/BUILD-INFO.txt
+          (cd build/app/outputs/flutter-apk && sha256sum app-debug.apk > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smiunotes-m4-qa-debug-apk
+          path: |
+            build/app/outputs/flutter-apk/app-debug.apk
+            build/app/outputs/flutter-apk/BUILD-INFO.txt
+            build/app/outputs/flutter-apk/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
+
+  android-staging-acceptance:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.1'
+          channel: stable
+          cache: true
+      - uses: gradle/actions/setup-gradle@v4
+      - run: flutter pub get
+      - name: Build isolated authenticated staging QA debug APK
+        shell: bash
+        env:
+          STAGING_API_BASE: https://cyphernotes-student-staging-git-e1aba6-muhammadbasheer600-1622.vercel.app
+        run: |
+          set -euo pipefail
+          flutter build apk --debug \
+            --dart-define=SMIUNOTES_API_BASE="$STAGING_API_BASE" \
+            --dart-define=SMIUNOTES_ENABLE_STAGING_AUTH=true \
+            --dart-define=SMIUNOTES_ENABLE_PRODUCTION_AUTH=false \
+            --dart-define=SMIUNOTES_ENABLE_NATIVE_PUSH=true
+          test -s build/app/outputs/flutter-apk/app-debug.apk
+          printf 'SMIUNotes STAGING QA APK, NOT PRODUCTION\nBuild: %s\nBackend: protected isolated staging\nRequires Turnstile and server flags; features remain off until acceptance\n' \
+            "$GITHUB_SHA" > build/app/outputs/flutter-apk/STAGING-INFO.txt
+          (cd build/app/outputs/flutter-apk && sha256sum app-debug.apk > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smiunotes-m4-staging-login-push-qa-apk
+          path: |
+            build/app/outputs/flutter-apk/app-debug.apk
+            build/app/outputs/flutter-apk/STAGING-INFO.txt
+            build/app/outputs/flutter-apk/SHA256SUMS.txt
+          retention-days: 7
+          if-no-files-found: error
+
+  staging-backend-smoke:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify public QA alias reaches app security gates, not Vercel SSO
+        shell: bash
+        env:
+          STAGING_BASE: https://cyphernotes-student-staging-git-e1aba6-muhammadbasheer600-1622.vercel.app
+        run: |
+          set -euo pipefail
+          # No student identity, credentials, challenge, OTP request or device token.
+          curl -fsS --max-time 15 --retry 2 --retry-delay 2 \
+            -H 'Accept: application/json' \
+            "$STAGING_BASE/api/mobile/v1/auth" > "$RUNNER_TEMP/mobile-auth.json"
+          node -e "const fs=require('fs');const obj=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/mobile-auth.json','utf8'));if(obj.enabled!==true)process.exit(1);console.log('PASS: app-level mobile auth readiness (no credentials exposed)')"
+          curl -fsS --max-time 15 --retry 2 --retry-delay 2 \
+            "$STAGING_BASE/api/mobile/v1/challenge" > "$RUNNER_TEMP/turnstile-challenge.html"
+          node -e "const fs=require('fs');const html=fs.readFileSync(process.env.RUNNER_TEMP+'/turnstile-challenge.html','utf8');if(!html.includes('challenges.cloudflare.com/turnstile')||!html.includes('mobile_login'))process.exit(1);console.log('PASS: mobile Turnstile challenge available')"
+          status="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 -X POST \
+            -H 'Content-Type: application/json' --data '{"op":"register","platform":"android","deviceId":"invalid"}' \
+            "$STAGING_BASE/api/mobile/v1/push")"
+          if [[ "$status" != 400 ]]; then echo 'FAIL: push registration rejected in unexpected way' >&2; exit 1; fi
+          echo 'PASS: untrusted device input rejected at API boundary'
+          status="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 -X POST \
+            "$STAGING_BASE/api/mobile/v1/internal/push-dispatch")"
+          if [[ "$status" != 503 ]]; then echo 'FAIL: FCM delivery gate is not disabled' >&2; exit 1; fi
+          echo 'PASS: FCM delivery remains off'

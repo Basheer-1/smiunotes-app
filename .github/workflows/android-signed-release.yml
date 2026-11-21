@@ -1,0 +1,108 @@
+name: Android Signed Release Candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_confirmation:
+        description: 'Type RELEASE_APPROVED after completing real-device and security acceptance'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  signed-aab:
+    if: github.ref == 'refs/heads/main' && inputs.release_confirmation == 'RELEASE_APPROVED'
+    # Release must be manually approved using a protected GitHub Environment.
+    environment: android-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate release identity and credential availability
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.SMIUNOTES_RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_API_BASE: ${{ vars.SMIUNOTES_RELEASE_API_BASE }}
+          RELEASE_AUTH_ACCEPTED: ${{ vars.SMIUNOTES_RELEASE_AUTH_ACCEPTED }}
+          RELEASE_PUSH_ACCEPTED: ${{ vars.SMIUNOTES_RELEASE_PUSH_ACCEPTED }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.SMIUNOTES_RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.SMIUNOTES_RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.SMIUNOTES_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if grep -q 'applicationId = "com.example.' android/app/build.gradle.kts; then
+            echo 'BLOCKED: assign the approved permanent applicationId before building a signed bundle.' >&2
+            exit 1
+          fi
+          if [[ -z "$RELEASE_KEYSTORE_BASE64" || -z "$RELEASE_STORE_PASSWORD" ||
+                -z "$RELEASE_KEY_ALIAS" || -z "$RELEASE_KEY_PASSWORD" ]]; then
+            echo 'BLOCKED: release signing credentials are not configured.' >&2
+            exit 1
+          fi
+          if [[ "$RELEASE_API_BASE" != 'https://smiunotes.com' ]]; then
+            echo 'BLOCKED: approve the exact production HTTPS API origin before release.' >&2
+            exit 1
+          fi
+          if [[ "$RELEASE_AUTH_ACCEPTED" != 'approved' ]]; then
+            echo 'BLOCKED: production mobile authentication acceptance has not been recorded.' >&2
+            exit 1
+          fi
+          if [[ "$RELEASE_PUSH_ACCEPTED" != 'approved' ]]; then
+            echo 'BLOCKED: native FCM push needs end-to-end device and delivery acceptance.' >&2
+            exit 1
+          fi
+          if ! grep -q "SMIUNOTES_ENABLE_PRODUCTION_AUTH" lib/main.dart; then
+            echo 'BLOCKED: production authentication build mode is missing.' >&2
+            exit 1
+          fi
+          if ! grep -q 'applicationId = "com.smiunotes.app"' android/app/build.gradle.kts; then
+            echo 'BLOCKED: approved SMIUNotes package identity mismatch.' >&2
+            exit 1
+          fi
+          echo 'Release identity, production auth acceptance, API origin and secret presence checks passed.'
+      - name: Smoke-test production mobile API before signing
+        env:
+          SMIUNOTES_RELEASE_API_BASE: ${{ vars.SMIUNOTES_RELEASE_API_BASE }}
+        run: node scripts/check-release-api.mjs
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.1'
+          channel: stable
+          cache: true
+      - uses: gradle/actions/setup-gradle@v4
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - name: Build Android App Bundle (release signing)
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.SMIUNOTES_RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_API_BASE: ${{ vars.SMIUNOTES_RELEASE_API_BASE }}
+          SMIUNOTES_RELEASE_STORE_PASSWORD: ${{ secrets.SMIUNOTES_RELEASE_STORE_PASSWORD }}
+          SMIUNOTES_RELEASE_KEY_ALIAS: ${{ secrets.SMIUNOTES_RELEASE_KEY_ALIAS }}
+          SMIUNOTES_RELEASE_KEY_PASSWORD: ${{ secrets.SMIUNOTES_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          trap 'rm -f "$RUNNER_TEMP/smiunotes-upload.jks"' EXIT
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/smiunotes-upload.jks"
+          chmod 600 "$RUNNER_TEMP/smiunotes-upload.jks"
+          export SMIUNOTES_RELEASE_KEYSTORE="$RUNNER_TEMP/smiunotes-upload.jks"
+          flutter build appbundle --release \
+            --dart-define=SMIUNOTES_API_BASE="$RELEASE_API_BASE" \
+            --dart-define=SMIUNOTES_ENABLE_PRODUCTION_AUTH=true \
+            --dart-define=SMIUNOTES_ENABLE_STAGING_AUTH=false \
+            --dart-define=SMIUNOTES_ENABLE_NATIVE_PUSH=true
+          # Verified production login and push acceptance are enforced above.
+          test -s build/app/outputs/bundle/release/app-release.aab
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smiunotes-signed-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 7
