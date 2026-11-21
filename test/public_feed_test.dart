@@ -6,6 +6,16 @@ import 'package:smiunotes_mobile/services/public_feed_api.dart';
 class FakeApi extends PublicFeedApi {
   const FakeApi();
   @override
+  Future<Map<String, dynamic>> fetchManifest(String noteId) async {
+    if (noteId != 'note-1') throw StateError('Unexpected note');
+    return {
+      'title': 'Reader uses injected API',
+      'description': 'Configured staging backend was preserved.',
+      'pages': <dynamic>[],
+    };
+  }
+
+  @override
   Future<Map<String, dynamic>> fetch(
     String kind, {int page = 1, String search = '', String stream = '',
     String department = '', String semester = '', String subject = '', String category = ''}) async {
@@ -65,4 +75,18 @@ void main() {
     expect(find.text('Exam timetable'), findsOneWidget);
     expect(find.text('Schedule announcement'), findsOneWidget);
   });
+  testWidgets('Catalogue note viewer uses the same configured API',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: PublicFeedPage(type: 'notes', api: FakeApi())),
+    ));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Introduction to Programming'));
+    await tester.tap(find.text('Introduction to Programming'));
+    await tester.pumpAndSettle();
+    expect(find.text('Reader uses injected API'), findsOneWidget);
+    expect(find.text('Configured staging backend was preserved.'),
+      findsOneWidget);
+  });
+
 }
