@@ -49,6 +49,27 @@ class MobileAuthApi {
     return origin;
   }
 
+  Future<bool> isEnabled() async {
+    final url = _base().resolve('/api/mobile/v1/auth');
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 8);
+    try {
+      final request = await client.getUrl(url).timeout(
+        const Duration(seconds: 12));
+      request.followRedirects = false;
+      final response = await request.close().timeout(
+        const Duration(seconds: 12));
+      if (response.statusCode != HttpStatus.ok) return false;
+      final body = await utf8.decoder.bind(response).join().timeout(
+        const Duration(seconds: 12));
+      final data = jsonDecode(body);
+      return data is Map<String, dynamic> && data['enabled'] == true;
+    } catch (_) {
+      return false;
+    } finally {
+      client.close(force: true);
+    }
+  }
+
   Future<Map<String, dynamic>> _post(Map<String, String> body) async {
     final url = _base().resolve('/api/mobile/v1/auth');
     final client = HttpClient()..connectionTimeout = const Duration(seconds: 8);
