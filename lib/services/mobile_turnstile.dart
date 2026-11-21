@@ -13,7 +13,7 @@ Future<String?> requestMobileTurnstile(
   required String httpsOrigin,
 }) async {
   if (!(Platform.isAndroid || Platform.isIOS)) {
-    throw const UnsupportedError('Turnstile requires Android or iOS WebView.');
+    throw UnsupportedError('Turnstile requires Android or iOS WebView.');
   }
   final base = Uri.tryParse(httpsOrigin);
   if (base == null ||
@@ -82,7 +82,9 @@ class _MobileChallengeDialogState extends State<_MobileChallengeDialog> {
           final proof = message.message;
           if (_complete ||
               proof.length < 10 || proof.length > 2048 ||
-              !mounted) return;
+              !mounted) {
+            return;
+          }
           _complete = true;
           Navigator.of(context).pop(proof);
         },
