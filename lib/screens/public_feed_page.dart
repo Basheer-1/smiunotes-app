@@ -15,8 +15,9 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   String? error;
   bool loading = false;
   int total = 0, page = 1;
-  String stream = '', semester = '', department = '';
+  String stream = '', semester = '', department = '', subject = '';
   List<Map<String, dynamic>> departments = [];
+  List<Map<String, dynamic>> subjects = [];
   List<int> semesters = [];
   bool get isNotes => widget.type == 'notes';
 
@@ -34,6 +35,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
       setState(() {
         departments = (data['departments'] as List<dynamic>? ?? [])
             .whereType<Map<String, dynamic>>().toList();
+        subjects = (data['subjects'] as List<dynamic>? ?? [])
+            .whereType<Map<String, dynamic>>().toList();
         semesters = (data['semesters'] as List<dynamic>? ?? [])
             .whereType<num>().map((value) => value.toInt()).toList();
       });
@@ -49,7 +52,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
     try {
       final data = await widget.api.fetch(widget.type, page: page,
         search: search.text, stream: stream, semester: semester,
-        department: department);
+        department: department, subject: subject);
       if (mounted) { setState(() {
         items = (data['items'] as List<dynamic>?) ?? [];
         total = (data['total'] as num?)?.toInt() ?? 0;
@@ -66,6 +69,19 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
     }
   }
   void filter() { page = 1; load(); }
+
+  List<int> get availableSemesters {
+    if (department.isEmpty) return semesters;
+    return subjects.where((item) => item['department_id'] == department)
+        .map((item) => item['semester']).whereType<num>()
+        .map((value) => value.toInt()).toSet().toList()..sort();
+  }
+
+  List<Map<String, dynamic>> get availableSubjects {
+    return subjects.where((item) =>
+      (department.isEmpty || item['department_id'] == department) &&
+      (semester.isEmpty || item['semester']?.toString() == semester)).toList();
+  }
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -109,6 +125,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
             ],
             onChanged: (value) {
               department = value ?? '';
+              semester = '';
+              subject = '';
               filter();
             },
           ),
@@ -119,11 +137,33 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
           decoration: const InputDecoration(labelText: 'Semester'),
           items: [
             const DropdownMenuItem(value: '', child: Text('All semesters')),
-            for (final i in semesters)
+            for (final i in availableSemesters)
               DropdownMenuItem(value: i.toString(), child: Text('Semester $i')),
           ],
-          onChanged: (value) { semester = value ?? ''; filter(); },
+          onChanged: (value) { semester = value ?? ''; subject = ''; filter(); },
         )
+      if (isNotes && availableSubjects.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: DropdownButtonFormField<String>(
+            key: const Key('subject-filter'),
+            initialValue: subject,
+            isExpanded: true,
+            decoration: const InputDecoration(labelText: 'Subject'),
+            items: [
+              const DropdownMenuItem(value: '', child: Text('All subjects')),
+              for (final item in availableSubjects)
+                DropdownMenuItem(
+                  value: item['id']?.toString() ?? '',
+                  child: Text(
+                    '${item['code'] ?? ''} · ${item['name'] ?? ''}',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+            onChanged: (value) { subject = value ?? ''; filter(); },
+          ),
+        ),
       else Wrap(spacing: 8, children: [
         for (final value in const ['', 'campus', 'opportunities'])
           ChoiceChip(
