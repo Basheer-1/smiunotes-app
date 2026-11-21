@@ -30,8 +30,22 @@ jobs:
           flutter-version: '3.50.1'
           channel: stable
           cache: true
+      - uses: gradle/actions/setup-gradle@v4
       - run: flutter pub get
-      - run: flutter build apk --debug
+      - name: Build Android debug APK with limited network retry
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            if flutter build apk --debug; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo 'Android build failed after 3 attempts.' >&2
+              exit 1
+            fi
+            echo 'Gradle artifact fetch may be rate-limited; retrying...' >&2
+            sleep $((attempt * 20))
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: smiunotes-m2-debug-apk
