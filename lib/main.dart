@@ -1,3 +1,4 @@
+import 'screens/notification_inbox_page.dart';
 import 'screens/staging_student_account_page.dart';
 import 'screens/student_profile_page.dart';
 import 'screens/community_feed_page.dart';
@@ -78,7 +79,11 @@ class _AppShellState extends State<AppShell> {
                           const Spacer(),
                           IconButton(
                             tooltip: 'Notifications (coming soon)',
-                            onPressed: () => _comingSoon(context, 'Notifications'),
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const NotificationInboxPage(),
+                              ),
+                            ),
                             icon: const Icon(Icons.notifications_none_rounded, color: archiveBlue),
                           ),
                         ],
