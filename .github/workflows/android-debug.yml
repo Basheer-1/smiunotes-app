@@ -11,6 +11,10 @@ on:
       - 'pubspec.lock'
       - '.github/workflows/android-debug.yml'
 
+concurrency:
+  group: android-m2-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   android-debug:
     runs-on: ubuntu-latest
