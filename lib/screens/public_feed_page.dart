@@ -86,7 +86,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
       if (mounted && generation == _feedGeneration) {
         setState(() {
           items = []; total = 0;
-          error = 'Feed unavailable. Check internet or staging API deployment.';
+          error = 'Unable to load published content. Check your connection and retry.';
         });
       }
     } finally {
@@ -279,9 +279,20 @@ class _FeedTile extends StatelessWidget {
                 children: [
                   Text(title, style: const TextStyle(
                     fontSize: 23, fontWeight: FontWeight.bold)),
+                  if (!isNote && data['is_pinned'] == true)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6),
+                      child: Text('Pinned update', style: TextStyle(
+                        color: Color(0xFF183C68), fontWeight: FontWeight.w700)),
+                    ),
                   const SizedBox(height: 12),
                   Text(subtitle),
                   if (!isNote) ...[
+                    if ((data['stream']?.toString() ?? '').isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text('Section: ${data['stream']}'),
+                      ),
                     const SizedBox(height: 8),
                     if ((data['category']?.toString() ?? '').isNotEmpty)
                       Text('Category: ${data['category']}'),
