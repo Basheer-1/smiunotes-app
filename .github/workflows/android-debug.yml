@@ -12,6 +12,7 @@ on:
       - 'test/**'
       - 'scripts/**'
       - '.github/workflows/android-signed-release.yml'
+      - '.github/workflows/android-staging-acceptance.yml'
       - '.github/workflows/android-debug.yml'
 
 concurrency:
