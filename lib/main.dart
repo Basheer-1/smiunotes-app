@@ -42,6 +42,10 @@ class _AppShellState extends State<AppShell> {
   static const bool stagingAuthEnabled = bool.fromEnvironment(
     'SMIUNOTES_ENABLE_STAGING_AUTH', defaultValue: false,
   );
+  static const bool productionAuthEnabled = bool.fromEnvironment(
+    'SMIUNOTES_ENABLE_PRODUCTION_AUTH', defaultValue: false,
+  );
+  static const bool accountAuthEnabled = stagingAuthEnabled || productionAuthEnabled;
   static const String stagingApiBase = String.fromEnvironment(
     'SMIUNOTES_API_BASE', defaultValue: '',
   );
@@ -82,7 +86,7 @@ class _AppShellState extends State<AppShell> {
                           IconButton(
                             tooltip: 'Notifications',
                             onPressed: () {
-                              if (stagingAuthEnabled && stagingApiBase.isNotEmpty) {
+                              if (accountAuthEnabled && stagingApiBase.isNotEmpty) {
                                 if (_studentAccountKey.currentState?.openNotifications() == true) {
                                   return;
                                 }
@@ -109,7 +113,7 @@ class _AppShellState extends State<AppShell> {
                           const PublicFeedPage(type: 'notes'),
                           const PublicFeedPage(type: 'updates'),
                           const CommunityFeedPage(),
-                          if (stagingAuthEnabled && stagingApiBase.isNotEmpty)
+                          if (accountAuthEnabled && stagingApiBase.isNotEmpty)
                             StagingStudentAccountPage(
                               key: _studentAccountKey,
                               httpsBaseUrl: stagingApiBase,
@@ -253,7 +257,7 @@ class _HomePage extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           apiConfigured
-              ? 'M4 testing build • Staging API configured • Student login requires explicit authorization.'
+              ? 'SMIUNotes mobile • Connected API • Verified student access is required.'
               : 'M4 testing build • Preview mode: live content and student login are not configured.',
           key: const Key('testing-build-status'),
           style: const TextStyle(color: muted, fontSize: 11),
