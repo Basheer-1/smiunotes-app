@@ -38,7 +38,9 @@ class _CommunityThreadPageState extends State<CommunityThreadPage> {
   }
 
   void load() {
-    setState(() => detail = widget.api.fetchThread(widget.threadId, page: page));
+    setState(() {
+      detail = widget.api.fetchThread(widget.threadId, page: page);
+    });
   }
 
   @override
