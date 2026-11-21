@@ -4,6 +4,7 @@
 - This is a **debug QA APK**, not a Play Store or production release.
 - Download the artifact from the **latest passing** Android Debug Build workflow for branch `feat/m4-notifications-release`. Verify the head SHA matches the tested commit. Avoid sharing an earlier APK under a newer version label.
 - The default build has no configured mobile API base, no live student authentication, no native Android push, and no embedded access tokens.
+- New artifact `smiunotes-m4-qa-debug-apk` contains `app-debug.apk`, `BUILD-INFO.txt` and `SHA256SUMS.txt`. Verify the commit in BUILD-INFO matches the GitHub workflow and optionally verify SHA-256 before sharing. An APK extracted from an older `m2` artifact is not the latest build.
 - No production branch or Kamil staging was changed by M4 work. Do not request real student credentials in this build.
 - GitHub artifact retention is currently seven days.
 
