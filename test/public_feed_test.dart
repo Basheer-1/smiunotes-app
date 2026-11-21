@@ -49,6 +49,10 @@ class FakeApi extends PublicFeedApi {
         {
           'id': 'update-1', 'title': 'Exam timetable',
           'summary': 'Schedule announcement',
+          'body': 'Exams start soon',
+          'category': 'inside',
+          'event_date': '2026-12-01',
+          'deadline_date': '2026-11-29',
         },
       ],
     };
@@ -74,6 +78,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Exam timetable'), findsOneWidget);
     expect(find.text('Schedule announcement'), findsOneWidget);
+    await tester.tap(find.text('Exam timetable'));
+    await tester.pumpAndSettle();
+    expect(find.text('Exams start soon'), findsOneWidget);
+    expect(find.text('Category: inside'), findsOneWidget);
+    expect(find.text('Event: 2026-12-01'), findsOneWidget);
+    expect(find.text('Deadline: 2026-11-29'), findsOneWidget);
   });
   testWidgets('Catalogue note viewer uses the same configured API',
       (tester) async {
