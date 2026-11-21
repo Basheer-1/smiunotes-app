@@ -301,35 +301,3 @@ class _QuickLink extends StatelessWidget {
   );
 }
 
-class _FeaturePage extends StatelessWidget {
-  const _FeaturePage({required this.icon, required this.title, required this.subtitle, required this.feature});
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String feature;
-
-  @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.fromLTRB(20, 24, 20, 112),
-    children: [
-      const Text('SMIUNOTES', style: TextStyle(letterSpacing: 2, fontSize: 11, fontWeight: FontWeight.w800, color: archiveBlue)),
-      const SizedBox(height: 14),
-      Text(title, style: const TextStyle(fontSize: 29, fontWeight: FontWeight.w900, color: ink)),
-      const SizedBox(height: 9),
-      Text(subtitle, style: const TextStyle(color: muted, height: 1.5)),
-      const SizedBox(height: 26),
-      _Glass(
-        padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 42),
-        child: Column(
-          children: [
-            Icon(icon, size: 54, color: archiveBlue),
-            const SizedBox(height: 17),
-            const Text('Coming soon', style: TextStyle(fontSize: 21, color: ink, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 9),
-            Text(feature, textAlign: TextAlign.center, style: const TextStyle(color: muted, height: 1.5)),
-          ],
-        ),
-      ),
-    ],
-  );
-}
