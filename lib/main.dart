@@ -78,7 +78,7 @@ class _AppShellState extends State<AppShell> {
                           const Text('SMIUNotes', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: ink)),
                           const Spacer(),
                           IconButton(
-                            tooltip: 'Notifications (coming soon)',
+                            tooltip: 'Notifications',
                             onPressed: () => Navigator.of(context).push(
                               MaterialPageRoute<void>(
                                 builder: (_) => const NotificationInboxPage(),
@@ -93,7 +93,10 @@ class _AppShellState extends State<AppShell> {
                       child: IndexedStack(
                         index: selectedIndex,
                         children: [
-                          _HomePage(onNavigate: (index) => setState(() => selectedIndex = index)),
+                          _HomePage(
+                            onNavigate: (index) => setState(() => selectedIndex = index),
+                            apiConfigured: stagingApiBase.isNotEmpty,
+                          ),
                           const PublicFeedPage(type: 'notes'),
                           const PublicFeedPage(type: 'updates'),
                           const CommunityFeedPage(),
@@ -217,8 +220,12 @@ class _Glass extends StatelessWidget {
 }
 
 class _HomePage extends StatelessWidget {
-  const _HomePage({required this.onNavigate});
+  const _HomePage({
+    required this.onNavigate,
+    required this.apiConfigured,
+  });
   final ValueChanged<int> onNavigate;
+  final bool apiConfigured;
 
   @override
   Widget build(BuildContext context) {
@@ -277,7 +284,13 @@ class _HomePage extends StatelessWidget {
           },
         ),
         const SizedBox(height: 20),
-        const Text('M2 • Staging development — authentication disabled by default', style: TextStyle(color: muted, fontSize: 11)),
+        Text(
+          apiConfigured
+              ? 'M4 testing build • Staging API configured • Student login requires explicit authorization.'
+              : 'M4 testing build • Preview mode: live content and student login are not configured.',
+          key: const Key('testing-build-status'),
+          style: const TextStyle(color: muted, fontSize: 11),
+        ),
       ],
     );
   }
