@@ -25,6 +25,7 @@ jobs:
         env:
           RELEASE_KEYSTORE_BASE64: ${{ secrets.SMIUNOTES_RELEASE_KEYSTORE_BASE64 }}
           RELEASE_API_BASE: ${{ vars.SMIUNOTES_RELEASE_API_BASE }}
+          RELEASE_AUTH_ACCEPTED: ${{ vars.SMIUNOTES_RELEASE_AUTH_ACCEPTED }}
           RELEASE_STORE_PASSWORD: ${{ secrets.SMIUNOTES_RELEASE_STORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.SMIUNOTES_RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.SMIUNOTES_RELEASE_KEY_PASSWORD }}
@@ -43,7 +44,15 @@ jobs:
             echo 'BLOCKED: approve the exact production HTTPS API origin before release.' >&2
             exit 1
           fi
-          echo 'Release identity, production API origin and secret presence checks passed.'
+          if [[ "$RELEASE_AUTH_ACCEPTED" != 'approved' ]]; then
+            echo 'BLOCKED: production mobile authentication acceptance has not been recorded.' >&2
+            exit 1
+          fi
+          if grep -q "SMIUNOTES_ENABLE_STAGING_AUTH" lib/main.dart; then
+            echo 'BLOCKED: the app shell still uses staging-only student authentication. Ship a separately approved production auth mode first.' >&2
+            exit 1
+          fi
+          echo 'Release identity, production auth acceptance, API origin and secret presence checks passed.'
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
