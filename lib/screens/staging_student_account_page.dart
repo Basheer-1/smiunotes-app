@@ -143,7 +143,9 @@ class StagingStudentAccountPageState
 
   void openCommunityComposer() {
     if (!runtime.coordinator.authenticated ||
-        runtime.controller.accessToken == null) return;
+        runtime.controller.accessToken == null) {
+      return;
+    }
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => CommunityComposerPage(
         api: CommunityWriteApi(baseUrl: widget.httpsBaseUrl),
