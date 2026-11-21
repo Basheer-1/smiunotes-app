@@ -4,6 +4,8 @@ import '../services/authenticated_reader_api.dart';
 import '../services/community_write_api.dart';
 import '../services/mobile_auth_api.dart';
 import '../services/mobile_notification_api.dart';
+import '../services/push_registration_api.dart';
+import '../services/student_push_enrollment.dart';
 import 'notification_inbox_page.dart';
 import '../services/mobile_turnstile.dart';
 import '../services/student_auth_runtime.dart';
@@ -27,6 +29,25 @@ class StagingStudentAccountPage extends StatefulWidget {
 
 class StagingStudentAccountPageState
     extends State<StagingStudentAccountPage> {
+  // Disabled until backend FCM delivery, rotation and device QA are approved.
+  static const bool pushEnabled = bool.fromEnvironment(
+    'SMIUNOTES_ENABLE_NATIVE_PUSH', defaultValue: false,
+  );
+  late final StudentPushEnrollment push = StudentPushEnrollment(
+    api: PushRegistrationApi(
+      baseUrl: widget.httpsBaseUrl,
+      enabled: pushEnabled,
+    ),
+  );
+
+  Future<void> enablePush() async {
+    await push.enable(currentAccessToken: _currentVerifiedToken());
+  }
+
+  Future<void> disablePush() async {
+    await push.disable(currentAccessToken: runtime.controller.accessToken);
+  }
+
   late final StudentAuthRuntime runtime =
       StudentAuthRuntime.forStaging(httpsBaseUrl: widget.httpsBaseUrl);
 
@@ -123,5 +144,8 @@ class StagingStudentAccountPageState
     onOpenVerifiedNote: openVerifiedNote,
     onCreateDiscussion: openCommunityComposer,
     onOpenNotifications: openNotifications,
+    pushAvailable: pushEnabled,
+    onEnablePush: pushEnabled ? enablePush : null,
+    onDisablePush: pushEnabled ? disablePush : null,
   );
 }
