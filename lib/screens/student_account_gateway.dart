@@ -134,10 +134,10 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                         fontWeight: FontWeight.w800)),
                     const SizedBox(height: 10),
                     if (_profile!.studentId != null)
-                      Text('Student ID: ' + _profile!.studentId!),
+                      Text('Student ID: ${_profile!.studentId}'),
                     if (_profile!.department != null)
-                      Text('Department: ' + _profile!.department!),
-                    Text('Verification: ' + _profile!.verificationStatus),
+                      Text('Department: ${_profile!.department}'),
+                    Text('Verification: ${_profile!.verificationStatus}'),
                     const SizedBox(height: 16),
                     FilledButton.icon(
                       key: const Key('account-signout'),
