@@ -20,7 +20,15 @@
 - [x] Wire staged verified Flutter session to inbox read, mark-read and clear API callbacks; real backend acceptance pending.
 - [ ] Opt-in native Android push and per-device unregister.
 - [ ] Real-device Turnstile, four-device sessions, revoke, note/community permissions.
-- [ ] Secure-store, signed-page cache, OS notifications, release signing and distribution QA.
+- [ ] Secure-store, signed-page cache, OS notifications and distribution QA.
+- [x] Debug-key fallback removed from Android release build. Production keystore, non-example application ID, release AAB, and signed-install QA remain pending.
 - [ ] Separate production merge/deployment approval.
 
 M4 branch is isolated from production, main, frozen M2/M3, and Kamil staging.
+
+## Android release signing (not yet provisioned)
+- Android `release` no longer inherits Flutter's debug signing config. A production store is NOT configured and no signed store-ready AAB has been generated.
+- Provide `SMIUNOTES_RELEASE_KEYSTORE` (path to private upload keystore), `SMIUNOTES_RELEASE_STORE_PASSWORD`, `SMIUNOTES_RELEASE_KEY_ALIAS`, `SMIUNOTES_RELEASE_KEY_PASSWORD` **only** as secured environment variables in an approved release environment.
+- Never commit the keystore or passwords, including inside GitHub Actions logs, artifacts, or source. Back up the original key securely.
+- Finalize unique Android `applicationId` and signing ownership before first Play Store upload. Current `com.example.smiunotes_mobile` is a placeholder, not approved for release.
+- Do not run or distribute a release build while credentials are missing; an unsigned release artifact is not publishable.
