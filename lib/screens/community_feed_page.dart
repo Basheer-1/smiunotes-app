@@ -20,6 +20,16 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
   @override
   void initState() { super.initState(); load(); }
   @override
+  void didUpdateWidget(covariant CommunityFeedPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.api != widget.api) {
+      page = 1;
+      category = '';
+      query.clear();
+      load();
+    }
+  }
+  @override
   void dispose() { query.dispose(); super.dispose(); }
 
   Future<void> load() async {
