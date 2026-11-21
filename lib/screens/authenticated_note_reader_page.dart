@@ -133,13 +133,32 @@ class _AuthorizedPage extends StatefulWidget {
 
 class _AuthorizedPageState extends State<_AuthorizedPage> {
   late Future<Map<String, dynamic>> page;
+  // Signed WebP images are sensitive. Evict only our own URLs when leaving
+  // this page; never clear the app-wide cache used by public content.
+  final Set<String> _signedUrls = <String>{};
+
+  void _evictSignedPages() {
+    for (final url in _signedUrls) {
+      NetworkImage(url).evict();
+    }
+    _signedUrls.clear();
+  }
+
+  @override
+  void dispose() {
+    _evictSignedPages();
+    super.dispose();
+  }
   @override
   void initState() {
     super.initState();
     page = widget.loader();
   }
 
-  void retry() => setState(() => page = widget.loader());
+  void retry() {
+    _evictSignedPages();
+    setState(() => page = widget.loader());
+  }
 
   @override
   Widget build(BuildContext context) => Card(
@@ -169,6 +188,7 @@ class _AuthorizedPageState extends State<_AuthorizedPage> {
                   url.userInfo.isNotEmpty) {
                 return const Center(child: Text('Invalid signed page.'));
               }
+              _signedUrls.add(url.toString());
               return Image.network(
                 url.toString(),
                 fit: BoxFit.contain,
