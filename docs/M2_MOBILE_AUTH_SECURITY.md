@@ -47,3 +47,10 @@ These are design/acceptance requirements, not claims that the native login is al
 - The Flutter `MobileAuthApi` supports password, send and OTP verify request envelopes. It **does not yet connect to a login UI or persist tokens**, and must not handle real credentials until the CAPTCHA user flow, OS-backed encrypted storage, refresh/revocation and staging device tests are implemented.
 - Current isolated staging schema was not confirmed to contain the production password-session registration and device-revocation RPCs. Additive staging migration/verification is required before enabling this broker; do not silently switch the endpoint to production Supabase.
 - The app's existing Linux build must remain usable. Avoid introducing native plugins requiring libsecret/Android SDK until the local environment and package cache are prepared.
+
+## Authenticated note-media adapter (feature-flagged)
+
+- Website feature branch now contains `GET /api/mobile/v1/reader?op=manifest|page&id=<uuid>&page=<n>`. When disabled it fails closed with HTTP 503. Enabled requests require a valid Supabase bearer token, live `student_reader_profile` grant and the existing privileged `note-media` function for final Student Card authorization and short-lived WebP signing. It does not access R2 secrets itself.
+- Flutter has `AuthenticatedReaderApi`, a token-scoped HTTPS client with strict note ID/page checks. Unit tests verify invalid tokens, invalid IDs, oversized pages and HTTP endpoints are rejected before network access.
+- **Not connected to login UI and not deployed to production.** Native session persistence, refresh, revocation and verification-role tests still gate activation. Do not use unverified student credentials in staging.
+- CI passed on website commit `f178bd82` and Flutter commit `ef419b79`. Live preview disabled-state check should be logged separately when deployed.
