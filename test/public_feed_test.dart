@@ -23,11 +23,14 @@ class FakeApi extends PublicFeedApi {
       return {
         'departments': [
           {'id': 'department-1', 'name': 'Computer Science'},
+          {'id': 'department-2', 'name': 'Software Engineering'},
         ],
-        'semesters': [1],
+        'semesters': [1, 2],
         'subjects': [
           {'id': 'subject-1', 'department_id': 'department-1',
            'semester': 1, 'code': 'CSC101', 'name': 'Programming'},
+          {'id': 'subject-2', 'department_id': 'department-2',
+           'semester': 2, 'code': 'SWE201', 'name': 'Software Design'},
         ],
       };
     }
@@ -114,6 +117,48 @@ void main() {
     expect(find.text('Introduction to Programming'), findsOneWidget);
     expect(find.text('Exam timetable'), findsNothing);
     expect(find.byKey(const Key('department-filter')), findsOneWidget);
+  });
+
+  testWidgets('Changing department resets selected Semester and Subject',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: PublicFeedPage(type: 'notes', api: FakeApi())),
+    ));
+    await tester.pumpAndSettle();
+
+    final semesterBefore = find.byKey(const ValueKey('semester-'));
+    await tester.ensureVisible(semesterBefore);
+    await tester.tap(semesterBefore);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Semester 1').last);
+    await tester.pumpAndSettle();
+
+    final subjectBefore = find.byKey(const ValueKey('subject--1'));
+    await tester.ensureVisible(subjectBefore);
+    await tester.tap(subjectBefore);
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('CSC101').last);
+    await tester.pumpAndSettle();
+
+    final departmentDropdown = find.descendant(
+      of: find.byKey(const Key('department-filter')),
+      matching: find.byType(DropdownButtonFormField<String>),
+    );
+    await tester.ensureVisible(departmentDropdown);
+    await tester.tap(departmentDropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Software Engineering').last);
+    await tester.pumpAndSettle();
+
+    final resetSemester = find.byKey(const ValueKey('semester-department-2'));
+    expect(resetSemester, findsOneWidget);
+    expect(tester.state<FormFieldState<String>>(resetSemester).value, '');
+    final resetSubject = find.byKey(
+      const ValueKey('subject-department-2-'),
+    );
+    expect(resetSubject, findsOneWidget);
+    expect(tester.state<FormFieldState<String>>(resetSubject).value, '');
+    expect(find.textContaining('CSC101'), findsNothing);
   });
 
 }
