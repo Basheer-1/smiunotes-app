@@ -2,8 +2,8 @@
 
 ## Implemented on feature branches
 
-- Website: GET /api/mobile/v1?kind=notes|updates|filters
-- Flutter: HTTPS-only feed client, search, API-driven department/semester filters, Updates stream filters, pagination, loading/error/retry states, and scrollable published Update article body.
+- Website: GET /api/mobile/v1?kind=notes|updates|filters|community|manifest
+- Flutter: HTTPS-only client, API-driven department/semester/subject filters, Updates and Community search, pagination, full published Update article body, public note manifests and on-demand signed WebP page reader.
 - Site API only returns public published metadata. It does not return R2 object keys, pre-signed reader URLs, student records, or credentials.
 - Both codebases are kept on feature branches until tests and staging checks pass.
 
@@ -22,14 +22,14 @@ The URL must be an HTTPS deployment of the cyphernotes feature branch with the a
 3. Validate RLS: only published notes and updates appear; private drafts and sensitive note pages never leak.
 4. Verify staging site API against staging DB, including empty results and pagination.
 5. Run Flutter analyze and tests via GitHub Actions and locally.
-6. Confirm authenticated student OTP flow design: the existing student-auth function uses a server-only broker key. Never embed this key or a service-role key in the mobile binary.
+6. Test public WebP notes end-to-end, including 60-second URL expiry, retry, page budget, invalid IDs, and verified-only denial. Confirm authenticated student OTP flow design: the existing student-auth function uses a server-only broker key. Never embed this key or a service-role key in the mobile binary.
 7. Implement and verify short-lived mobile-safe session exchange, refresh, logout, student verification, and role-scoped access before enabling profile, community writes or sensitive note reader.
 8. Render note pages with the same authorization decisions as the website. Reuse server-controlled manifest/page signing, never save or expose private R2 credentials.
 9. A deployment to production needs separate explicit approval after staging and security review.
 
 ## Current limits
 
-- Public lists and metadata only. No native private reader yet.
-- Article detail and student login not connected.
-- Community/Profile remain placeholders.
+- Public note reader now implemented on feature branch but not yet staging-tested. Verified-only notes remain locked until native authentication is built.
+- Published Updates article detail and public Community summaries are wired in code. Student login is not connected.
+- Community public reading is implemented; posting/replies and authenticated Profile remain pending.
 - No live integration or device build has been verified in this branch.
