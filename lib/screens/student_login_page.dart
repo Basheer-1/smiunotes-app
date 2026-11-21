@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'student_recovery_page.dart';
 import 'package:material_ui/material_ui.dart';
 import '../services/mobile_auth_api.dart';
@@ -88,10 +89,31 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
           await widget.onSession!(session);
         }
       }
+    } on HttpException catch (e) {
+      // The API returns safe, predefined public errors; do not log user input.
+      final serverMessage = e.message;
+      const allowedErrors = <String>{
+        'Invalid credentials or verification.',
+        'Security verification required.',
+        'Maximum device limit reached.',
+        'Account access unavailable.',
+        'Sign-in temporarily unavailable.',
+        'Sign-in unavailable.',
+        'Mobile sign-in is not enabled.',
+        'Verification status unavailable.',
+        'Invalid request.',
+      };
+      if (mounted) {
+        setState(() {
+          error = allowedErrors.contains(serverMessage)
+              ? serverMessage
+              : 'Unable to sign in. Please try again.';
+        });
+      }
     } catch (_) {
       if (mounted) {
         setState(() {
-          error = 'Unable to sign in. Please check your details or try again.';
+          error = 'Unable to sign in. Please try again.';
         });
       }
     } finally {
