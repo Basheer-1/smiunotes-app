@@ -23,7 +23,7 @@ class MobileSession {
     final access = session['access_token'];
     final refresh = session['refresh_token'];
     if (access is! String || refresh is! String ||
-        access.length < 30 || refresh.length < 20) {
+        access.length < 30 || refresh.length < 12) {
       throw const FormatException('Invalid sign-in response.');
     }
     return MobileSession(
