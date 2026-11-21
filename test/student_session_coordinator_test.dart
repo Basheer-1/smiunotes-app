@@ -22,11 +22,15 @@ const activeProfile = StudentProfile(
 class FakeVault implements SessionVault {
   MobileSession? saved;
   @override
-  Future<void> save(MobileSession session) async => saved = session;
+  Future<void> save(MobileSession session) async {
+    saved = session;
+  }
   @override
   Future<MobileSession?> read() async => saved;
   @override
-  Future<void> clear() async => saved = null;
+  Future<void> clear() async {
+    saved = null;
+  }
 }
 
 void main() {
