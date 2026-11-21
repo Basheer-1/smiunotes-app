@@ -9,6 +9,9 @@ on:
       - 'lib/**'
       - 'pubspec.yaml'
       - 'pubspec.lock'
+      - 'test/**'
+      - 'scripts/**'
+      - '.github/workflows/android-signed-release.yml'
       - '.github/workflows/android-debug.yml'
 
 concurrency:
