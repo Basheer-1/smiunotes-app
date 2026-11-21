@@ -18,7 +18,7 @@ class StudentProfilePage extends StatelessWidget {
       const SizedBox(height: 10),
       const Text('Your SMIUNotes student identity and verification status.'),
       const SizedBox(height: 20),
-      if (profileLoader == null)
+      if (profileLoader == null) ...[
         const Card(child: Padding(
           padding: EdgeInsets.all(24),
           child: Column(
@@ -34,8 +34,9 @@ class StudentProfilePage extends StatelessWidget {
                 'No credentials are stored in this preview.'),
             ],
           ),
-        ))
-      else
+        )),
+        const _LoginPreviewButton(),
+      ] else
         FutureBuilder<StudentProfile>(
           future: profileLoader!(),
           builder: (context, snapshot) {
