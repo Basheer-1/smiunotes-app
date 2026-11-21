@@ -15,6 +15,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   List<dynamic> items = [];
   String? error;
   bool loading = false;
+  int _feedGeneration = 0;
+  int _filterGeneration = 0;
   int total = 0, page = 1;
   String stream = '', semester = '', department = '', subject = '';
   List<Map<String, dynamic>> departments = [];
@@ -30,9 +32,10 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   }
 
   Future<void> loadFilters() async {
+    final generation = ++_filterGeneration;
     try {
       final data = await widget.api.fetch('filters');
-      if (!mounted) return;
+      if (!mounted || generation != _filterGeneration) return;
       setState(() {
         departments = (data['departments'] as List<dynamic>? ?? [])
             .whereType<Map<String, dynamic>>().toList();
@@ -49,24 +52,27 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   void dispose() { search.dispose(); super.dispose(); }
 
   Future<void> load() async {
+    final generation = ++_feedGeneration;
     setState(() { loading = true; error = null; });
     try {
       final data = await widget.api.fetch(widget.type, page: page,
         search: search.text, stream: stream, semester: semester,
         department: department, subject: subject);
-      if (mounted) { setState(() {
+      if (mounted && generation == _feedGeneration) { setState(() {
         items = (data['items'] as List<dynamic>?) ?? [];
         total = (data['total'] as num?)?.toInt() ?? 0;
       }); }
     } catch (_) {
-      if (mounted) {
+      if (mounted && generation == _feedGeneration) {
         setState(() {
           items = []; total = 0;
           error = 'Feed unavailable. Check internet or staging API deployment.';
         });
       }
     } finally {
-      if (mounted) { setState(() => loading = false); }
+      if (mounted && generation == _feedGeneration) {
+        setState(() => loading = false);
+      }
     }
   }
   void filter() { page = 1; load(); }
