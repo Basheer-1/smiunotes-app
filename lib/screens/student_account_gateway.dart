@@ -18,6 +18,7 @@ class StudentAccountGateway extends StatefulWidget {
     this.onCreateDiscussion,
     this.onOpenVerifiedNote,
     this.onOpenNotifications,
+    this.onOpenBookmarks,
     this.onEnablePush,
     this.onDisablePush,
     this.onLoadPushEnabled,
@@ -33,6 +34,7 @@ class StudentAccountGateway extends StatefulWidget {
   final VoidCallback? onCreateDiscussion;
   final VoidCallback? onOpenVerifiedNote;
   final VoidCallback? onOpenNotifications;
+  final VoidCallback? onOpenBookmarks;
   final Future<void> Function()? onEnablePush;
   final Future<void> Function()? onDisablePush;
   final Future<bool> Function()? onLoadPushEnabled;
@@ -214,6 +216,13 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                         onPressed: _busy ? null : widget.onCreateDiscussion,
                         icon: const Icon(Icons.forum_outlined),
                         label: const Text('New Community discussion'),
+                      ),
+                    if (widget.onOpenBookmarks != null)
+                      OutlinedButton.icon(
+                        key: const Key('account-open-bookmarks'),
+                        onPressed: _busy ? null : widget.onOpenBookmarks,
+                        icon: const Icon(Icons.bookmarks_outlined),
+                        label: const Text('My saved notes'),
                       ),
                     if (widget.onOpenNotifications != null)
                       OutlinedButton.icon(
