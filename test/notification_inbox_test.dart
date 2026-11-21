@@ -42,6 +42,69 @@ void main() {
     expect(find.byKey(const Key('notifications-empty')), findsOneWidget);
     expect(tries, 2);
   });
+  testWidgets('Mark read and clear invoke only authenticated callbacks',
+      (tester) async {
+    var readCalls = 0;
+    var clearCalls = 0;
+    var inbox = MemberNotificationInbox.fromJson({
+      'unread': 1,
+      'items': [{
+        'id': '00000000-0000-4000-8000-000000000001',
+        'category': 'account',
+        'title': 'Account verified',
+        'message': 'Your account is verified.',
+        'created_at': '2026-11-21T10:00:00Z',
+        'read_at': null,
+      }],
+    });
+    await tester.pumpWidget(MaterialApp(
+      home: NotificationInboxPage(
+        loader: () async => inbox,
+        markRead: (id) async {
+          expect(id, '00000000-0000-4000-8000-000000000001');
+          readCalls++;
+          inbox = const MemberNotificationInbox(items: [], unread: 0);
+        },
+        clearOwn: () async {
+          clearCalls++;
+          inbox = const MemberNotificationInbox(items: [], unread: 0);
+          return 1;
+        },
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(
+      const Key('notification-read-00000000-0000-4000-8000-000000000001')));
+    await tester.pumpAndSettle();
+    expect(readCalls, 1);
+    expect(find.byKey(const Key('notifications-empty')), findsOneWidget);
+    // Rebuild with an item to confirm the clear control invokes its callback.
+    inbox = MemberNotificationInbox.fromJson({
+      'unread': 1,
+      'items': [{
+        'id': '00000000-0000-4000-8000-000000000002',
+        'category': 'account', 'title': 'Account update',
+        'message': 'Please review.',
+        'created_at': '2026-11-21T10:00:00Z', 'read_at': null,
+      }],
+    });
+    await tester.pumpWidget(MaterialApp(
+      home: NotificationInboxPage(
+        loader: () async => inbox,
+        clearOwn: () async {
+          clearCalls++;
+          inbox = const MemberNotificationInbox(items: [], unread: 0);
+          return 1;
+        },
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('notifications-clear')));
+    await tester.pumpAndSettle();
+    expect(clearCalls, 1);
+    expect(find.byKey(const Key('notifications-empty')), findsOneWidget);
+  });
+
   test('Invalid read timestamps fail closed', () {
     Map<String, dynamic> notification(Object? readAt) => {
       'id': 'n-1', 'category': 'verification',
