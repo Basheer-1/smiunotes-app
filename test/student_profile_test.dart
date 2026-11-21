@@ -49,4 +49,56 @@ void main() {
     expect(find.text('QA Student'), findsOneWidget);
     expect(find.text('Verification: verified'), findsOneWidget);
   });
+  testWidgets('Profile fetch happens once per rebuild, refresh is explicit',
+      (tester) async {
+    var calls = 0;
+    Future<StudentProfile> load() async {
+      calls++;
+      return const StudentProfile(
+        studentName: 'Cached Student',
+        department: 'Computer Science',
+        role: 'student',
+        accountStatus: 'active',
+        verificationStatus: 'verified',
+      );
+    }
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: StudentProfilePage(profileLoader: load)),
+    ));
+    await tester.pumpAndSettle();
+    expect(calls, 1);
+    expect(find.text('Cached Student'), findsOneWidget);
+    await tester.pump();
+    expect(calls, 1);
+    await tester.tap(find.byKey(const Key('profile-refresh')));
+    await tester.pumpAndSettle();
+    expect(calls, 2);
+  });
+
+  testWidgets('Failed profile call displays retry and can recover',
+      (tester) async {
+    var calls = 0;
+    Future<StudentProfile> load() async {
+      calls++;
+      if (calls == 1) throw StateError('offline');
+      return const StudentProfile(
+        studentName: 'Recovered Student',
+        department: null,
+        role: 'student',
+        accountStatus: 'active',
+        verificationStatus: 'unverified',
+      );
+    }
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: StudentProfilePage(profileLoader: load)),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('profile-retry')), findsOneWidget);
+    expect(calls, 1);
+    await tester.tap(find.byKey(const Key('profile-retry')));
+    await tester.pumpAndSettle();
+    expect(find.text('Recovered Student'), findsOneWidget);
+    expect(calls, 2);
+  });
+
 }
