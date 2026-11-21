@@ -23,6 +23,7 @@
 ## Fail-safe behavior
 - Workflow signs only on `main` with explicit `RELEASE_APPROVED` confirmation. A GitHub Environment name is not an approval control by itself: configure required reviewers in Environment settings.
 - Workflow refuses `com.example.*` application IDs, unapproved API origin, unaccepted/staging-only student auth, and absent signing secrets.
+- Signed release runs `scripts/check-release-api.mjs` before signing. It requires the approved exact `https://smiunotes.com` origin, working mobile auth availability (`enabled: true`), valid public notes feed, and a 401 denial for unauthenticated notifications. Invalid, protected, HTML, or redirect responses BLOCK release. This is a public endpoint smoke only; real user access and device QA still require separate acceptance.
 - `flutter analyze` and `flutter test` run before signing.
 - Keystore exists only temporarily on CI runner and is deleted after the build; artifact contains only AAB.
 - Without prerequisites, no production release should be issued.
