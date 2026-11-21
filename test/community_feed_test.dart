@@ -7,6 +7,17 @@ class FakeCommunityApi extends PublicFeedApi {
   const FakeCommunityApi();
 
   @override
+  Future<Map<String, dynamic>> fetchThread(String threadId, {int page = 1}) async {
+    return {
+      'thread': {'title': 'Study group', 'body': 'Full discussion body',
+                 'category': 'study', 'author_name': 'Student', 'locked': false},
+      'replies': [
+        {'id': 'reply-1', 'body': 'Helpful reply', 'author_name': 'Classmate'},
+      ],
+      'has_more': false,
+    };
+  }
+  @override
   Future<Map<String, dynamic>> fetch(
     String kind, {
     int page = 1,
@@ -37,5 +48,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Study group'), findsOneWidget);
     expect(find.textContaining('Who is preparing'), findsOneWidget);
+    await tester.tap(find.text('Study group'));
+    await tester.pumpAndSettle();
+    expect(find.text('Full discussion body'), findsOneWidget);
+    expect(find.text('Helpful reply'), findsOneWidget);
   });
 }
