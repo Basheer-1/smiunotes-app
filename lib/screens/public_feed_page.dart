@@ -31,6 +31,25 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
     load();
   }
 
+  @override
+  void didUpdateWidget(covariant PublicFeedPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.type != widget.type || oldWidget.api != widget.api) {
+      page = 1;
+      stream = '';
+      department = '';
+      semester = '';
+      subject = '';
+      departments = [];
+      subjects = [];
+      semesters = [];
+      // Switching between Notes and Updates must never reuse old filter data.
+      _filterGeneration++;
+      if (isNotes) loadFilters();
+      load();
+    }
+  }
+
   Future<void> loadFilters() async {
     final generation = ++_filterGeneration;
     try {
