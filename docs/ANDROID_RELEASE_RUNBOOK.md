@@ -9,7 +9,7 @@
 ## Operator setup (never send credentials to ChatGPT or commit them)
 1. In GitHub Settings > Environments, create `android-release` and require manual reviewers.
 2. Use an approved release upload key and store the private key and passwords in a secure password manager with backups.
-3. Configure the `SMIUNOTES_RELEASE_API_BASE` environment variable to `https://smiunotes.com` **only after** the public production mobile API passes acceptance. A website homepage is not proof of API readiness. Configure environment secrets:
+3. After real Android test-account acceptance, configure the GitHub environment variable `SMIUNOTES_RELEASE_AUTH_ACCEPTED=approved`. This is a recorded approval gate, not a substitute for actual test evidence. The build also blocks while `lib/main.dart` still contains staging-only auth gating; implement and accept a production auth mode before signing. Configure the `SMIUNOTES_RELEASE_API_BASE` environment variable to `https://smiunotes.com` **only after** the public production mobile API passes acceptance. A website homepage is not proof of API readiness. Configure environment secrets:
    - `SMIUNOTES_RELEASE_KEYSTORE_BASE64`: base64 of upload keystore JKS file
    - `SMIUNOTES_RELEASE_STORE_PASSWORD`
    - `SMIUNOTES_RELEASE_KEY_ALIAS`
@@ -22,7 +22,7 @@
 
 ## Fail-safe behavior
 - Workflow signs only on `main` with explicit `RELEASE_APPROVED` confirmation. A GitHub Environment name is not an approval control by itself: configure required reviewers in Environment settings.
-- Workflow refuses `com.example.*` application IDs, unapproved API origin, and absent signing secrets.
+- Workflow refuses `com.example.*` application IDs, unapproved API origin, unaccepted/staging-only student auth, and absent signing secrets.
 - `flutter analyze` and `flutter test` run before signing.
 - Keystore exists only temporarily on CI runner and is deleted after the build; artifact contains only AAB.
 - Without prerequisites, no production release should be issued.
