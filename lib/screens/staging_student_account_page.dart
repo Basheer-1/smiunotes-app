@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../services/authenticated_reader_api.dart';
 import '../services/community_write_api.dart';
+import '../services/bookmark_api.dart';
 import '../services/mobile_auth_api.dart';
 import '../services/mobile_notification_api.dart';
 import '../services/push_registration_api.dart';
@@ -11,6 +12,7 @@ import '../services/mobile_turnstile.dart';
 import '../services/student_auth_runtime.dart';
 import 'authenticated_note_reader_page.dart';
 import 'community_composer_page.dart';
+import 'my_bookmarks_page.dart';
 import 'student_account_gateway.dart';
 
 /// Staging-only account flow; ordinary app builds keep auth switched off.
@@ -119,13 +121,64 @@ class StagingStudentAccountPageState
     return true;
   }
 
+  /// Opens the reply composer only if a verified session still exists.
+  Future<bool> openCommunityReply(String threadId) async {
+    if (!mounted || !runtime.coordinator.authenticated ||
+        runtime.controller.accessToken == null) {
+      return false;
+    }
+    if (threadId.length != 36 ||
+        !RegExp(r'^[0-9a-fA-F-]+').hasMatch(threadId)) {
+      return false;
+    }
+    final posted = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => CommunityComposerPage(
+          api: CommunityWriteApi(baseUrl: widget.httpsBaseUrl),
+          tokenProvider: _currentVerifiedToken,
+          threadId: threadId,
+        ),
+      ),
+    );
+    return posted == true;
+  }
+
+  void openSavedNotes() {
+    if (!mounted || !runtime.coordinator.authenticated ||
+        runtime.controller.accessToken == null) {
+      return;
+    }
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => MyBookmarksPage(
+        api: BookmarkApi(baseUrl: widget.httpsBaseUrl),
+        currentAccessToken: _currentVerifiedToken,
+      ),
+    ));
+  }
+
+  Future<bool> saveNote(String noteId) async {
+    if (!mounted || !runtime.coordinator.authenticated ||
+        runtime.controller.accessToken == null) {
+      return false;
+    }
+    try {
+      final response = await BookmarkApi(baseUrl: widget.httpsBaseUrl)
+          .save(_currentVerifiedToken(), noteId);
+      return response['ok'] == true && response['bookmarked'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   void openCommunityComposer() {
-    final token = runtime.controller.accessToken;
-    if (!runtime.coordinator.authenticated || token == null) return;
+    if (!runtime.coordinator.authenticated ||
+        runtime.controller.accessToken == null) {
+      return;
+    }
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => CommunityComposerPage(
         api: CommunityWriteApi(baseUrl: widget.httpsBaseUrl),
-        accessToken: token,
+        tokenProvider: _currentVerifiedToken,
       ),
     ));
   }
@@ -144,6 +197,7 @@ class StagingStudentAccountPageState
     onOpenVerifiedNote: openVerifiedNote,
     onCreateDiscussion: openCommunityComposer,
     onOpenNotifications: openNotifications,
+    onOpenBookmarks: openSavedNotes,
     pushAvailable: pushEnabled,
     onEnablePush: pushEnabled ? enablePush : null,
     onDisablePush: pushEnabled ? disablePush : null,

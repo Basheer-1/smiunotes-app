@@ -110,9 +110,45 @@ class _AppShellState extends State<AppShell> {
                             onNavigate: (index) => setState(() => selectedIndex = index),
                             apiConfigured: stagingApiBase.isNotEmpty,
                           ),
-                          const PublicFeedPage(type: 'notes'),
+                          PublicFeedPage(
+                            type: 'notes',
+                            onSaveNote: (noteId) async {
+                              if (!accountAuthEnabled || stagingApiBase.isEmpty) {
+                                if (mounted) setState(() => selectedIndex = 4);
+                                return false;
+                              }
+                              final account = _studentAccountKey.currentState;
+                              if (account == null) {
+                                if (mounted) setState(() => selectedIndex = 4);
+                                return false;
+                              }
+                              final saved = await account.saveNote(noteId);
+                              if (!saved && mounted &&
+                                  !account.runtime.coordinator.authenticated) {
+                                setState(() => selectedIndex = 4);
+                              }
+                              return saved;
+                            },
+                          ),
                           const PublicFeedPage(type: 'updates'),
-                          const CommunityFeedPage(),
+                          CommunityFeedPage(
+                            onReply: (threadId) async {
+                              if (!accountAuthEnabled || stagingApiBase.isEmpty) {
+                                if (mounted) setState(() => selectedIndex = 4);
+                                return false;
+                              }
+                              final state = _studentAccountKey.currentState;
+                              if (state == null) {
+                                if (mounted) setState(() => selectedIndex = 4);
+                                return false;
+                              }
+                              final posted = await state.openCommunityReply(threadId);
+                              if (!posted && mounted && !state.runtime.coordinator.authenticated) {
+                                setState(() => selectedIndex = 4);
+                              }
+                              return posted;
+                            },
+                          ),
                           if (accountAuthEnabled && stagingApiBase.isNotEmpty)
                             StagingStudentAccountPage(
                               key: _studentAccountKey,

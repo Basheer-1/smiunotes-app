@@ -38,6 +38,41 @@ class _SwitchingThreadApi extends PublicFeedApi {
 
 
 void main() {
+  testWidgets('Verified callback is used for unlocked thread replies', (tester) async {
+    String? received;
+    await tester.pumpWidget(MaterialApp(
+      home: CommunityThreadPage(
+        threadId: '11111111-1111-4111-8111-111111111111',
+        api: const FakeThreadApi(),
+        onReply: (thread) async { received = thread; return true; },
+      ),
+    ));
+    await tester.pumpAndSettle();
+    final reply = find.byKey(const Key('community-reply-button'));
+    await tester.ensureVisible(reply);
+    await tester.tap(reply);
+    await tester.pumpAndSettle();
+    expect(received, '11111111-1111-4111-8111-111111111111');
+  });
+
+  testWidgets('Locked discussion hides the reply action', (tester) async {
+    Future<Map<String, dynamic>> locked(String id, {int page = 1}) async => {
+      'thread': {'id': id, 'title': 'Locked discussion',
+        'body': 'Staff locked this thread', 'locked': true},
+      'replies': <dynamic>[], 'has_more': false,
+    };
+    await tester.pumpWidget(MaterialApp(
+      home: CommunityThreadPage(
+        threadId: '11111111-1111-4111-8111-111111111111',
+        api: _SwitchingThreadApi(locked),
+        onReply: (thread) async => true,
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('community-reply-button')), findsNothing);
+    expect(find.textContaining('Replies are disabled'), findsOneWidget);
+  });
+
   testWidgets('Renders public discussion and replies without auth', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: CommunityThreadPage(

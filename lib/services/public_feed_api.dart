@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-/// Configurable via --dart-define=SMIUNOTES_API_BASE=https://staging.example.com
+/// Configurable via --dart-define=SMIUNOTES_API_BASE=https://smiunotes.com
 /// Never embed server-side secrets in a mobile client.
 class PublicFeedApi {
   const PublicFeedApi({this.baseUrl = const String.fromEnvironment(
@@ -15,7 +15,7 @@ class PublicFeedApi {
     final origin = Uri.tryParse(baseUrl);
     if (origin == null || origin.scheme != 'https' || origin.host.isEmpty ||
         origin.userInfo.isNotEmpty || origin.hasQuery || origin.hasFragment) {
-      throw const FormatException('Configure an HTTPS staging API base URL.');
+      throw const FormatException('Configure a trusted HTTPS API base URL.');
     }
     return origin;
   }

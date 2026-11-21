@@ -4,8 +4,9 @@ import '../services/public_feed_api.dart';
 
 /// Public discussions only. Posting requires a verified student session.
 class CommunityFeedPage extends StatefulWidget {
-  const CommunityFeedPage({super.key, this.api = const PublicFeedApi()});
+  const CommunityFeedPage({super.key, this.api = const PublicFeedApi(), this.onReply});
   final PublicFeedApi api;
+  final Future<bool> Function(String threadId)? onReply;
   @override
   State<CommunityFeedPage> createState() => _CommunityFeedPageState();
 }
@@ -48,7 +49,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
       if (!mounted || generation != _requestGeneration) return;
       setState(() {
         threads = [];
-        error = 'Community feed is unavailable. Retry after staging deployment.';
+        error = 'Unable to load discussions. Check your connection and retry.';
       });
     } finally {
       if (mounted && generation == _requestGeneration) {
@@ -68,7 +69,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
         fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF102B4B),
       )),
       const SizedBox(height: 10),
-      const Text('Read student discussions. Sign-in and posting are coming later.'),
+      const Text('Read public student discussions. Posting requires a verified account.'),
       const SizedBox(height: 18),
       TextField(
         key: const Key('community-search'),
@@ -130,6 +131,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
                     builder: (_) => CommunityThreadPage(
                       threadId: raw['id']?.toString() ?? '',
                       api: widget.api,
+                      onReply: widget.onReply,
                     ),
                   ));
                 },

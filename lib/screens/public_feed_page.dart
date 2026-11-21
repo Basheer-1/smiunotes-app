@@ -3,9 +3,10 @@ import 'package:material_ui/material_ui.dart';
 import '../services/public_feed_api.dart';
 
 class PublicFeedPage extends StatefulWidget {
-  const PublicFeedPage({super.key, required this.type, this.api = const PublicFeedApi()});
+  const PublicFeedPage({super.key, required this.type, this.api = const PublicFeedApi(), this.onSaveNote});
   final String type;
   final PublicFeedApi api;
+  final Future<bool> Function(String noteId)? onSaveNote;
   @override
   State<PublicFeedPage> createState() => _PublicFeedPageState();
 }
@@ -18,7 +19,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   int _feedGeneration = 0;
   int _filterGeneration = 0;
   int total = 0, page = 1;
-  String stream = '', semester = '', department = '', subject = '';
+  String stream = '', category = '', semester = '', department = '', subject = '';
   List<Map<String, dynamic>> departments = [];
   List<Map<String, dynamic>> subjects = [];
   List<int> semesters = [];
@@ -38,6 +39,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
       page = 1;
       search.clear();
       stream = '';
+      category = '';
       department = '';
       semester = '';
       subject = '';
@@ -77,7 +79,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
     try {
       final data = await widget.api.fetch(widget.type, page: page,
         search: search.text, stream: stream, semester: semester,
-        department: department, subject: subject);
+        department: department, subject: subject,
+        category: isNotes ? '' : category);
       if (mounted && generation == _feedGeneration) { setState(() {
         items = (data['items'] as List<dynamic>?) ?? [];
         total = (data['total'] as num?)?.toInt() ?? 0;
@@ -86,7 +89,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
       if (mounted && generation == _feedGeneration) {
         setState(() {
           items = []; total = 0;
-          error = 'Feed unavailable. Check internet or staging API deployment.';
+          error = 'Unable to load published content. Check your connection and retry.';
         });
       }
     } finally {
@@ -195,14 +198,37 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
             onChanged: (value) { subject = value ?? ''; filter(); },
           ),
         ),
-      if (!isNotes) Wrap(spacing: 8, children: [
-        for (final value in const ['', 'campus', 'opportunities'])
-          ChoiceChip(
-            label: Text(value.isEmpty ? 'All' : value == 'campus' ? 'Campus' : 'Opportunities'),
-            selected: stream == value,
-            onSelected: (_) { stream = value; filter(); },
-          ),
-      ]),
+      if (!isNotes) ...[
+        Wrap(spacing: 8, children: [
+          for (final value in const ['', 'campus', 'opportunities'])
+            ChoiceChip(
+              key: Key('update-stream-${value.isEmpty ? 'all' : value}'),
+              label: Text(value.isEmpty ? 'All' : value == 'campus' ? 'Campus' : 'Opportunities'),
+              selected: stream == value,
+              onSelected: (_) { stream = value; category = ''; filter(); },
+            ),
+        ]),
+        const SizedBox(height: 12),
+        DropdownButtonFormField<String>(
+          key: ValueKey('update-category-$stream'),
+          initialValue: category,
+          isExpanded: true,
+          decoration: const InputDecoration(labelText: 'Category'),
+          items: const [
+            DropdownMenuItem(value: '', child: Text('All categories')),
+            DropdownMenuItem(value: 'academics', child: Text('Academics')),
+            DropdownMenuItem(value: 'exams', child: Text('Exams')),
+            DropdownMenuItem(value: 'admissions', child: Text('Admissions')),
+            DropdownMenuItem(value: 'fees', child: Text('Fees')),
+            DropdownMenuItem(value: 'events', child: Text('Events')),
+            DropdownMenuItem(value: 'scholarships', child: Text('Scholarships')),
+            DropdownMenuItem(value: 'campus', child: Text('Campus')),
+            DropdownMenuItem(value: 'opportunities', child: Text('Opportunities')),
+            DropdownMenuItem(value: 'other', child: Text('Other')),
+          ],
+          onChanged: (value) { category = value ?? ''; filter(); },
+        ),
+      ],
       const SizedBox(height: 18),
       if (loading) const Center(child: CircularProgressIndicator())
       else if (error != null) ...[
@@ -216,7 +242,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
         const SizedBox(height: 12),
         for (final raw in items)
           if (raw is Map<String, dynamic>)
-            _FeedTile(data: raw, isNote: isNotes, api: widget.api),
+            _FeedTile(data: raw, isNote: isNotes, api: widget.api,
+              onSaveNote: widget.onSaveNote),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           OutlinedButton(
             onPressed: page > 1 ? () { page--; load(); } : null,
@@ -232,10 +259,11 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
 }
 
 class _FeedTile extends StatelessWidget {
-  const _FeedTile({required this.data, required this.isNote, required this.api});
+  const _FeedTile({required this.data, required this.isNote, required this.api, this.onSaveNote});
   final Map<String, dynamic> data;
   final bool isNote;
   final PublicFeedApi api;
+  final Future<bool> Function(String noteId)? onSaveNote;
   @override
   Widget build(BuildContext context) {
     final title = data['title']?.toString() ?? 'Untitled';
@@ -251,7 +279,23 @@ class _FeedTile extends StatelessWidget {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
         subtitle: Text('$subtitle${restricted ? '\nVerified only' : ''}',
           maxLines: 3, overflow: TextOverflow.ellipsis),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: isNote && onSaveNote != null
+          ? IconButton(
+              key: Key('save-note-${data['id']}'),
+              tooltip: 'Save note to bookmarks',
+              icon: const Icon(Icons.bookmark_add_outlined),
+              onPressed: () async {
+                final id = data['id']?.toString() ?? '';
+                final saved = await onSaveNote!(id);
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(saved
+                    ? 'Note saved to your account.'
+                    : 'Sign in or retry to save this note.'),
+                ));
+              },
+            )
+          : const Icon(Icons.chevron_right),
         onTap: () {
           if (isNote) {
             if (restricted) {
@@ -279,9 +323,20 @@ class _FeedTile extends StatelessWidget {
                 children: [
                   Text(title, style: const TextStyle(
                     fontSize: 23, fontWeight: FontWeight.bold)),
+                  if (!isNote && data['is_pinned'] == true)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6),
+                      child: Text('Pinned update', style: TextStyle(
+                        color: Color(0xFF183C68), fontWeight: FontWeight.w700)),
+                    ),
                   const SizedBox(height: 12),
                   Text(subtitle),
                   if (!isNote) ...[
+                    if ((data['stream']?.toString() ?? '').isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text('Section: ${data['stream']}'),
+                      ),
                     const SizedBox(height: 8),
                     if ((data['category']?.toString() ?? '').isNotEmpty)
                       Text('Category: ${data['category']}'),
