@@ -38,7 +38,7 @@ class PublicFeedApi {
       final response = await request.close().timeout(const Duration(seconds: 12));
       final body = await utf8.decoder.bind(response).join().timeout(const Duration(seconds: 12));
       if (response.statusCode != HttpStatus.ok) {
-        throw HttpException('Feed unavailable: HTTP ' + response.statusCode.toString());
+        throw HttpException('Feed unavailable: HTTP ${response.statusCode}');
       }
       final decoded = jsonDecode(body);
       if (decoded is! Map<String, dynamic>) throw const FormatException('Invalid feed.');
