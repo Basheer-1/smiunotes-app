@@ -149,10 +149,6 @@ class _CommunityThreadPageState extends State<CommunityThreadPage> {
                   if (posted) {
                     page = 1;
                     load();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Sign in as a verified student to reply, or cancel the composer.'),
-                    ));
                   }
                 },
               )
