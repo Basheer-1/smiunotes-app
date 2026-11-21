@@ -1,3 +1,4 @@
+import 'screens/student_profile_page.dart';
 import 'screens/community_feed_page.dart';
 import 'screens/public_feed_page.dart';
 import 'dart:ui';
@@ -84,12 +85,7 @@ class _AppShellState extends State<AppShell> {
                           const PublicFeedPage(type: 'notes'),
                           const PublicFeedPage(type: 'updates'),
                           const CommunityFeedPage(),
-                          const _FeaturePage(
-                            icon: Icons.person_outline,
-                            title: 'Your profile',
-                            subtitle: 'A personalised space for your SMIUNotes experience.',
-                            feature: 'Secure student sign-in is coming in M2.',
-                          ),
+                          const StudentProfilePage(),
                         ],
                       ),
                     ),
