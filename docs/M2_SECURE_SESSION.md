@@ -25,3 +25,11 @@
 ## QA note
 
 The new Android debug APK workflow is **not proof of native login working**. It tests compilation/package assembly only, without a real student session. The produced APK remains a disabled-auth test build.
+
+## Session coordinator and staged wiring
+
+- `StudentSessionCoordinator` requires both a successful refresh and a server-fetched, active `StudentProfile` before treating restored credentials as authenticated.
+- Suspended or unverifiable accounts cause local credential clearing. No cached JWT is used as a standalone permission grant.
+- `StudentAuthRuntime.forStaging` composes the encrypted vault, refresh/revoke API and self-profile API without reading credentials or starting network access at construction time. It is intentionally **not connected to the default Profile tab** until mobile CAPTCHA/session lifecycle acceptance is complete.
+- Mock tests cover successful validated restore, revoked profile denial, offline revoke cleanup and Profile logout clearance. These are unit tests, not a live session QA claim.
+- Android debug builds have successfully run on earlier commits. The latest feature commit requires its own CI build confirmation.
