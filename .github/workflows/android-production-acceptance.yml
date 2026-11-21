@@ -1,8 +1,8 @@
-name: Android Production Acceptance QA (Not Release)
+name: Android Login Diagnostics QA APK
 
 on:
   push:
-    branches: [main]
+    branches: [fix/mobile-login-error-diagnostics]
     paths:
       - '.github/workflows/android-production-acceptance.yml'
   workflow_dispatch:
@@ -50,7 +50,7 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
-      - name: Build production-connected DEBUG acceptance APK
+      - name: Build login diagnostic DEBUG APK
         shell: bash
         run: |
           set -euo pipefail
@@ -64,7 +64,7 @@ jobs:
           (cd build/app/outputs/flutter-apk && sha256sum app-debug.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
-          name: smiunotes-production-connected-debug-qa-apk
+          name: smiunotes-login-diagnostics-debug-apk
           path: |
             build/app/outputs/flutter-apk/app-debug.apk
             build/app/outputs/flutter-apk/PRODUCTION-QA-INFO.txt
