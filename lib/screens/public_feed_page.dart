@@ -15,11 +15,32 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   String? error;
   bool loading = false;
   int total = 0, page = 1;
-  String stream = '', semester = '';
+  String stream = '', semester = '', department = '';
+  List<Map<String, dynamic>> departments = [];
+  List<int> semesters = [];
   bool get isNotes => widget.type == 'notes';
 
   @override
-  void initState() { super.initState(); load(); }
+  void initState() {
+    super.initState();
+    if (isNotes) { loadFilters(); }
+    load();
+  }
+
+  Future<void> loadFilters() async {
+    try {
+      final data = await widget.api.fetch('filters');
+      if (!mounted) return;
+      setState(() {
+        departments = (data['departments'] as List<dynamic>? ?? [])
+            .whereType<Map<String, dynamic>>().toList();
+        semesters = (data['semesters'] as List<dynamic>? ?? [])
+            .whereType<num>().map((value) => value.toInt()).toList();
+      });
+    } catch (_) {
+      // Keep catalogue search usable when filter options are unavailable.
+    }
+  }
   @override
   void dispose() { search.dispose(); super.dispose(); }
 
@@ -27,7 +48,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
     setState(() { loading = true; error = null; });
     try {
       final data = await widget.api.fetch(widget.type, page: page,
-        search: search.text, stream: stream, semester: semester);
+        search: search.text, stream: stream, semester: semester,
+        department: department);
       if (mounted) { setState(() {
         items = (data['items'] as List<dynamic>?) ?? [];
         total = (data['total'] as num?)?.toInt() ?? 0;
@@ -68,13 +90,36 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16))),
       ),
       const SizedBox(height: 12),
+      if (isNotes && departments.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: DropdownButtonFormField<String>(
+            key: const Key('department-filter'),
+            initialValue: department,
+            isExpanded: true,
+            decoration: const InputDecoration(labelText: 'Department'),
+            items: [
+              const DropdownMenuItem(value: '', child: Text('All departments')),
+              for (final item in departments)
+                DropdownMenuItem(
+                  value: item['id']?.toString() ?? '',
+                  child: Text(item['name']?.toString() ?? 'Department',
+                    overflow: TextOverflow.ellipsis),
+                ),
+            ],
+            onChanged: (value) {
+              department = value ?? '';
+              filter();
+            },
+          ),
+        ),
       if (isNotes)
         DropdownButtonFormField<String>(
           initialValue: semester,
           decoration: const InputDecoration(labelText: 'Semester'),
           items: [
             const DropdownMenuItem(value: '', child: Text('All semesters')),
-            for (var i = 1; i <= 8; i++)
+            for (final i in semesters)
               DropdownMenuItem(value: i.toString(), child: Text('Semester $i')),
           ],
           onChanged: (value) { semester = value ?? ''; filter(); },
