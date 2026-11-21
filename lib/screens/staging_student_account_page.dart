@@ -147,5 +147,6 @@ class StagingStudentAccountPageState
     pushAvailable: pushEnabled,
     onEnablePush: pushEnabled ? enablePush : null,
     onDisablePush: pushEnabled ? disablePush : null,
+    onLoadPushEnabled: pushEnabled ? () => push.isOptedIn : null,
   );
 }
