@@ -17,6 +17,11 @@ class StudentAccountGateway extends StatefulWidget {
     required this.signOut,
     this.onCreateDiscussion,
     this.onOpenVerifiedNote,
+    this.onOpenNotifications,
+    this.onEnablePush,
+    this.onDisablePush,
+    this.onLoadPushEnabled,
+    this.pushAvailable = false,
   });
 
   final MobileAuthApi api;
@@ -27,6 +32,11 @@ class StudentAccountGateway extends StatefulWidget {
   final Future<void> Function() signOut;
   final VoidCallback? onCreateDiscussion;
   final VoidCallback? onOpenVerifiedNote;
+  final VoidCallback? onOpenNotifications;
+  final Future<void> Function()? onEnablePush;
+  final Future<void> Function()? onDisablePush;
+  final Future<bool> Function()? onLoadPushEnabled;
+  final bool pushAvailable;
 
   @override
   State<StudentAccountGateway> createState() => _StudentAccountGatewayState();
@@ -36,6 +46,8 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
   late Future<bool> _restoring;
   StudentProfile? _profile;
   bool _busy = false;
+  bool _pushEnabled = false;
+  bool _pushBusy = false;
   String? _error;
 
   @override
@@ -49,6 +61,13 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
       final restored = await widget.restoreAndVerify();
       if (!mounted) return false;
       setState(() => _profile = restored ? widget.loadValidatedProfile() : null);
+      if (restored && _profile != null && widget.pushAvailable &&
+          widget.onLoadPushEnabled != null) {
+        final enabled = await widget.onLoadPushEnabled!();
+        if (mounted) setState(() => _pushEnabled = enabled);
+      } else if (mounted) {
+        setState(() => _pushEnabled = false);
+      }
       return restored;
     } catch (_) {
       if (mounted) setState(() => _profile = null);
@@ -63,11 +82,39 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
     if (profile == null || profile.accountStatus != 'active') {
       throw StateError('Account validation failed.');
     }
+    final enabled = widget.pushAvailable && widget.onLoadPushEnabled != null
+        ? await widget.onLoadPushEnabled!()
+        : false;
+    if (!mounted) return;
     setState(() {
       _profile = profile;
+      _pushEnabled = enabled;
       _error = null;
     });
     Navigator.of(context).pop();
+  }
+
+  Future<void> _togglePush(bool enabled) async {
+    if (_pushBusy || _busy || !widget.pushAvailable || _profile == null) return;
+    setState(() { _pushBusy = true; _error = null; });
+    try {
+      if (enabled) {
+        final action = widget.onEnablePush;
+        if (action == null) throw StateError('Push enrollment unavailable.');
+        await action();
+      } else {
+        final action = widget.onDisablePush;
+        if (action == null) throw StateError('Push removal unavailable.');
+        await action();
+      }
+      if (mounted) setState(() => _pushEnabled = enabled);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = 'Unable to change push notifications. Try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _pushBusy = false);
+    }
   }
 
   Future<void> _logout() async {
@@ -78,6 +125,14 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
       _profile = null;
     });
     try {
+      if (widget.pushAvailable && widget.onDisablePush != null) {
+        try {
+          await widget.onDisablePush!();
+        } catch (_) {
+          // Local sign-out is required even if the remote device is offline.
+        }
+      }
+      _pushEnabled = false;
       await widget.signOut();
     } catch (_) {
       if (mounted) {
@@ -160,6 +215,27 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                         icon: const Icon(Icons.forum_outlined),
                         label: const Text('New Community discussion'),
                       ),
+                    if (widget.onOpenNotifications != null)
+                      OutlinedButton.icon(
+                        key: const Key('account-open-notifications'),
+                        onPressed: _busy ? null : widget.onOpenNotifications,
+                        icon: const Icon(Icons.notifications_outlined),
+                        label: const Text('My notifications'),
+                      ),
+                    if (widget.pushAvailable) ...[
+                      const SizedBox(height: 8),
+                      SwitchListTile(
+                        key: const Key('account-push-optin'),
+                        title: const Text('Phone notifications'),
+                        subtitle: const Text(
+                          'Account activity and university updates only. '
+                          'New-note announcements stay off.',
+                        ),
+                        value: _pushEnabled,
+                        onChanged: (_busy || _pushBusy)
+                            ? null : (value) => _togglePush(value),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     FilledButton.icon(
                       key: const Key('account-signout'),

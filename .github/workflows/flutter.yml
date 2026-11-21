@@ -22,5 +22,6 @@ jobs:
       - run: flutter pub get
       - name: Verify pubspec.lock has not changed
         run: git diff --exit-code -- pubspec.lock
+      - run: node --check scripts/check-release-api.mjs && node --test test/release_api_gate.test.mjs
       - run: flutter analyze
       - run: flutter test

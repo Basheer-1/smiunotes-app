@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "93859217423",
+    "project_id": "smiunotes",
+    "storage_bucket": "smiunotes.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:93859217423:android:131a05e26ef112e317237a",
+        "android_client_info": {
+          "package_name": "com.smiunotes.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSUz5hT-jhQ5FU46vV94fq5hLRENzdgro"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

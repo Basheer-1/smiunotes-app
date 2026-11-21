@@ -1,3 +1,4 @@
+import 'screens/notification_inbox_page.dart';
 import 'screens/staging_student_account_page.dart';
 import 'screens/student_profile_page.dart';
 import 'screens/community_feed_page.dart';
@@ -41,9 +42,15 @@ class _AppShellState extends State<AppShell> {
   static const bool stagingAuthEnabled = bool.fromEnvironment(
     'SMIUNOTES_ENABLE_STAGING_AUTH', defaultValue: false,
   );
+  static const bool productionAuthEnabled = bool.fromEnvironment(
+    'SMIUNOTES_ENABLE_PRODUCTION_AUTH', defaultValue: false,
+  );
+  static const bool accountAuthEnabled = stagingAuthEnabled || productionAuthEnabled;
   static const String stagingApiBase = String.fromEnvironment(
     'SMIUNOTES_API_BASE', defaultValue: '',
   );
+  final GlobalKey<StagingStudentAccountPageState> _studentAccountKey =
+      GlobalKey<StagingStudentAccountPageState>();
   int selectedIndex = 0;
   static const labels = ['Home', 'Notes', 'Updates', 'Community', 'Profile'];
   static const icons = [
@@ -77,8 +84,19 @@ class _AppShellState extends State<AppShell> {
                           const Text('SMIUNotes', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: ink)),
                           const Spacer(),
                           IconButton(
-                            tooltip: 'Notifications (coming soon)',
-                            onPressed: () => _comingSoon(context, 'Notifications'),
+                            tooltip: 'Notifications',
+                            onPressed: () {
+                              if (accountAuthEnabled && stagingApiBase.isNotEmpty) {
+                                if (_studentAccountKey.currentState?.openNotifications() == true) {
+                                  return;
+                                }
+                                setState(() => selectedIndex = 4);
+                                return;
+                              }
+                              Navigator.of(context).push(MaterialPageRoute<void>(
+                                builder: (_) => const NotificationInboxPage(),
+                              ));
+                            },
                             icon: const Icon(Icons.notifications_none_rounded, color: archiveBlue),
                           ),
                         ],
@@ -88,12 +106,18 @@ class _AppShellState extends State<AppShell> {
                       child: IndexedStack(
                         index: selectedIndex,
                         children: [
-                          _HomePage(onNavigate: (index) => setState(() => selectedIndex = index)),
+                          _HomePage(
+                            onNavigate: (index) => setState(() => selectedIndex = index),
+                            apiConfigured: stagingApiBase.isNotEmpty,
+                          ),
                           const PublicFeedPage(type: 'notes'),
                           const PublicFeedPage(type: 'updates'),
                           const CommunityFeedPage(),
-                          if (stagingAuthEnabled && stagingApiBase.isNotEmpty)
-                            const StagingStudentAccountPage(httpsBaseUrl: stagingApiBase)
+                          if (accountAuthEnabled && stagingApiBase.isNotEmpty)
+                            StagingStudentAccountPage(
+                              key: _studentAccountKey,
+                              httpsBaseUrl: stagingApiBase,
+                            )
                           else
                             const StudentProfilePage(),
                         ],
@@ -147,12 +171,6 @@ class _AppShellState extends State<AppShell> {
       ),
     );
   }
-}
-
-void _comingSoon(BuildContext context, String feature) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('$feature will be available in a future milestone.')),
-  );
 }
 
 class _Backdrop extends StatelessWidget {
@@ -218,8 +236,12 @@ class _Glass extends StatelessWidget {
 }
 
 class _HomePage extends StatelessWidget {
-  const _HomePage({required this.onNavigate});
+  const _HomePage({
+    required this.onNavigate,
+    required this.apiConfigured,
+  });
   final ValueChanged<int> onNavigate;
+  final bool apiConfigured;
 
   @override
   Widget build(BuildContext context) {
@@ -232,6 +254,14 @@ class _HomePage extends StatelessWidget {
         const Text('Everything SMIU,\nin one place.', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1.15, color: ink)),
         const SizedBox(height: 10),
         const Text('Find notes, stay updated and connect with your university community.', style: TextStyle(fontSize: 14, height: 1.5, color: muted)),
+        const SizedBox(height: 12),
+        Text(
+          apiConfigured
+              ? 'SMIUNotes mobile • Connected API • Verified student access is required.'
+              : 'M4 testing build • Preview mode: live content and student login are not configured.',
+          key: const Key('testing-build-status'),
+          style: const TextStyle(color: muted, fontSize: 11),
+        ),
         const SizedBox(height: 24),
         _Glass(
           padding: const EdgeInsets.all(22),
@@ -278,7 +308,7 @@ class _HomePage extends StatelessWidget {
           },
         ),
         const SizedBox(height: 20),
-        const Text('M2 • Staging development — authentication disabled by default', style: TextStyle(color: muted, fontSize: 11)),
+
       ],
     );
   }

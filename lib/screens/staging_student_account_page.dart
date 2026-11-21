@@ -3,6 +3,10 @@ import 'package:material_ui/material_ui.dart';
 import '../services/authenticated_reader_api.dart';
 import '../services/community_write_api.dart';
 import '../services/mobile_auth_api.dart';
+import '../services/mobile_notification_api.dart';
+import '../services/push_registration_api.dart';
+import '../services/student_push_enrollment.dart';
+import 'notification_inbox_page.dart';
 import '../services/mobile_turnstile.dart';
 import '../services/student_auth_runtime.dart';
 import 'authenticated_note_reader_page.dart';
@@ -19,12 +23,31 @@ class StagingStudentAccountPage extends StatefulWidget {
   final String httpsBaseUrl;
 
   @override
-  State<StagingStudentAccountPage> createState() =>
-      _StagingStudentAccountPageState();
+  StagingStudentAccountPageState createState() =>
+      StagingStudentAccountPageState();
 }
 
-class _StagingStudentAccountPageState
+class StagingStudentAccountPageState
     extends State<StagingStudentAccountPage> {
+  // Disabled until backend FCM delivery, rotation and device QA are approved.
+  static const bool pushEnabled = bool.fromEnvironment(
+    'SMIUNOTES_ENABLE_NATIVE_PUSH', defaultValue: false,
+  );
+  late final StudentPushEnrollment push = StudentPushEnrollment(
+    api: PushRegistrationApi(
+      baseUrl: widget.httpsBaseUrl,
+      enabled: pushEnabled,
+    ),
+  );
+
+  Future<void> enablePush() async {
+    await push.enable(currentAccessToken: _currentVerifiedToken());
+  }
+
+  Future<void> disablePush() async {
+    await push.disable(currentAccessToken: runtime.controller.accessToken);
+  }
+
   late final StudentAuthRuntime runtime =
       StudentAuthRuntime.forStaging(httpsBaseUrl: widget.httpsBaseUrl);
 
@@ -69,6 +92,33 @@ class _StagingStudentAccountPageState
     ));
   }
 
+  /// Retrieve the current token for every request. Never retain a bearer
+  /// captured when a route opens: sign-out/rotation may invalidate it.
+  String _currentVerifiedToken() {
+    final token = runtime.controller.accessToken;
+    if (!mounted || !runtime.coordinator.authenticated || token == null) {
+      throw StateError('Student sign-in required.');
+    }
+    return token;
+  }
+
+  /// Returns false if sign-in is needed; callers can open the Profile tab.
+  bool openNotifications() {
+    if (!runtime.coordinator.authenticated ||
+        runtime.controller.accessToken == null) {
+      return false;
+    }
+    final api = MobileNotificationApi(baseUrl: widget.httpsBaseUrl);
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => NotificationInboxPage(
+        loader: () => api.loadOwn(_currentVerifiedToken()),
+        markRead: (id) => api.markRead(_currentVerifiedToken(), id),
+        clearOwn: () => api.clearOwn(_currentVerifiedToken()),
+      ),
+    ));
+    return true;
+  }
+
   void openCommunityComposer() {
     final token = runtime.controller.accessToken;
     if (!runtime.coordinator.authenticated || token == null) return;
@@ -93,5 +143,10 @@ class _StagingStudentAccountPageState
     signOut: runtime.coordinator.signOut,
     onOpenVerifiedNote: openVerifiedNote,
     onCreateDiscussion: openCommunityComposer,
+    onOpenNotifications: openNotifications,
+    pushAvailable: pushEnabled,
+    onEnablePush: pushEnabled ? enablePush : null,
+    onDisablePush: pushEnabled ? disablePush : null,
+    onLoadPushEnabled: pushEnabled ? () => push.isOptedIn : null,
   );
 }
