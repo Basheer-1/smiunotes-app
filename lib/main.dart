@@ -1,6 +1,6 @@
 import 'screens/public_feed_page.dart';
 import 'dart:ui';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 void main() => runApp(const SmiuNotesApp());
 
