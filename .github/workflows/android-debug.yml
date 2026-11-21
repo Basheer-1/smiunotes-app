@@ -1,4 +1,4 @@
-name: Android Debug Build
+name: Android M4 QA Debug APK
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
       - '.github/workflows/android-debug.yml'
 
 concurrency:
-  group: android-m2-${{ github.head_ref || github.ref_name }}
+  group: android-qa-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -46,8 +46,20 @@ jobs:
             echo 'Gradle artifact fetch may be rate-limited; retrying...' >&2
             sleep $((attempt * 20))
           done
+      - name: Record APK build provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s build/app/outputs/flutter-apk/app-debug.apk
+          printf 'SMIUNotes M4 DEBUG QA ONLY\nCommit: %s\nWorkflow Run: %s\nProduction signing: NO\nBackend URL: NOT CONFIGURED\nNative push: NOT ENABLED\n' \
+            "$GITHUB_SHA" "$GITHUB_RUN_ID" > build/app/outputs/flutter-apk/BUILD-INFO.txt
+          sha256sum build/app/outputs/flutter-apk/app-debug.apk > build/app/outputs/flutter-apk/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: smiunotes-m2-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: smiunotes-m4-qa-debug-apk
+          path: |
+            build/app/outputs/flutter-apk/app-debug.apk
+            build/app/outputs/flutter-apk/BUILD-INFO.txt
+            build/app/outputs/flutter-apk/SHA256SUMS.txt
+          if-no-files-found: error
           retention-days: 7
