@@ -20,6 +20,7 @@ class StudentAccountGateway extends StatefulWidget {
     this.onOpenNotifications,
     this.onEnablePush,
     this.onDisablePush,
+    this.onLoadPushEnabled,
     this.pushAvailable = false,
   });
 
@@ -34,6 +35,7 @@ class StudentAccountGateway extends StatefulWidget {
   final VoidCallback? onOpenNotifications;
   final Future<void> Function()? onEnablePush;
   final Future<void> Function()? onDisablePush;
+  final Future<bool> Function()? onLoadPushEnabled;
   final bool pushAvailable;
 
   @override
@@ -59,6 +61,13 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
       final restored = await widget.restoreAndVerify();
       if (!mounted) return false;
       setState(() => _profile = restored ? widget.loadValidatedProfile() : null);
+      if (restored && _profile != null && widget.pushAvailable &&
+          widget.onLoadPushEnabled != null) {
+        final enabled = await widget.onLoadPushEnabled!();
+        if (mounted) setState(() => _pushEnabled = enabled);
+      } else if (mounted) {
+        setState(() => _pushEnabled = false);
+      }
       return restored;
     } catch (_) {
       if (mounted) setState(() => _profile = null);
@@ -73,8 +82,13 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
     if (profile == null || profile.accountStatus != 'active') {
       throw StateError('Account validation failed.');
     }
+    final enabled = widget.pushAvailable && widget.onLoadPushEnabled != null
+        ? await widget.onLoadPushEnabled!()
+        : false;
+    if (!mounted) return;
     setState(() {
       _profile = profile;
+      _pushEnabled = enabled;
       _error = null;
     });
     Navigator.of(context).pop();
