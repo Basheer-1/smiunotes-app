@@ -119,34 +119,16 @@ class StagingStudentAccountPageState
     return true;
   }
 
-  /// Open a reply composer only for a currently verified student.
-  /// Returns false for guests; the thread remains publicly readable.
+  /// Opens the reply composer only if a verified session still exists.
   Future<bool> openCommunityReply(String threadId) async {
     if (!mounted || !runtime.coordinator.authenticated ||
-        runtime.controller.accessToken == null) return false;
-    if (!RegExp(r'^[0-9a-fA-F-]{36}
-
-  @override
-  Widget build(BuildContext context) => StudentAccountGateway(
-    api: MobileAuthApi(baseUrl: widget.httpsBaseUrl),
-    challengeProvider: () => requestMobileTurnstile(
-      context,
-      httpsOrigin: widget.httpsBaseUrl,
-    ),
-    acceptAndVerify: runtime.coordinator.acceptAndVerify,
-    restoreAndVerify: runtime.coordinator.restoreAndVerify,
-    loadValidatedProfile: () => runtime.coordinator.profile,
-    signOut: runtime.coordinator.signOut,
-    onOpenVerifiedNote: openVerifiedNote,
-    onCreateDiscussion: openCommunityComposer,
-    onOpenNotifications: openNotifications,
-    pushAvailable: pushEnabled,
-    onEnablePush: pushEnabled ? enablePush : null,
-    onDisablePush: pushEnabled ? disablePush : null,
-    onLoadPushEnabled: pushEnabled ? () => push.isOptedIn : null,
-  );
-}
-).hasMatch(threadId)) return false;
+        runtime.controller.accessToken == null) {
+      return false;
+    }
+    if (threadId.length != 36 ||
+        !RegExp(r'^[0-9a-fA-F-]+').hasMatch(threadId)) {
+      return false;
+    }
     final posted = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
         builder: (_) => CommunityComposerPage(
