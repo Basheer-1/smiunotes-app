@@ -134,9 +134,10 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
       const SizedBox(height: 12),
       if (isNotes && departments.isNotEmpty)
         Padding(
+          key: const Key('department-filter'),
           padding: const EdgeInsets.only(bottom: 12),
           child: DropdownButtonFormField<String>(
-            key: const Key('department-filter'),
+            key: ValueKey('department-${identityHashCode(widget.api)}'),
             initialValue: department,
             isExpanded: true,
             decoration: const InputDecoration(labelText: 'Department'),
@@ -159,6 +160,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
         ),
       if (isNotes)
         DropdownButtonFormField<String>(
+          key: ValueKey('semester-$department'),
           initialValue: semester,
           decoration: const InputDecoration(labelText: 'Semester'),
           items: [
@@ -170,9 +172,10 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
         ),
       if (isNotes && availableSubjects.isNotEmpty)
         Padding(
+          key: const Key('subject-filter'),
           padding: const EdgeInsets.only(top: 12),
           child: DropdownButtonFormField<String>(
-            key: const Key('subject-filter'),
+            key: ValueKey('subject-$department-$semester'),
             initialValue: subject,
             isExpanded: true,
             decoration: const InputDecoration(labelText: 'Subject'),
