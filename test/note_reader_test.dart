@@ -29,6 +29,26 @@ class SwitchingReaderApi extends PublicFeedApi {
   }
 }
 
+
+class SignedPageTrackingApi extends PublicFeedApi {
+  SignedPageTrackingApi();
+  int pageRequests = 0;
+
+  @override
+  Future<Map<String, dynamic>> fetchManifest(String noteId) async => {
+    'title': 'Public signed note',
+    'pages': <Map<String, dynamic>>[
+      {'page_number': 1, 'width': 800, 'height': 1100},
+    ],
+  };
+
+  @override
+  Future<String> fetchSignedPageUrl(String noteId, int page) async {
+    pageRequests++;
+    return 'https://example.invalid/signed-page.webp';
+  }
+}
+
 void main() {
   testWidgets('Public note reader displays authorized manifest metadata', (tester) async {
     await tester.pumpWidget(const MaterialApp(
@@ -60,6 +80,25 @@ void main() {
     expect(find.text('Note $first'), findsNothing);
     expect(find.text('Note $second'), findsOneWidget);
     expect(api.requested, [first, second]);
+  });
+
+  testWidgets('Changing API origin refetches signed page instead of reusing URL',
+      (tester) async {
+    final firstApi = SignedPageTrackingApi();
+    final secondApi = SignedPageTrackingApi();
+    const id = '11111111-1111-4111-8111-111111111111';
+    await tester.pumpWidget(MaterialApp(
+      home: NoteReaderPage(noteId: id, api: firstApi),
+    ));
+    await tester.pumpAndSettle();
+    expect(firstApi.pageRequests, 1);
+
+    await tester.pumpWidget(MaterialApp(
+      home: NoteReaderPage(noteId: id, api: secondApi),
+    ));
+    await tester.pumpAndSettle();
+    expect(secondApi.pageRequests, 1);
+    expect(firstApi.pageRequests, 1);
   });
 
 }
