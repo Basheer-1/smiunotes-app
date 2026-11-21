@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../services/public_feed_api.dart';
 
 class PublicFeedPage extends StatefulWidget {
@@ -28,24 +28,24 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
     try {
       final data = await widget.api.fetch(widget.type, page: page,
         search: search.text, stream: stream, semester: semester);
-      if (mounted) setState(() {
+      if (mounted) { setState(() {
         items = (data['items'] as List<dynamic>?) ?? [];
         total = (data['total'] as num?)?.toInt() ?? 0;
-      });
+      }); }
     } catch (_) {
       if (mounted) setState(() {
         items = []; total = 0;
         error = 'Feed unavailable. Check internet or staging API deployment.';
-      });
+      }); }
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted) { setState(() => loading = false); }
     }
   }
   void filter() { page = 1; load(); }
 
   @override
   Widget build(BuildContext context) => ListView(
-    key: Key('feed-' + widget.type),
+    key: Key('feed-${widget.type}'),
     padding: const EdgeInsets.fromLTRB(20, 18, 20, 110),
     children: [
       Text(isNotes ? 'Browse notes' : 'University updates',
@@ -56,7 +56,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
         : 'Latest campus announcements and student opportunities.'),
       const SizedBox(height: 20),
       TextField(
-        key: Key('search-' + widget.type),
+        key: Key('search-${widget.type}'),
         controller: search,
         onSubmitted: (_) => filter(),
         decoration: InputDecoration(
@@ -73,7 +73,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
           items: [
             const DropdownMenuItem(value: '', child: Text('All semesters')),
             for (var i = 1; i <= 8; i++)
-              DropdownMenuItem(value: i.toString(), child: Text('Semester ' + i.toString())),
+              DropdownMenuItem(value: i.toString(), child: Text('Semester $i')),
           ],
           onChanged: (value) { semester = value ?? ''; filter(); },
         )
@@ -94,7 +94,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
       ] else if (items.isEmpty) const Padding(
         padding: EdgeInsets.all(22), child: Text('No published content found.'),
       ) else ...[
-        Text(total.toString() + ' published results'),
+        Text('$total published results'),
         const SizedBox(height: 12),
         for (final raw in items)
           if (raw is Map<String, dynamic>)
@@ -103,7 +103,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
           OutlinedButton(
             onPressed: page > 1 ? () { page--; load(); } : null,
             child: const Text('Previous')),
-          Text('Page ' + page.toString()),
+          Text('Page $page'),
           OutlinedButton(
             onPressed: page * 12 < total ? () { page++; load(); } : null,
             child: const Text('Next')),
@@ -121,9 +121,7 @@ class _FeedTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final title = data['title']?.toString() ?? 'Untitled';
     final subtitle = isNote
-      ? (data['department_name']?.toString() ?? '') + ' · ' +
-        (data['subject_code']?.toString() ?? '') + ' · Semester ' +
-        (data['semester']?.toString() ?? '?')
+      ? '${data['department_name'] ?? ''} · ${data['subject_code'] ?? ''} · Semester ${data['semester'] ?? '?'}'
       : data['summary']?.toString() ?? '';
     final restricted = isNote && data['is_sensitive'] == true;
     return Card(
@@ -132,7 +130,7 @@ class _FeedTile extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-        subtitle: Text(subtitle + (restricted ? '\nVerified only' : ''),
+        subtitle: Text('$subtitle${restricted ? '\nVerified only' : ''}',
           maxLines: 3, overflow: TextOverflow.ellipsis),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => showModalBottomSheet<void>(
