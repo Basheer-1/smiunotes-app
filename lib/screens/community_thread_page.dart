@@ -134,7 +134,7 @@ class _CommunityThreadPageState extends State<CommunityThreadPage> {
             ),
             const SizedBox(height: 20),
             const Text(
-              'Replying will be available after secure student sign-in.',
+              'Replying requires a verified student account. Mobile replies are being added in M5.',
               textAlign: TextAlign.center,
             ),
           ],
