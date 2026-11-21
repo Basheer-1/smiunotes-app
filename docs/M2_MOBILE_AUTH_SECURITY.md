@@ -38,3 +38,12 @@ Status: **design reviewed against existing repository code; implementation NOT e
 | Production keys in APK | never |
 
 These are design/acceptance requirements, not claims that the native login is already implemented.
+
+## Implemented but OFF by default (November 21, 2026)
+
+- A separate `POST /api/mobile/v1/auth` is present **only on the website feature branch**. It forwards validated Student ID password/OTP requests to the existing privileged broker, registers the same password session grant as web, and never sends a server secret to a client.
+- Anonymous `password` and `send` calls require Cloudflare Turnstile proof verified server-side for the exact configured `MOBILE_AUTH_TURNSTILE_HOSTNAME` with action `mobile_login`. OTP `verify` uses the existing durable OTP attempt budget.
+- The route refuses all login requests unless `MOBILE_AUTH_ENABLED=true`. Staging currently has not been enabled. `GET /api/mobile/v1/auth` reports the effective enabled status without returning secrets.
+- The Flutter `MobileAuthApi` supports password, send and OTP verify request envelopes. It **does not yet connect to a login UI or persist tokens**, and must not handle real credentials until the CAPTCHA user flow, OS-backed encrypted storage, refresh/revocation and staging device tests are implemented.
+- Current isolated staging schema was not confirmed to contain the production password-session registration and device-revocation RPCs. Additive staging migration/verification is required before enabling this broker; do not silently switch the endpoint to production Supabase.
+- The app's existing Linux build must remain usable. Avoid introducing native plugins requiring libsecret/Android SDK until the local environment and package cache are prepared.
