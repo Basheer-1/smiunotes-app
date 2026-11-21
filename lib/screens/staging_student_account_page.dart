@@ -3,6 +3,8 @@ import 'package:material_ui/material_ui.dart';
 import '../services/authenticated_reader_api.dart';
 import '../services/community_write_api.dart';
 import '../services/mobile_auth_api.dart';
+import '../services/mobile_notification_api.dart';
+import 'notification_inbox_page.dart';
 import '../services/mobile_turnstile.dart';
 import '../services/student_auth_runtime.dart';
 import 'authenticated_note_reader_page.dart';
@@ -69,6 +71,19 @@ class _StagingStudentAccountPageState
     ));
   }
 
+  void openNotifications() {
+    final token = runtime.controller.accessToken;
+    if (!runtime.coordinator.authenticated || token == null) return;
+    final api = MobileNotificationApi(baseUrl: widget.httpsBaseUrl);
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => NotificationInboxPage(
+        loader: () => api.loadOwn(token),
+        markRead: (id) => api.markRead(token, id),
+        clearOwn: () => api.clearOwn(token),
+      ),
+    ));
+  }
+
   void openCommunityComposer() {
     final token = runtime.controller.accessToken;
     if (!runtime.coordinator.authenticated || token == null) return;
@@ -93,5 +108,6 @@ class _StagingStudentAccountPageState
     signOut: runtime.coordinator.signOut,
     onOpenVerifiedNote: openVerifiedNote,
     onCreateDiscussion: openCommunityComposer,
+    onOpenNotifications: openNotifications,
   );
 }
