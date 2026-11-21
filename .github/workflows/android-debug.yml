@@ -53,7 +53,7 @@ jobs:
           test -s build/app/outputs/flutter-apk/app-debug.apk
           printf 'SMIUNotes M4 DEBUG QA ONLY\nCommit: %s\nWorkflow Run: %s\nProduction signing: NO\nBackend URL: NOT CONFIGURED\nNative push: NOT ENABLED\n' \
             "$GITHUB_SHA" "$GITHUB_RUN_ID" > build/app/outputs/flutter-apk/BUILD-INFO.txt
-          sha256sum build/app/outputs/flutter-apk/app-debug.apk > build/app/outputs/flutter-apk/SHA256SUMS.txt
+          (cd build/app/outputs/flutter-apk && sha256sum app-debug.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         with:
           name: smiunotes-m4-qa-debug-apk
