@@ -1,3 +1,4 @@
+import 'screens/staging_student_account_page.dart';
 import 'screens/student_profile_page.dart';
 import 'screens/community_feed_page.dart';
 import 'screens/public_feed_page.dart';
@@ -37,6 +38,12 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
+  static const bool stagingAuthEnabled = bool.fromEnvironment(
+    'SMIUNOTES_ENABLE_STAGING_AUTH', defaultValue: false,
+  );
+  static const String stagingApiBase = String.fromEnvironment(
+    'SMIUNOTES_API_BASE', defaultValue: '',
+  );
   int selectedIndex = 0;
   static const labels = ['Home', 'Notes', 'Updates', 'Community', 'Profile'];
   static const icons = [
@@ -85,7 +92,10 @@ class _AppShellState extends State<AppShell> {
                           const PublicFeedPage(type: 'notes'),
                           const PublicFeedPage(type: 'updates'),
                           const CommunityFeedPage(),
-                          const StudentProfilePage(),
+                          if (stagingAuthEnabled && stagingApiBase.isNotEmpty)
+                            const StagingStudentAccountPage(httpsBaseUrl: stagingApiBase)
+                          else
+                            const StudentProfilePage(),
                         ],
                       ),
                     ),
@@ -268,7 +278,7 @@ class _HomePage extends StatelessWidget {
           },
         ),
         const SizedBox(height: 20),
-        const Text('M1 • UI preview only — no live student data', style: TextStyle(color: muted, fontSize: 11)),
+        const Text('M2 • Staging development — authentication disabled by default', style: TextStyle(color: muted, fontSize: 11)),
       ],
     );
   }
