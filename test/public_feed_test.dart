@@ -62,6 +62,27 @@ class FakeApi extends PublicFeedApi {
   }
 }
 
+class ExpiredApplyApi extends FakeApi {
+  const ExpiredApplyApi();
+  @override
+  Future<Map<String, dynamic>> fetch(
+    String kind, {int page = 1, String search = '', String stream = '',
+    String department = '', String semester = '', String subject = '',
+    String category = ''}) async {
+    final result = await super.fetch(kind, page: page, search: search,
+      stream: stream, department: department, semester: semester,
+      subject: subject, category: category);
+    if (kind == 'updates') {
+      final update = Map<String, dynamic>.from(
+        (result['items'] as List<dynamic>).first as Map<String, dynamic>);
+      update['application_url'] = 'https://example.org/apply';
+      update['deadline_date'] = '2020-01-01';
+      result['items'] = [update];
+    }
+    return result;
+  }
+}
+
 class CapturingApi extends FakeApi {
   String lastCategory = '';
   String lastStream = '';
@@ -101,6 +122,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(api.lastStream, 'campus');
     expect(api.lastCategory, isEmpty);
+  });
+
+  testWidgets('Expired application is disabled on card and detail',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: PublicFeedPage(
+        type: 'updates', api: ExpiredApplyApi())),
+    ));
+    await tester.pumpAndSettle();
+    final cardButton = find.byKey(const Key('update-apply-update-1'));
+    await tester.ensureVisible(cardButton);
+    expect(tester.widget<FilledButton>(cardButton).onPressed, isNull);
+    expect(find.text('Applications Closed'), findsOneWidget);
+    await tester.ensureVisible(find.text('Exam timetable'));
+    await tester.tap(find.text('Exam timetable'));
+    await tester.pumpAndSettle();
+    final detail = find.byKey(const Key('update-apply-now-detail'));
+    await tester.ensureVisible(detail);
+    expect(tester.widget<FilledButton>(detail).onPressed, isNull);
   });
 
   testWidgets('Notes feed displays published metadata', (tester) async {
