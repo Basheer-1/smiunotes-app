@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:material_ui/material_ui.dart';
 import '../models/student_profile.dart';
 import '../services/mobile_auth_api.dart';
@@ -5,7 +6,7 @@ import 'student_login_page.dart';
 import 'student_recovery_page.dart';
 import '../widgets/profile_avatar.dart';
 
-/// Native, read-only account settings backed by the validated /me widget.profile.
+/// Native, read-only account settings backed by the validated /me profile.
 /// Mutations are deliberately not offered until equivalent secured mobile
 /// endpoints exist; account recovery already has a Turnstile-protected API.
 class NativeProfileSettingsPage extends StatefulWidget {
@@ -21,6 +22,7 @@ class NativeProfileSettingsPage extends StatefulWidget {
     this.pushBusy = false,
     this.onPushChanged,
     this.onSignOutAll,
+    this.onLoadAvatar,
   });
 
   final StudentProfile profile;
@@ -31,6 +33,7 @@ class NativeProfileSettingsPage extends StatefulWidget {
   final bool pushAvailable, pushEnabled, pushBusy;
   final ValueChanged<bool>? onPushChanged;
   final Future<void> Function()? onSignOutAll;
+  final Future<Uint8List?> Function()? onLoadAvatar;
 
   @override
   State<NativeProfileSettingsPage> createState() => _NativeProfileSettingsPageState();
@@ -71,6 +74,8 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
                   name: widget.profile.studentName,
                   size: 70,
                   cacheKey: '${widget.profile.studentId}:${widget.profile.avatarVersion}',
+                  imageLoader: widget.profile.avatarVersion == null
+                    ? null : widget.onLoadAvatar,
                 ),
                 const SizedBox(height: 12),
                 Text(widget.profile.studentName,
