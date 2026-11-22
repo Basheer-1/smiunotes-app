@@ -5,6 +5,7 @@ import '../models/student_profile.dart';
 import '../services/mobile_auth_api.dart';
 import 'student_login_page.dart';
 import '../widgets/profile_avatar.dart';
+import '../services/native_profile_settings_api.dart';
 import 'native_information_pages.dart';
 import 'native_profile_settings_page.dart';
 
@@ -36,6 +37,8 @@ class StudentAccountGateway extends StatefulWidget {
     this.darkMode = false,
     this.signOutAll,
     this.onLoadAvatar,
+    this.profileSettingsApi,
+    this.onRefreshProfile,
   });
 
   final MobileAuthApi api;
@@ -61,6 +64,8 @@ class StudentAccountGateway extends StatefulWidget {
   final bool darkMode;
   final Future<void> Function()? signOutAll;
   final Future<Uint8List?> Function()? onLoadAvatar;
+  final NativeProfileSettingsApi? profileSettingsApi;
+  final Future<StudentProfile?> Function()? onRefreshProfile;
 
   @override
   State<StudentAccountGateway> createState() => StudentAccountGatewayState();
@@ -355,6 +360,18 @@ class StudentAccountGatewayState extends State<StudentAccountGateway> {
                   onPushChanged: _togglePush,
                   onSignOutAll: _confirmLogoutAll,
                   onLoadAvatar: widget.onLoadAvatar,
+                  profileSettingsApi: widget.profileSettingsApi,
+                  onAvatarChanged: () async {
+                    final fresh = await widget.onRefreshProfile?.call();
+                    if (fresh != null && mounted) {
+                      setState(() => _profile = fresh);
+                      widget.onProfileChanged?.call(fresh);
+                    }
+                  },
+                  onOpenLibrary: widget.onOpenBookmarks,
+                  onOpenNotifications: widget.onOpenNotifications,
+                  onOpenNotificationPreferences:
+                    widget.onOpenNotificationPreferences,
                   onOpenNativeCardVerification: widget.onOpenNativeCardVerification,
                 ),
               )),
