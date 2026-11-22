@@ -95,8 +95,8 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
         bytes = await NativeStudentFormsApi.chooseImage();
         if (bytes == null) return;
       } catch (_) {
-        if (mounted) setState(() => _feedback =
-          'Choose a JPG, PNG or WebP profile photo smaller than 2 MB.');
+        if (mounted) { setState(() => _feedback =
+          'Choose a JPG, PNG or WebP profile photo smaller than 2 MB.'); }
         return;
       }
     } else {
@@ -115,7 +115,7 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
       );
       if (confirmed != true) return;
     }
-    if (!mounted) return;
+    if (!mounted) { return; }
     setState(() { _busy = true; _feedback = null; });
     try {
       if (remove) {
@@ -124,13 +124,13 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
         await api.savePhoto(bytes!);
       }
       await widget.onAvatarChanged?.call();
-      if (mounted) setState(() {
+      if (mounted) { setState(() {
         _avatarRevision++;
         _feedback = remove ? 'Profile photo removed.' : 'Profile photo updated.';
-      });
+      }); }
     } catch (_) {
-      if (mounted) setState(() => _feedback =
-        'Profile photo change is unavailable. Your existing photo is unchanged.');
+      if (mounted) { setState(() => _feedback =
+        'Profile photo change is unavailable. Your existing photo is unchanged.'); }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -203,19 +203,19 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
                     key: const Key('settings-change-password-confirm'),
                     onPressed: submitting ? null : () async {
                       if (key.currentState?.validate() != true ||
-                          next.text == current.text) return;
+                          next.text == current.text) { return; }
                       change(() => submitting = true);
                       try {
                         await api.changePassword(
                           current.text, next.text, confirm.text);
                         if (!sheetContext.mounted) return;
                         Navigator.of(sheetContext).pop();
-                        if (mounted) setState(() => _feedback =
-                          'Password updated. Use it for future sign-ins.');
+                        if (mounted) { setState(() => _feedback =
+                          'Password updated. Use it for future sign-ins.'); }
                       } catch (_) {
-                        if (mounted) setState(() => _feedback =
+                        if (mounted) { setState(() => _feedback =
                           'Could not update password. Check the current '
-                          'password or try again later.');
+                          'password or try again later.'); }
                         if (sheetContext.mounted) {
                           Navigator.of(sheetContext).pop();
                         }
@@ -283,7 +283,7 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
         );
       } finally { input.dispose(); }
       if (nickname == null || nickname.length < 2 ||
-          nickname.length > 60) return;
+          nickname.length > 60) { return; }
     }
     if (!mounted) return;
     setState(() { _busy = true; _feedback = null; });
@@ -293,13 +293,13 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
       } else {
         await api.renameDevice(id, nickname!);
       }
-      if (mounted) setState(() {
+      if (mounted) { setState(() {
         _refresh();
         _feedback = remove ? 'Device signed out.' : 'Device renamed.';
-      });
+      }); }
     } catch (_) {
-      if (mounted) setState(() => _feedback =
-        'Device change unavailable. Please try again.');
+      if (mounted) { setState(() => _feedback =
+        'Device change unavailable. Please try again.'); }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
