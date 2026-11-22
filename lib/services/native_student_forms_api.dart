@@ -78,12 +78,14 @@ class NativeStudentFormsApi {
         }
         bytes.addAll(chunk);
       }
+      // An unimplemented Next.js API route often responds with HTML,
+      // so recognize HTTP 404 *before* trying to parse JSON.
+      if (path == 'support' && response.statusCode == 404) {
+        throw const NativeSupportNotAvailable();
+      }
       final parsed = jsonDecode(utf8.decode(bytes));
       if (parsed is! Map<String, dynamic>) {
         throw const FormatException('Invalid server response.');
-      }
-      if (path == 'support' && response.statusCode == 404) {
-        throw const NativeSupportNotAvailable();
       }
       if (response.statusCode != 200) {
         // Never show raw backend errors or tokens to the user.
