@@ -4,6 +4,7 @@ import '../models/student_profile.dart';
 import '../services/mobile_auth_api.dart';
 import 'student_login_page.dart';
 import 'student_recovery_page.dart';
+import 'student_verification_status_page.dart';
 import '../widgets/profile_avatar.dart';
 
 /// Native, read-only account settings backed by the validated /me profile.
@@ -102,9 +103,16 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
             subtitle: Text(widget.profile.department ?? 'Not provided'),
           ),
           ListTile(
+            key: const Key('settings-verification-status'),
             leading: const Icon(Icons.verified_user_outlined),
             title: const Text('Student verification'),
             subtitle: Text(widget.profile.verificationStatus),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => StudentVerificationStatusPage(
+                profile: widget.profile,
+              ),
+            )),
           ),
           ListTile(
             leading: const Icon(Icons.shield_outlined),
