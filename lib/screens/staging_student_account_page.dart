@@ -58,6 +58,13 @@ class StagingStudentAccountPageState
         .loadOwn(_currentVerifiedToken());
   }
 
+  Future<void> signOutAllDevices() async {
+    if (pushEnabled) {
+      await push.disable(currentAccessToken: runtime.controller.accessToken);
+    }
+    await runtime.controller.signOutAll(runtime.sessionApi.revokeAll);
+  }
+
   Future<void> enablePush() async {
     await push.enable(currentAccessToken: _currentVerifiedToken());
   }
@@ -210,6 +217,8 @@ class StagingStudentAccountPageState
     restoreAndVerify: runtime.coordinator.restoreAndVerify,
     loadValidatedProfile: () => runtime.coordinator.profile,
     signOut: runtime.coordinator.signOut,
+    signOutAll: signOutAllDevices,
+    onLoadAvatar: loadOwnAvatar,
     onOpenVerifiedNote: openVerifiedNote,
     onCreateDiscussion: openCommunityComposer,
     onOpenNotifications: openNotifications,
