@@ -46,3 +46,5 @@ C. Transaction parity: native Contact + Support receipt upload (anti-abuse + sig
 D. Accessibility, regression, security and multi-device QA.
 
 Tracking: https://github.com/Basheer-1/smiunotes-app/issues/15 .
+
+| University Updates notification preferences | Native in this increment | Same owner-only update announcements switch, essential/security alerts always on, new-note broadcasts always off |

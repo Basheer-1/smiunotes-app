@@ -5,6 +5,7 @@ import 'screens/student_profile_page.dart';
 import 'screens/community_feed_page.dart';
 import 'screens/public_feed_page.dart';
 import 'screens/native_information_pages.dart';
+import 'screens/native_public_content_page.dart';
 import 'screens/native_student_forms.dart';
 import 'services/native_student_forms_api.dart';
 import 'screens/contributors_directory_page.dart';
@@ -147,7 +148,9 @@ class _AppShellState extends State<AppShell> {
         ? const ContributorsDirectoryPage()
         : kind == 'catalogue'
           ? const NativeCataloguePage()
-          : NativeInformationPage(kind: kind)));
+          : const ['about', 'privacy', 'disclaimer'].contains(kind)
+            ? NativePublicContentPage(kind: kind)
+            : NativeInformationPage(kind: kind)));
   }
   static const labels = ['Home', 'Notes', 'Updates', 'Community', 'Profile'];
   static const icons = [

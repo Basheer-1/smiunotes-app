@@ -7,6 +7,8 @@ import 'student_login_page.dart';
 import '../widgets/profile_avatar.dart';
 import '../services/native_profile_settings_api.dart';
 import 'native_information_pages.dart';
+import 'native_notification_preferences_page.dart';
+import 'native_public_content_page.dart';
 import 'native_profile_settings_page.dart';
 
 /// Staging-only account experience; NOT constructed by the default app.
@@ -39,6 +41,8 @@ class StudentAccountGateway extends StatefulWidget {
     this.onLoadAvatar,
     this.profileSettingsApi,
     this.onRefreshProfile,
+    this.onLoadUpdatePreference,
+    this.onSaveUpdatePreference,
   });
 
   final MobileAuthApi api;
@@ -66,6 +70,8 @@ class StudentAccountGateway extends StatefulWidget {
   final Future<Uint8List?> Function()? onLoadAvatar;
   final NativeProfileSettingsApi? profileSettingsApi;
   final Future<StudentProfile?> Function()? onRefreshProfile;
+  final Future<bool> Function()? onLoadUpdatePreference;
+  final Future<void> Function(bool)? onSaveUpdatePreference;
 
   @override
   State<StudentAccountGateway> createState() => StudentAccountGatewayState();
@@ -438,6 +444,22 @@ class StudentAccountGatewayState extends State<StudentAccountGateway> {
             ]),
           ),
           const SizedBox(height: 16),
+          if (_profile != null &&
+              widget.onLoadUpdatePreference != null &&
+              widget.onSaveUpdatePreference != null) ...[
+            _AccountEntry(
+              icon: Icons.campaign_outlined,
+              label: 'University notification preferences',
+              entryKey: const Key('account-update-preferences'),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) =>
+                  NativeNotificationPreferencesPage(
+                    load: widget.onLoadUpdatePreference!,
+                    save: widget.onSaveUpdatePreference!,
+                  ))),
+            ),
+            const SizedBox(height: 12),
+          ],
           Text('Explore & help', style: TextStyle(
             color: colors.onSurface, fontWeight: FontWeight.w800, fontSize: 19)),
           const SizedBox(height: 10),
@@ -453,6 +475,18 @@ class StudentAccountGatewayState extends State<StudentAccountGateway> {
               ? widget.onOpenNativeContact
               : () => Navigator.of(context).push(MaterialPageRoute<void>(
                   builder: (_) => const NativeInformationPage(kind: 'contact')))),
+          _AccountEntry(icon: Icons.info_outline_rounded, label: 'About SMIUNotes',
+            entryKey: const Key('account-about'),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => const NativePublicContentPage(kind: 'about')))),
+          _AccountEntry(icon: Icons.privacy_tip_outlined, label: 'Privacy notice',
+            entryKey: const Key('account-privacy'),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => const NativePublicContentPage(kind: 'privacy')))),
+          _AccountEntry(icon: Icons.gavel_outlined, label: 'Disclaimer',
+            entryKey: const Key('account-disclaimer'),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => const NativePublicContentPage(kind: 'disclaimer')))),
           if (_profile != null) ...[
             const SizedBox(height: 20),
             OutlinedButton.icon(

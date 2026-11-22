@@ -9,6 +9,7 @@ import '../services/bookmark_api.dart';
 import '../services/mobile_auth_api.dart';
 import '../services/mobile_notification_api.dart';
 import '../services/mobile_preferences_api.dart';
+import '../services/student_notification_preferences_api.dart';
 import '../services/native_student_forms_api.dart';
 import '../services/native_profile_settings_api.dart';
 import 'native_student_forms.dart';
@@ -74,6 +75,20 @@ class StagingStudentAccountPageState
       }
     }
     await runtime.controller.signOutAll(runtime.sessionApi.revokeAll);
+  }
+
+  Future<bool> loadUpdatePreference() async {
+    final data = await StudentNotificationPreferencesApi(
+      baseUrl: widget.httpsBaseUrl).read(_currentVerifiedToken());
+    if (data['notify_updates'] is! bool || data['notify_notes'] != false) {
+      throw const FormatException('Invalid notification preferences.');
+    }
+    return data['notify_updates'] as bool;
+  }
+
+  Future<void> saveUpdatePreference(bool enabled) async {
+    await StudentNotificationPreferencesApi(
+      baseUrl: widget.httpsBaseUrl).save(_currentVerifiedToken(), enabled);
   }
 
   Future<void> enablePush() async {
@@ -215,8 +230,8 @@ class StagingStudentAccountPageState
         runtime.controller.accessToken == null) { return; }
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => NativeNotificationPreferencesPage(
-        api: MobilePreferencesApi(baseUrl: widget.httpsBaseUrl),
-        currentAccessToken: _currentVerifiedToken,
+        load: loadUpdatePreference,
+        save: saveUpdatePreference,
       ),
     ));
   }
@@ -303,6 +318,8 @@ class StagingStudentAccountPageState
     onCreateDiscussion: openCommunityComposer,
     onOpenNotifications: openNotifications,
     onOpenNotificationPreferences: openNotificationPreferences,
+    onLoadUpdatePreference: loadUpdatePreference,
+    onSaveUpdatePreference: saveUpdatePreference,
     onOpenNativeCardVerification: openNativeCardVerification,
     onOpenNativeSupport: openNativeSupport,
     onOpenNativeContact: openNativeContact,

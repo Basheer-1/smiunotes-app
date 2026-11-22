@@ -1,43 +1,44 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:smiunotes_mobile/screens/native_notification_preferences_page.dart';
-import 'package:smiunotes_mobile/services/mobile_preferences_api.dart';
-
-class FakePreferencesApi extends MobilePreferencesApi {
-  FakePreferencesApi() : super(baseUrl: 'https://example.com');
-  bool updates = true;
-  int saves = 0;
-
-  @override
-  Future<bool> load(String token) async => updates;
-
-  @override
-  Future<bool> save(String token, bool enabled) async {
-    saves++;
-    updates = enabled;
-    return updates;
-  }
-}
 
 void main() {
-  testWidgets('only optional university updates can be turned off',
+  testWidgets('University alerts are loaded from server and saved per account',
       (tester) async {
-    final api = FakePreferencesApi();
+    bool serverValue = true;
+    final writes = <bool>[];
     await tester.pumpWidget(MaterialApp(
       home: NativeNotificationPreferencesPage(
-        api: api,
-        currentAccessToken: () => 'test-token',
+        load: () async => serverValue,
+        save: (value) async {
+          writes.add(value);
+          serverValue = value;
+        },
       ),
     ));
     await tester.pumpAndSettle();
-
-    expect(find.text('Essential account alerts'), findsOneWidget);
-    expect(find.text('Every new note published'), findsOneWidget);
-    expect(find.byType(SwitchListTile), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('notify-university-updates')));
+    expect(find.byKey(const Key('notify-updates-toggle')), findsOneWidget);
+    expect(find.text('Newly published notes'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('notify-updates-toggle')));
     await tester.pumpAndSettle();
-    expect(api.saves, 1);
-    expect(api.updates, isFalse);
+    expect(writes, [false]);
+    expect(serverValue, isFalse);
+  });
+
+  testWidgets('Server rejection does not alter the stored UI preference',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: NativeNotificationPreferencesPage(
+        load: () async => true,
+        save: (_) async => throw StateError('fail closed'),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('notify-updates-toggle')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('preference-error')), findsOneWidget);
+    final toggle = tester.widget<SwitchListTile>(
+      find.byKey(const Key('notify-updates-toggle')));
+    expect(toggle.value, isTrue);
   });
 }
