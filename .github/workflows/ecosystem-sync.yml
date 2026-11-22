@@ -1,0 +1,24 @@
+name: SMIUNotes Website–Android Ecosystem Sync
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Detect website changes after deployment, even with no Android commits.
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  website-app-compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify native Android supported features
+        run: node scripts/check-ecosystem-contract.mjs
+      - name: Compare latest published website feature contract with Android
+        run: node scripts/check-ecosystem-contract.mjs --remote
