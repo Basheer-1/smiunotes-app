@@ -132,6 +132,7 @@ class NativeStudentFormsApi {
     required String name,
     required bool publicName,
     required bool publicAmount,
+    required int startedAt,
     bool signedIn = true,
   }) async {
     final result = await _send('support', image: receipt, imageField: 'proof',
@@ -139,6 +140,7 @@ class NativeStudentFormsApi {
       fields: {
         'method_id': methodId, 'amount': amount, 'phone': phone,
         'name': name, 'note': note, 'consent': 'yes',
+        'started_at': startedAt.toString(),
         'public_name': publicName ? 'yes' : 'no',
         'public_amount': publicAmount ? 'yes' : 'no',
       });
