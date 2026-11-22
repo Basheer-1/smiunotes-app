@@ -64,7 +64,7 @@ class _NativeCataloguePageState extends State<NativeCataloguePage> {
             .whereType<Map<String, dynamic>>().toList();
         final departments = (data['departments'] as List<dynamic>? ?? [])
             .whereType<Map<String, dynamic>>().toList();
-        final semesters = (data['semesters'] as List<dynamic>? ?? [])
+        final semesters = subjects.map((s) => s['semester'])
             .whereType<num>().map((n) => n.toInt()).toSet().toList()..sort();
         final visibleDepartments = departments.where((dept) => subjects
             .any((s) => s['department_id']?.toString() ==
