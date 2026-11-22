@@ -504,7 +504,7 @@ class _QuickLink extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: archiveBlue, size: 27),
+          Icon(icon, color: Theme.of(context).colorScheme.primary, size: 27),
           const SizedBox(height: 9),
           Text(title, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
