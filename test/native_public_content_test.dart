@@ -23,7 +23,11 @@ void main() {
     ));
     await tester.pumpAndSettle();
     expect(find.text('Student verification and profile'), findsWidgets);
-    await tester.scrollUntilVisible(find.text('Optional website support'), 180);
+    await tester.scrollUntilVisible(find.text('Optional website support'), 180,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('native-public-content-privacy')),
+        matching: find.byType(Scrollable),
+      ).first);
     expect(find.text('Optional website support'), findsOneWidget);
   });
 }
