@@ -39,7 +39,7 @@ class _NativeContactFormPageState extends State<NativeContactFormPage> {
         email: email.text.trim(), topic: topic,
         subject: subject.text.trim(), message: message.text.trim(),
         proof: proof, elapsedMs: elapsed, signedIn: widget.signedIn);
-      if (mounted) setState(() => success = true);
+      if (mounted) { setState(() => success = true); }
     } catch (_) {
       if (mounted) setState(() => error =
         'Message could not be sent. Check your connection and try again.');
@@ -121,7 +121,7 @@ class _NativeStudentCardFormPageState extends State<NativeStudentCardFormPage> {
   Future<void> pick() async {
     try {
       final bytes = await NativeStudentFormsApi.chooseImage();
-      if (bytes != null && mounted) setState(() { card = bytes; error = null; });
+      if (bytes != null && mounted) { setState(() { card = bytes; error = null; }); }
     } catch (_) {
       if (mounted) setState(() => error =
         'Choose a JPG, PNG or WebP between 2 KB and 2.5 MB.');
@@ -132,7 +132,7 @@ class _NativeStudentCardFormPageState extends State<NativeStudentCardFormPage> {
     setState(() { busy = true; error = null; });
     try {
       await widget.api.submitStudentCard(card!);
-      if (mounted) setState(() { done = true; card = null; });
+      if (mounted) { setState(() { done = true; card = null; }); }
     } catch (_) {
       if (mounted) setState(() => error =
         'Card was not submitted. Check your status and try again.');
@@ -236,7 +236,7 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
         name: widget.signedIn ? '' : guestName.text.trim(),
         publicName: publicName, publicAmount: publicName && publicAmount,
         signedIn: widget.signedIn);
-      if (mounted) setState(() { done = true; receipt = null; });
+      if (mounted) { setState(() { done = true; receipt = null; }); }
     } catch (_) {
       if (mounted) setState(() => error =
         'Submission could not be confirmed. If the receipt was uploaded, '
@@ -253,9 +253,11 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
       future: details,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          if (snapshot.hasError) return Center(child: TextButton(
-            onPressed: () => setState(() { details = _loadMethods(); }),
-            child: const Text('Unable to load methods. Retry')));
+          if (snapshot.hasError) {
+            return Center(child: TextButton(
+              onPressed: () => setState(() { details = _loadMethods(); }),
+              child: const Text('Unable to load methods. Retry')));
+          }
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.data!['eligible'] != true) {
@@ -265,8 +267,10 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
         }
         final methods = (snapshot.data!['methods'] as List<dynamic>? ?? [])
             .whereType<Map<String, dynamic>>().toList();
-        if (methods.isEmpty) return const Center(child: Text(
-          'No payment methods are currently available.'));
+        if (methods.isEmpty) {
+          return const Center(child: Text(
+            'No payment methods are currently available.'));
+        }
         final chosen = methodId ?? methods.first['id']?.toString() ?? '';
         // Selection is initialized on method load; do not mutate state in build.
         final selection = methods.firstWhere(
