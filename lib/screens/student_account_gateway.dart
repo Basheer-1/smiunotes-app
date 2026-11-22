@@ -23,6 +23,9 @@ class StudentAccountGateway extends StatefulWidget {
     this.onOpenVerifiedNote,
     this.onOpenNotifications,
     this.onOpenNotificationPreferences,
+    this.onOpenNativeCardVerification,
+    this.onOpenNativeSupport,
+    this.onOpenNativeContact,
     this.onOpenBookmarks,
     this.onEnablePush,
     this.onDisablePush,
@@ -45,6 +48,9 @@ class StudentAccountGateway extends StatefulWidget {
   final VoidCallback? onOpenVerifiedNote;
   final VoidCallback? onOpenNotifications;
   final VoidCallback? onOpenNotificationPreferences;
+  final VoidCallback? onOpenNativeCardVerification;
+  final VoidCallback? onOpenNativeSupport;
+  final VoidCallback? onOpenNativeContact;
   final VoidCallback? onOpenBookmarks;
   final Future<void> Function()? onEnablePush;
   final Future<void> Function()? onDisablePush;
@@ -326,6 +332,7 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                   onPushChanged: _togglePush,
                   onSignOutAll: _confirmLogoutAll,
                   onLoadAvatar: widget.onLoadAvatar,
+                  onOpenNativeCardVerification: widget.onOpenNativeCardVerification,
                 ),
               )),
             ),
@@ -395,12 +402,16 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
           const SizedBox(height: 10),
           _AccountEntry(icon: Icons.favorite_outline, label: 'Support SMIUNotes',
             entryKey: const Key('account-support'),
-            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
-              builder: (_) => const NativeInformationPage(kind: 'support')))),
+            onTap: _profile != null && widget.onOpenNativeSupport != null
+              ? widget.onOpenNativeSupport
+              : () => Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (_) => const NativeInformationPage(kind: 'support')))),
           _AccountEntry(icon: Icons.mail_outline, label: 'Contact Us',
             entryKey: const Key('account-contact'),
-            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
-              builder: (_) => const NativeInformationPage(kind: 'contact')))),
+            onTap: _profile != null && widget.onOpenNativeContact != null
+              ? widget.onOpenNativeContact
+              : () => Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (_) => const NativeInformationPage(kind: 'contact')))),
           if (_profile != null) ...[
             const SizedBox(height: 20),
             OutlinedButton.icon(
