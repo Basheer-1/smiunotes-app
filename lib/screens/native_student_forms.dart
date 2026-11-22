@@ -188,7 +188,20 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
     busy = false, done = false;
 
   @override
-  void initState() { super.initState(); details = widget.api.supportOptions(signedIn: widget.signedIn); }
+  void initState() {
+    super.initState();
+    details = _loadMethods();
+  }
+
+  Future<Map<String, dynamic>> _loadMethods() async {
+    final data = await widget.api.supportOptions(signedIn: widget.signedIn);
+    final methods = (data['methods'] as List<dynamic>? ?? [])
+        .whereType<Map<String, dynamic>>().toList();
+    if (mounted && methods.isNotEmpty) {
+      setState(() => methodId = methods.first['id']?.toString());
+    }
+    return data;
+  }
   @override
   void dispose() { amount.dispose(); phone.dispose(); note.dispose(); guestName.dispose(); super.dispose(); }
 
@@ -202,7 +215,9 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
   }
 
   Future<void> submit() async {
-    if (busy || !consent || receipt == null || methodId == null) return;
+    if (busy || !consent || receipt == null) return;
+    final chosenMethod = methodId;
+    if (chosenMethod == null || chosenMethod.isEmpty) return;
     if (!widget.signedIn && guestName.text.trim().length < 2) {
       setState(() => error = 'Enter your name for payment review.');
       return;
@@ -216,7 +231,7 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
     setState(() { busy = true; error = null; });
     try {
       await widget.api.submitSupport(
-        receipt: receipt!, methodId: methodId!, amount: amount.text.trim(),
+        receipt: receipt!, methodId: chosenMethod, amount: amount.text.trim(),
         phone: phone.text.trim(), note: note.text.trim(),
         name: widget.signedIn ? '' : guestName.text.trim(),
         publicName: publicName, publicAmount: publicName && publicAmount,
@@ -239,7 +254,7 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           if (snapshot.hasError) return Center(child: TextButton(
-            onPressed: () => setState(() { details = widget.api.supportOptions(signedIn: widget.signedIn); }),
+            onPressed: () => setState(() { details = _loadMethods(); }),
             child: const Text('Unable to load methods. Retry')));
           return const Center(child: CircularProgressIndicator());
         }
@@ -253,7 +268,7 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
         if (methods.isEmpty) return const Center(child: Text(
           'No payment methods are currently available.'));
         final chosen = methodId ?? methods.first['id']?.toString() ?? '';
-        methodId ??= chosen;
+        // Selection is initialized on method load; do not mutate state in build.
         final selection = methods.firstWhere(
           (m) => m['id']?.toString() == chosen, orElse: () => methods.first);
         return ListView(
