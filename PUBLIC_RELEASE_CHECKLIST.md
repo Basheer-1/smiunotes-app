@@ -39,3 +39,10 @@ The currently connected GitHub integration supports repository/file writes but *
 - Do not interpret a pre-start failure as proof of leaked credentials, or as proof that credentials are safe.
 
 Re-check this list and record the production release commit when the hold is lifted.
+
+## Follow-up verification — 22 November 2026 (16:32 UTC)
+
+- Website isolated security CI run 45042927556 was retried (attempt 2) and still finished **failure before any steps were executed**; it is an infrastructure/settings blocker, **not a scan finding**. Check the run's job-level GitHub UI setup annotation and account Actions usage/billing/repository settings. Do not suppress the scan or claim a pass.
+- GitHub API reports **403: Upgrade to GitHub Pro or make this repository public to enable this feature** for private website rulesets. Do not pay or make public merely to bypass the audit gate. After safe release, public repository rulesets may be configured by the owner.
+- The connected GitHub integration cannot update repository visibility or branch protection; GitHub repository owner must perform those settings changes once audit gates are satisfied.
+- Public mobile repository currently returns an empty rulesets list, so main branch protection remains an actionable owner-level task.
