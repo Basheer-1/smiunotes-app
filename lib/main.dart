@@ -176,7 +176,7 @@ class _AppShellState extends State<AppShell> {
                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                       child: Row(
                         children: [
-                          const Icon(Icons.auto_stories_rounded, color: Theme.of(context).colorScheme.primary, size: 28),
+                          Icon(Icons.auto_stories_rounded, color: Theme.of(context).colorScheme.primary, size: 28),
                           const SizedBox(width: 9),
                           Text('SMIUNotes', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
                           const Spacer(),
@@ -194,7 +194,7 @@ class _AppShellState extends State<AppShell> {
                                 builder: (_) => const NotificationInboxPage(),
                               ));
                             },
-                            icon: const Icon(Icons.notifications_none_rounded, color: Theme.of(context).colorScheme.primary),
+                            icon: Icon(Icons.notifications_none_rounded, color: Theme.of(context).colorScheme.primary),
                           ),
                         ],
                       ),
@@ -428,7 +428,7 @@ class _HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.auto_stories_rounded, color: Theme.of(context).colorScheme.primary, size: 32),
+              Icon(Icons.auto_stories_rounded, color: Theme.of(context).colorScheme.primary, size: 32),
               const SizedBox(height: 12),
               Text('Ready to learn?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22, fontWeight: FontWeight.w800)),
               const SizedBox(height: 7),
