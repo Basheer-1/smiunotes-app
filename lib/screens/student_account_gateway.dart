@@ -367,6 +367,7 @@ class StudentAccountGatewayState extends State<StudentAccountGateway> {
                       setState(() => _profile = fresh);
                       widget.onProfileChanged?.call(fresh);
                     }
+                    return fresh;
                   },
                   onOpenLibrary: widget.onOpenBookmarks,
                   onOpenNotifications: widget.onOpenNotifications,
