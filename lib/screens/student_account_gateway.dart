@@ -163,7 +163,7 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
     }
   }
 
-  Future<void> _confirmLogoutAll() async {
+  Future<bool> _confirmLogoutAll() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -178,7 +178,11 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
         ],
       ),
     );
-    if (confirmed == true && mounted) { await _logoutAll(); }
+    if (confirmed == true && mounted) {
+      await _logoutAll();
+      return true;
+    }
+    return false;
   }
 
   Future<void> _logoutAll() async {
@@ -399,7 +403,9 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
             const SizedBox(height: 8),
             OutlinedButton.icon(
               key: const Key('account-signout-all'),
-              onPressed: _busy || widget.signOutAll == null ? null : _confirmLogoutAll,
+              onPressed: _busy || widget.signOutAll == null ? null : () {
+                _confirmLogoutAll();
+              },
               icon: const Icon(Icons.phonelink_erase_rounded),
               label: const Text('Sign out all devices'),
             ),
