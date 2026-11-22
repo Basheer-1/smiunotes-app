@@ -80,6 +80,35 @@ void main() {
     expect(find.byKey(const Key('account-open-login')), findsOneWidget);
   });
 
+  testWidgets('protected action opens login modal without navigating to Profile',
+      (tester) async {
+    final gatewayKey = GlobalKey<StudentAccountGatewayState>();
+    StudentProfile? current;
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: StudentAccountGateway(
+        key: gatewayKey,
+        api: const FakeGatewayApi(),
+        challengeProvider: () async => 'mock-proof',
+        acceptAndVerify: (_) async { current = profile; },
+        restoreAndVerify: () async => false,
+        loadValidatedProfile: () => current,
+        signOut: () async {},
+      )),
+    ));
+    await tester.pumpAndSettle();
+    final future = gatewayKey.currentState!.promptSignIn();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('student-id')), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('student-id')), 'CSC-TEST-001');
+    await tester.enterText(find.byKey(const Key('password')), 'pass-example');
+    await tester.ensureVisible(find.byKey(const Key('login-submit')));
+    await tester.tap(find.byKey(const Key('login-submit')));
+    await tester.pumpAndSettle();
+    expect(await future, isTrue);
+    expect(find.byKey(const Key('student-id')), findsNothing);
+    expect(find.text('QA Student'), findsOneWidget);
+  });
+
   testWidgets('Session restore cannot show an account without a valid profile',
       (tester) async {
     await tester.pumpWidget(MaterialApp(
