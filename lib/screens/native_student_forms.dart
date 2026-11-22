@@ -247,6 +247,51 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
     }
   }
 
+  Widget _supportHero(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(26),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft, end: Alignment.bottomRight,
+          colors: [colors.primaryContainer, colors.surface],
+        ),
+        border: Border.all(color: colors.outlineVariant),
+        boxShadow: [
+          BoxShadow(color: colors.shadow.withValues(alpha: .07),
+            blurRadius: 26, offset: const Offset(0, 9)),
+        ],
+      ),
+      padding: const EdgeInsets.all(22),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: colors.primary.withValues(alpha: .13),
+            borderRadius: BorderRadius.circular(15)),
+          child: Icon(Icons.favorite_rounded, color: colors.primary, size: 30),
+        ),
+        const SizedBox(height: 16),
+        Text('Keep good notes free.',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w900)),
+        const SizedBox(height: 9),
+        Text('SMIUNotes is built by students, for students. '
+          'Optional support helps maintain hosting and improvements, '
+          'without charging anyone to study.',
+          style: TextStyle(color: colors.onSurfaceVariant, height: 1.5)),
+        const SizedBox(height: 13),
+        Wrap(spacing: 8, runSpacing: 8, children: [
+          Chip(avatar: Icon(Icons.menu_book_outlined,
+            size: 17, color: colors.primary),
+            label: const Text('Always free')),
+          Chip(avatar: Icon(Icons.verified_user_outlined,
+            size: 17, color: colors.primary),
+            label: const Text('Manual bank review')),
+        ]),
+      ]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Support SMIUNotes')),
@@ -256,9 +301,16 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
         if (!snapshot.hasData) {
           if (snapshot.hasError) {
             final notDeployed = snapshot.error is NativeSupportNotAvailable;
-            return Center(child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
+            return ListView(
+              key: const Key('native-support-landing'),
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 32),
+              children: [
+                _supportHero(context),
+                const SizedBox(height: 18),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(21),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Icon(notDeployed ? Icons.info_outline : Icons.wifi_off_outlined,
                   size: 38, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(height: 12),
@@ -291,10 +343,28 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
                     child: const Text('Retry'),
                   ),
                 ],
-              ]),
-            ));
+                    ]),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text('Independent student project, not an SMIU payment. '
+                  'Contributions are voluntary and unlock no extra features.',
+                  style: TextStyle(fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  textAlign: TextAlign.center),
+              ],
+            );
           }
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text('Checking secure support options…',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            ]),
+          ));
         }
         if (snapshot.data!['eligible'] != true) {
           return const Center(child: Padding(padding: EdgeInsets.all(24),
@@ -315,8 +385,11 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
           key: const Key('native-support-form'),
           padding: const EdgeInsets.all(20),
           children: [
-            const Text('Support free student notes',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+            _supportHero(context),
+            const SizedBox(height: 22),
+            Text('Transfer details',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w900)),
             const SizedBox(height: 12),
             const Text('Only submit after making your transfer. '
               'Payment confirmation requires independent admin review.'),
