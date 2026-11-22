@@ -32,6 +32,7 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
   final email = TextEditingController();
   final code = TextEditingController();
   final newPassword = TextEditingController();
+  final confirmPassword = TextEditingController();
   late Future<bool> availability;
   String? challenge, error;
   bool registration = false, busy = false, revealPassword = false;
@@ -49,11 +50,13 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
     email.dispose();
     code.dispose();
     newPassword.dispose();
+    confirmPassword.dispose();
     super.dispose();
   }
 
   Future<void> execute() async {
-    if (!form.currentState!.validate() || busy ||
+    if (!form.currentState!.validate() ||
+        (registration && newPassword.text != confirmPassword.text) || busy ||
         widget.challengeProvider == null || widget.onSession == null) {
       return;
     }
@@ -178,10 +181,40 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
           child: ListView(
             padding: const EdgeInsets.all(24),
             children: [
-              Text(registration ? 'Register your email' : 'Welcome back',
+                      const Icon(Icons.auto_stories_rounded, size: 35),
+              const SizedBox(height: 12),
+              Text(registration ? 'Create your student account' : 'Welcome back',
                 style: const TextStyle(
-                  fontSize: 27, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 14),
+                  fontSize: 26, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              Text(registration
+                ? 'Use your SMIU Student ID and email OTP. '
+                  'Student Card verification is a separate step.'
+                : 'Sign in with your existing SMIUNotes account.',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              const SizedBox(height: 18),
+              Row(children: [
+                Expanded(child: ChoiceChip(
+                  key: const Key('login-mode-signin'),
+                  label: const Center(child: Text('Sign in')),
+                  selected: !registration,
+                  onSelected: busy ? null : (_) => setState(() {
+                    registration = false; challenge = null; error = null;
+                    code.clear();
+                  }),
+                )),
+                const SizedBox(width: 10),
+                Expanded(child: ChoiceChip(
+                  key: const Key('login-mode-register'),
+                  label: const Center(child: Text('Register')),
+                  selected: registration,
+                  onSelected: busy ? null : (_) => setState(() {
+                    registration = true; challenge = null; error = null;
+                    code.clear();
+                  }),
+                )),
+              ]),
+              const SizedBox(height: 15),
               TextFormField(
                 key: const Key('student-id'),
                 controller: studentId,
@@ -196,8 +229,108 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                 TextFormField(
                   key: const Key('email'),
                   controller: email,
+                  maxLength: 254,
+                  keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
-                    labelText: 'Email (first registration only)'),
+                    labelText: 'Email address'),
+                  validator: (value) =>
+                    RegExp(r'^[^\\s@]+@[^\\s@]+\\.[^\\s@]+
+              ] else if (registration) ...[
+                TextFormField(
+                  key: const Key('otp-code'),
+                  controller: code,
+                  maxLength: 6,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: '6-digit code'),
+                  validator: (value) => RegExp(r'^\d{6}$')
+                        .hasMatch((value ?? '').trim())
+                      ? null : 'Enter the 6-digit code',
+                ),
+                Text('Confirming the code will complete registration with '
+                  'your chosen password.',
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              ] else
+                TextFormField(
+                  key: const Key('password'),
+                  controller: password,
+                  obscureText: !revealPassword,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    suffixIcon: IconButton(
+                      onPressed: () => setState(() =>
+                        revealPassword = !revealPassword),
+                      icon: Icon(revealPassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined),
+                    ),
+                  ),
+                  validator: (value) => (value ?? '').isNotEmpty
+                      ? null : 'Enter your password',
+                ),
+              const SizedBox(height: 14),
+              if (error != null) Text(error!,
+                style: const TextStyle(color: Colors.red)),
+              FilledButton(
+                key: const Key('login-submit'),
+                onPressed: busy ? null : execute,
+                child: Text(busy ? 'Processing…'
+                  : registration
+                    ? challenge == null ? 'Send verification code' : 'Verify & create account'
+                    : 'Sign in'),
+              ),
+              if (!registration)
+                TextButton(
+                  key: const Key('open-account-recovery'),
+                  onPressed: busy ? null : () {
+                    Navigator.of(context).push(MaterialPageRoute<void>(
+                      builder: (_) => StudentRecoveryPage(
+                        api: widget.api,
+                        challengeProvider: widget.challengeProvider!,
+                      ),
+                    ));
+                  },
+                  child: const Text('Forgot password? Recover account'),
+                ),
+              TextButton(
+                onPressed: busy ? null : () => setState(() {
+                  registration = !registration;
+                  challenge = null;
+                  error = null;
+                  code.clear();
+                  newPassword.clear();
+                  confirmPassword.clear();
+                }),
+                child: Text(registration
+                  ? 'Already registered? Sign in'
+                  : 'First time here? Register your email'),
+              ),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+}
+)
+                      .hasMatch((value ?? '').trim())
+                      ? null : 'Enter a valid email address',
+                ),
+                TextFormField(
+                  key: const Key('new-password'),
+                  controller: newPassword,
+                  obscureText: !revealPassword,
+                  decoration: const InputDecoration(labelText: 'Create password'),
+                  validator: (v) => (v?.length ?? 0) >= 12 &&
+                          (v?.length ?? 0) <= 128
+                      ? null : 'Use 12–128 characters',
+                ),
+                TextFormField(
+                  key: const Key('confirm-password'),
+                  controller: confirmPassword,
+                  obscureText: !revealPassword,
+                  decoration: const InputDecoration(labelText: 'Confirm password'),
+                  validator: (v) => v == newPassword.text
+                      ? null : 'Passwords do not match',
                 ),
               ] else if (registration) ...[
                 TextFormField(
