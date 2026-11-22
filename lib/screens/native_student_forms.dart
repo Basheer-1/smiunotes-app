@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:material_ui/material_ui.dart';
 import '../services/native_student_forms_api.dart';
 import '../services/mobile_turnstile.dart';
+import '../services/external_link_opener.dart';
 
 /// Native contact form using the shared website intake and contact-scoped proof.
 class NativeContactFormPage extends StatefulWidget {
@@ -254,9 +255,44 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           if (snapshot.hasError) {
-            return Center(child: TextButton(
-              onPressed: () => setState(() { details = _loadMethods(); }),
-              child: const Text('Unable to load methods. Retry')));
+            final notDeployed = snapshot.error is NativeSupportNotAvailable;
+            return Center(child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Icon(notDeployed ? Icons.info_outline : Icons.wifi_off_outlined,
+                  size: 38, color: Theme.of(context).colorScheme.primary),
+                const SizedBox(height: 12),
+                Text(notDeployed
+                  ? 'Native Support submissions are not yet available on this server.'
+                  : 'Could not load payment methods. Check your connection.',
+                  key: const Key('support-unavailable-message'),
+                  textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  key: const Key('support-website-fallback'),
+                  onPressed: () async {
+                    try {
+                      await const ExternalLinkOpener().openHttps(
+                        'https://smiunotes.com/support');
+                    } catch (_) {
+                      if (!context.mounted) { return; }
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Unable to open the website in a browser.'),
+                      ));
+                    }
+                  },
+                  icon: const Icon(Icons.open_in_browser),
+                  label: const Text('Open official Support page'),
+                ),
+                if (!notDeployed) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: () => setState(() { details = _loadMethods(); }),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ]),
+            ));
           }
           return const Center(child: CircularProgressIndicator());
         }
