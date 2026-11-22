@@ -46,3 +46,28 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Private developer/operator files (do not commit)
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p12
+*.p8
+*.pem
+*.key
+key.properties
+**/key.properties
+**/service-account*.json
+**/*service_account*.json
+**/*firebase-admin*.json
+**/secrets.properties
+*.mobileprovision
+*.cer
+*.der
+*.dump
+*.sql.gz
+/backups/
+/student-data/
+/private/
