@@ -6,6 +6,7 @@ import '../services/mobile_auth_api.dart';
 import 'student_login_page.dart';
 import '../widgets/profile_avatar.dart';
 import 'native_information_pages.dart';
+import 'native_profile_settings_page.dart';
 
 /// Staging-only account experience; NOT constructed by the default app.
 /// A login is visible only after encrypted storage and live profile validation.
@@ -302,6 +303,25 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
               ),
             ),
             const SizedBox(height: 16),
+            _AccountEntry(
+              icon: Icons.manage_accounts_outlined,
+              label: 'Profile settings',
+              entryKey: const Key('account-profile-settings'),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) => NativeProfileSettingsPage(
+                  profile: _profile!,
+                  api: widget.api,
+                  challengeProvider: widget.challengeProvider,
+                  darkMode: widget.darkMode,
+                  onThemeChanged: widget.onThemeChanged,
+                  pushAvailable: widget.pushAvailable,
+                  pushEnabled: _pushEnabled,
+                  pushBusy: _pushBusy,
+                  onPushChanged: _togglePush,
+                  onSignOutAll: _confirmLogoutAll,
+                ),
+              )),
+            ),
             _AccountEntry(
               icon: Icons.bookmarks_outlined, label: 'My study library',
               onTap: widget.onOpenBookmarks,
