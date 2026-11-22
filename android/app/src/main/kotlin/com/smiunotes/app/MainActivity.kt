@@ -1,6 +1,7 @@
 package com.smiunotes.app
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.content.pm.PackageManager
@@ -19,9 +20,32 @@ class MainActivity : FlutterActivity() {
     private val channelName = "smiunotes/push"
     private val notificationPermissionRequest = 5127
     private var pendingTokenResult: MethodChannel.Result? = null
+    private val imagePickerRequest = 6134
+    private var pendingImageResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "smiunotes/media_picker")
+            .setMethodCallHandler { call, result ->
+                if (call.method != "chooseImage") {
+                    result.notImplemented()
+                } else if (pendingImageResult != null) {
+                    result.error("BUSY", "Image picker is already open.", null)
+                } else {
+                    pendingImageResult = result
+                    try {
+                        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                            addCategory(Intent.CATEGORY_OPENABLE)
+                            type = "image/*"
+                            putExtra(Intent.EXTRA_MIME_TYPES,
+                                arrayOf("image/jpeg", "image/png", "image/webp"))
+                        }, imagePickerRequest)
+                    } catch (_: Exception) {
+                        pendingImageResult = null
+                        result.error("PICKER_UNAVAILABLE", "Cannot open image picker.", null)
+                    }
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "smiunotes/external_links")
             .setMethodCallHandler { call, result ->
                 if (call.method != "openUrl") {
@@ -77,6 +101,42 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    @Deprecated("Android framework callback used for the document picker")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != imagePickerRequest) return
+        val callback = pendingImageResult ?: return
+        pendingImageResult = null
+        if (resultCode != Activity.RESULT_OK || data?.data == null) {
+            callback.success(null)
+            return
+        }
+        try {
+            val uri = data.data!!
+            val bytes = contentResolver.openInputStream(uri)?.use { stream ->
+                val output = java.io.ByteArrayOutputStream()
+                val buffer = ByteArray(8192)
+                while (true) {
+                    val count = stream.read(buffer)
+                    if (count < 0) break
+                    if (output.size() + count > 2_500_000) {
+                        throw IllegalArgumentException("Image too large.")
+                    }
+                    output.write(buffer, 0, count)
+                }
+                output.toByteArray()
+            }
+            if (bytes == null || bytes.size < 2000) {
+                callback.error("INVALID_IMAGE", "Choose a valid image.", null)
+            } else {
+                // Flutter StandardMessageCodec maps ByteArray to Uint8List.
+                callback.success(bytes)
+            }
+        } catch (_: Exception) {
+            callback.error("INVALID_IMAGE", "Image must be 2 KB-2.5 MB.", null)
+        }
     }
 
     private fun obtainToken(result: MethodChannel.Result) {
