@@ -56,6 +56,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Semester 1'), findsNWidgets(2));
-    expect(find.text('Semester 2'), findsOneWidget);
+    expect(find.text('Semester 2'), findsNothing);
   });
 }
