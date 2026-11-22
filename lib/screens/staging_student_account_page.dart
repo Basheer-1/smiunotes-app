@@ -95,7 +95,7 @@ class StagingStudentAccountPageState
   void openVerificationStatus() {
     final profile = runtime.coordinator.profile;
     if (!mounted || !runtime.coordinator.authenticated ||
-        profile == null) return;
+        profile == null) { return; }
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => StudentVerificationStatusPage(
         profile: profile,
