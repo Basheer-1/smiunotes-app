@@ -23,6 +23,7 @@ jobs:
       - name: Verify pubspec.lock has not changed
         run: git diff --exit-code -- pubspec.lock
       - run: node --check scripts/check-release-api.mjs && node --test test/release_api_gate.test.mjs
+      - run: node scripts/check-ecosystem-contract.mjs && node --test test/ecosystem_contract.test.mjs
       - run: node scripts/check-m7-release-config.mjs
       - run: flutter analyze
       - run: flutter test
