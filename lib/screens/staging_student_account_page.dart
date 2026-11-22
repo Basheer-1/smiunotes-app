@@ -60,7 +60,12 @@ class StagingStudentAccountPageState
 
   Future<void> signOutAllDevices() async {
     if (pushEnabled) {
-      await push.disable(currentAccessToken: runtime.controller.accessToken);
+      try {
+        await push.disable(currentAccessToken: runtime.controller.accessToken);
+      } catch (_) {
+        // Even if remote FCM revoke is unavailable, secure session wipe
+        // must still continue.
+      }
     }
     await runtime.controller.signOutAll(runtime.sessionApi.revokeAll);
   }
