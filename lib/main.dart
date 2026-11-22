@@ -109,7 +109,7 @@ class _AppShellState extends State<AppShell> {
                         children: [
                           const Icon(Icons.auto_stories_rounded, color: archiveBlue, size: 28),
                           const SizedBox(width: 9),
-                          const Text('SMIUNotes', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: ink)),
+                          const Text('SMIUNotes', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
                           const Spacer(),
                           IconButton(
                             tooltip: 'Notifications',
@@ -232,11 +232,11 @@ class _AppShellState extends State<AppShell> {
                               )
                             else
                               Icon(icons[index], size: 23,
-                                color: active ? archiveBlue : muted),
+                                color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant),
                             const SizedBox(height: 4),
                             FittedBox(
                               fit: BoxFit.scaleDown,
-                              child: Text(labels[index], style: TextStyle(fontSize: 11, color: active ? archiveBlue : muted, fontWeight: active ? FontWeight.w800 : FontWeight.w500)),
+                              child: Text(labels[index], style: TextStyle(fontSize: 11, color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: active ? FontWeight.w800 : FontWeight.w500)),
                             ),
                           ],
                         ),
@@ -333,18 +333,18 @@ class _HomePage extends StatelessWidget {
       key: const Key('home-page'),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 112),
       children: [
-        const Text('YOUR STUDENT COMPANION', style: TextStyle(fontSize: 11, letterSpacing: 2, fontWeight: FontWeight.w800, color: archiveBlue)),
+        Text('YOUR STUDENT COMPANION', style: TextStyle(fontSize: 11, letterSpacing: 2, fontWeight: FontWeight.w800, color: archiveBlue)),
         const SizedBox(height: 10),
-        const Text('Everything SMIU,\nin one place.', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1.15, color: ink)),
+        Text('Everything SMIU,\nin one place.', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1.15, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 10),
-        const Text('Find notes, stay updated and connect with your university community.', style: TextStyle(fontSize: 14, height: 1.5, color: muted)),
+        Text('Find notes, stay updated and connect with your university community.', style: TextStyle(fontSize: 14, height: 1.5, color: Theme.of(context).colorScheme.onSurfaceVariant)),
         const SizedBox(height: 12),
         Text(
           apiConfigured
               ? 'Explore public resources freely. Sign in for your personal library.'
               : 'M4 testing build • Preview mode: live content and student login are not configured.',
           key: const Key('testing-build-status'),
-          style: const TextStyle(color: muted, fontSize: 11),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11),
         ),
         const SizedBox(height: 24),
         _Glass(
@@ -354,9 +354,9 @@ class _HomePage extends StatelessWidget {
             children: [
               const Icon(Icons.auto_stories_rounded, color: archiveBlue, size: 32),
               const SizedBox(height: 12),
-              const Text('Ready to learn?', style: TextStyle(color: ink, fontSize: 22, fontWeight: FontWeight.w800)),
+              Text('Ready to learn?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22, fontWeight: FontWeight.w800)),
               const SizedBox(height: 7),
-              const Text('Explore study notes organised around your academic journey.', style: TextStyle(color: muted, height: 1.5)),
+              Text('Explore study notes organised around your academic journey.', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.5)),
               const SizedBox(height: 16),
               FilledButton.icon(
                 key: const Key('explore-notes'),
@@ -369,7 +369,7 @@ class _HomePage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 25),
-        const Text('Explore SMIUNotes', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: ink)),
+        Text('Explore SMIUNotes', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 14),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -423,9 +423,9 @@ class _QuickLink extends StatelessWidget {
         children: [
           Icon(icon, color: archiveBlue, size: 27),
           const SizedBox(height: 9),
-          Text(title, style: const TextStyle(fontSize: 14, color: ink, fontWeight: FontWeight.w800)),
+          Text(title, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
-          Text(caption, textAlign: TextAlign.center, maxLines: 2, style: const TextStyle(fontSize: 11, color: muted)),
+          Text(caption, textAlign: TextAlign.center, maxLines: 2, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
         ],
       ),
     ),
