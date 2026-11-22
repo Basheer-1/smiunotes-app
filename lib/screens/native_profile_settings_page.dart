@@ -39,7 +39,7 @@ class NativeProfileSettingsPage extends StatefulWidget {
   final bool darkMode;
   final ValueChanged<bool>? onThemeChanged;
   final NativeProfileSettingsApi? profileSettingsApi;
-  final Future<void> Function()? onAvatarChanged;
+  final Future<StudentProfile?> Function()? onAvatarChanged;
   final VoidCallback? onOpenLibrary;
   final VoidCallback? onOpenNotificationPreferences;
   final VoidCallback? onOpenNotifications;
@@ -61,10 +61,12 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
   bool _busy = false;
   String? _feedback;
   int _avatarRevision = 0;
+  late StudentProfile _liveProfile;
 
   @override
   void initState() {
     super.initState();
+    _liveProfile = widget.profile;
     _darkMode = widget.darkMode;
     _pushEnabled = widget.pushEnabled;
     _refresh();
@@ -79,6 +81,7 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
   @override
   void didUpdateWidget(covariant NativeProfileSettingsPage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.profile != oldWidget.profile) _liveProfile = widget.profile;
     if (widget.darkMode != oldWidget.darkMode) _darkMode = widget.darkMode;
     if (widget.pushEnabled != oldWidget.pushEnabled) {
       _pushEnabled = widget.pushEnabled;
@@ -123,8 +126,9 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
       } else {
         await api.savePhoto(bytes!);
       }
-      await widget.onAvatarChanged?.call();
+      final refreshed = await widget.onAvatarChanged?.call();
       if (mounted) { setState(() {
+        if (refreshed != null) _liveProfile = refreshed;
         _avatarRevision++;
         _feedback = remove ? 'Profile photo removed.' : 'Profile photo updated.';
       }); }
@@ -349,7 +353,7 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final c = Theme.of(context).colorScheme;
-    final profile = widget.profile;
+    final profile = _liveProfile;
     return Scaffold(
       appBar: AppBar(title: const Text('Profile settings')),
       body: ListView(
