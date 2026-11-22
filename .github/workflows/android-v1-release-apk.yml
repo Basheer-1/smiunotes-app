@@ -1,0 +1,104 @@
+name: Android v1.0 Optimized Signed APK
+
+on:
+  push:
+    branches: [release/v1.0.0-apk]
+    paths:
+      - '.github/workflows/android-v1-release-apk.yml'
+      - 'lib/**'
+      - 'android/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'scripts/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-v1-signed-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  signed-release-apk:
+    if: github.ref == 'refs/heads/release/v1.0.0-apk'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # This must retain the existing protected release signing environment.
+    environment: android-release
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify release identity and signing configuration
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.SMIUNOTES_RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.SMIUNOTES_RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.SMIUNOTES_RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.SMIUNOTES_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          grep -q '^version: 1.0.0+1$' pubspec.yaml
+          grep -q 'applicationId = "com.smiunotes.app"' android/app/build.gradle.kts
+          grep -q 'signingConfig = null' android/app/build.gradle.kts
+          if [[ -z "$RELEASE_KEYSTORE_BASE64" || -z "$RELEASE_STORE_PASSWORD" || 
+                -z "$RELEASE_KEY_ALIAS" || -z "$RELEASE_KEY_PASSWORD" ]]; then
+            echo 'BLOCKED: supply the existing release keystore and signing passwords as protected android-release secrets.' >&2
+            exit 1
+          fi
+          echo 'PASS: package identity, version and signing-secret presence.'
+      - name: Verify live website mobile authentication
+        env:
+          SMIUNOTES_RELEASE_API_BASE: https://smiunotes.com
+        run: node scripts/check-release-api.mjs
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.50.1'
+          cache: true
+      - uses: gradle/actions/setup-gradle@v4
+      - run: flutter pub get
+      - run: git diff --exit-code -- pubspec.lock
+      - run: flutter analyze
+      - run: flutter test
+      - name: Build optimized Android release APK with protected upload key
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.SMIUNOTES_RELEASE_KEYSTORE_BASE64 }}
+          SMIUNOTES_RELEASE_STORE_PASSWORD: ${{ secrets.SMIUNOTES_RELEASE_STORE_PASSWORD }}
+          SMIUNOTES_RELEASE_KEY_ALIAS: ${{ secrets.SMIUNOTES_RELEASE_KEY_ALIAS }}
+          SMIUNOTES_RELEASE_KEY_PASSWORD: ${{ secrets.SMIUNOTES_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          trap 'rm -f "$RUNNER_TEMP/smiunotes-upload.jks"' EXIT
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/smiunotes-upload.jks"
+          chmod 600 "$RUNNER_TEMP/smiunotes-upload.jks"
+          export SMIUNOTES_RELEASE_KEYSTORE="$RUNNER_TEMP/smiunotes-upload.jks"
+          keytool -list -keystore "$SMIUNOTES_RELEASE_KEYSTORE" \
+            -storepass "$SMIUNOTES_RELEASE_STORE_PASSWORD" \
+            -alias "$SMIUNOTES_RELEASE_KEY_ALIAS" >/dev/null
+          flutter build apk --release \
+            --build-name=1.0.0 --build-number=1 \
+            --dart-define=SMIUNOTES_API_BASE=https://smiunotes.com \
+            --dart-define=SMIUNOTES_ENABLE_PRODUCTION_AUTH=true \
+            --dart-define=SMIUNOTES_ENABLE_STAGING_AUTH=false \
+            --dart-define=SMIUNOTES_ENABLE_NATIVE_PUSH=false
+          apk=build/app/outputs/flutter-apk/app-release.apk
+          test -s "$apk"
+          apksigner=$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -1)
+          test -n "$apksigner"
+          "$apksigner" verify --verbose --print-certs "$apk"
+          mkdir -p release-output
+          cp "$apk" release-output/SMIUNotes-v1.0.0-signed-release.apk
+          (cd release-output && sha256sum SMIUNotes-v1.0.0-signed-release.apk > SHA256SUMS.txt)
+          printf 'SMIUNotes v1.0.0+1 optimized Android release APK\nSource: %s\nPackage: com.smiunotes.app\nBackend: https://smiunotes.com\nProduction student login: enabled\nNative FCM push: disabled pending device acceptance\nSigned with existing protected release upload keystore\nNot automatically published on Google Play\n' \
+            "$GITHUB_SHA" > release-output/RELEASE-INFO.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SMIUNotes-v1.0.0-optimized-signed-apk
+          path: release-output/
+          if-no-files-found: error
+          retention-days: 14
