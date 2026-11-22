@@ -87,7 +87,7 @@ class StagingStudentAccountPageState
       GlobalKey<StudentAccountGatewayState>();
 
   Future<bool> promptStudentSignIn() async {
-    if (!mounted) return false;
+    if (!mounted) { return false; }
     if (runtime.coordinator.authenticated) return true;
     return await _gatewayKey.currentState?.promptSignIn() ?? false;
   }
