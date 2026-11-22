@@ -1,6 +1,8 @@
 package com.smiunotes.app
 
 import android.Manifest
+import android.content.Intent
+import android.net.Uri
 import android.content.pm.PackageManager
 import android.os.Build
 import com.google.firebase.messaging.FirebaseMessaging
@@ -20,6 +22,28 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "smiunotes/external_links")
+            .setMethodCallHandler { call, result ->
+                if (call.method != "openUrl") {
+                    result.notImplemented()
+                } else {
+                    val raw = call.argument<String>("url")
+                    val url = raw?.let { Uri.parse(it) }
+                    if (url == null || url.scheme != "https" || url.host.isNullOrEmpty() ||
+                        !url.userInfo.isNullOrEmpty()) {
+                        result.error("INVALID_URL", "HTTPS URL required.", null)
+                    } else {
+                        try {
+                            startActivity(Intent(Intent.ACTION_VIEW, url).apply {
+                                addCategory(Intent.CATEGORY_BROWSABLE)
+                            })
+                            result.success(null)
+                        } catch (_: Exception) {
+                            result.error("NO_BROWSER", "No app available for link.", null)
+                        }
+                    }
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
