@@ -118,6 +118,17 @@ class _AppShellState extends State<AppShell> {
   final GlobalKey<StagingStudentAccountPageState> _studentAccountKey =
       GlobalKey<StagingStudentAccountPageState>();
   int selectedIndex = 0;
+  int _notesRefreshVersion = 0;
+  int _updatesRefreshVersion = 0;
+
+  void _selectTab(int index) {
+    if (!mounted) return;
+    setState(() {
+      selectedIndex = index;
+      if (index == 1) _notesRefreshVersion++;
+      if (index == 2) _updatesRefreshVersion++;
+    });
+  }
   StudentProfile? _activeProfile;
 
   Future<void> _openInformation(BuildContext context, String kind) async {
@@ -208,13 +219,14 @@ class _AppShellState extends State<AppShell> {
                         children: [
                           _HomePage(
                             onOpenInformation: (kind) => _openInformation(context, kind),
-                            onNavigate: (index) => setState(() => selectedIndex = index),
+                            onNavigate: _selectTab,
                             apiConfigured: stagingApiBase.isNotEmpty,
                             studentProfile: _activeProfile,
                             onOpenVerification: () => _studentAccountKey.currentState?.openVerificationStatus(),
                           ),
                           PublicFeedPage(
                             type: 'notes',
+                            refreshVersion: _notesRefreshVersion,
                             onSaveNote: (noteId) async {
                               if (!accountAuthEnabled || stagingApiBase.isEmpty) {
                                 if (mounted) setState(() => selectedIndex = 4);
@@ -233,7 +245,8 @@ class _AppShellState extends State<AppShell> {
                               return saved;
                             },
                           ),
-                          const PublicFeedPage(type: 'updates'),
+                          PublicFeedPage(type: 'updates',
+                            refreshVersion: _updatesRefreshVersion),
                           CommunityFeedPage(
                             onReply: (threadId) async {
                               if (!accountAuthEnabled || stagingApiBase.isEmpty) {
@@ -292,7 +305,7 @@ class _AppShellState extends State<AppShell> {
                     child: InkWell(
                       key: Key('tab-$index'),
                       borderRadius: BorderRadius.circular(18),
-                      onTap: () => setState(() => selectedIndex = index),
+                      onTap: () => _selectTab(index),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 1),
                         child: Column(
