@@ -200,9 +200,10 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
         return const Center(child: CircularProgressIndicator());
       }
       final colors = Theme.of(context).colorScheme;
-      return ListView(
+      return SingleChildScrollView(
         key: const Key('account-gateway'),
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 122),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text('Your Profile', style: TextStyle(
             fontSize: 28, fontWeight: FontWeight.w900)),
@@ -257,7 +258,7 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                       Expanded(child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(_profile!.studentName,
+                          Text('Your account',
                             style: const TextStyle(fontSize: 21,
                               fontWeight: FontWeight.w800)),
                           const SizedBox(height: 4),
@@ -366,7 +367,7 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
             Text('This app provides the same student-facing experience for every role.',
               style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant)),
           ],
-        ],
+        ]),
       );
     },
   );
