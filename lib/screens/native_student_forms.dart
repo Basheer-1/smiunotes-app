@@ -170,24 +170,27 @@ class _NativeStudentCardFormPageState extends State<NativeStudentCardFormPage> {
 
 /// Native support claim: verified students only; never marks a transfer paid.
 class NativeSupportFormPage extends StatefulWidget {
-  const NativeSupportFormPage({super.key, required this.api});
+  const NativeSupportFormPage({super.key, required this.api,
+    this.signedIn = true});
   final NativeStudentFormsApi api;
+  final bool signedIn;
   @override
   State<NativeSupportFormPage> createState() => _NativeSupportFormPageState();
 }
 class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
   late Future<Map<String, dynamic>> details;
   final amount = TextEditingController(text: '100'),
-    phone = TextEditingController(), note = TextEditingController();
+    phone = TextEditingController(), note = TextEditingController(),
+    guestName = TextEditingController();
   String? methodId, error;
   Uint8List? receipt;
   bool consent = false, publicName = false, publicAmount = false,
     busy = false, done = false;
 
   @override
-  void initState() { super.initState(); details = widget.api.supportOptions(); }
+  void initState() { super.initState(); details = widget.api.supportOptions(signedIn: widget.signedIn); }
   @override
-  void dispose() { amount.dispose(); phone.dispose(); note.dispose(); super.dispose(); }
+  void dispose() { amount.dispose(); phone.dispose(); note.dispose(); guestName.dispose(); super.dispose(); }
 
   Future<void> pick() async {
     try {
@@ -200,6 +203,10 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
 
   Future<void> submit() async {
     if (busy || !consent || receipt == null || methodId == null) return;
+    if (!widget.signedIn && guestName.text.trim().length < 2) {
+      setState(() => error = 'Enter your name for payment review.');
+      return;
+    }
     if (!RegExp(r'^(?:0|[1-9][0-9]*)(?:\.[0-9]{1,2})?$')
         .hasMatch(amount.text.trim()) ||
         !RegExp(r'^03[0-9]{9}$').hasMatch(phone.text.trim())) {
@@ -210,8 +217,10 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
     try {
       await widget.api.submitSupport(
         receipt: receipt!, methodId: methodId!, amount: amount.text.trim(),
-        phone: phone.text.trim(), note: note.text.trim(), name: '',
-        publicName: publicName, publicAmount: publicName && publicAmount);
+        phone: phone.text.trim(), note: note.text.trim(),
+        name: widget.signedIn ? '' : guestName.text.trim(),
+        publicName: publicName, publicAmount: publicName && publicAmount,
+        signedIn: widget.signedIn);
       if (mounted) setState(() { done = true; receipt = null; });
     } catch (_) {
       if (mounted) setState(() => error =
@@ -230,7 +239,7 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           if (snapshot.hasError) return Center(child: TextButton(
-            onPressed: () => setState(() { details = widget.api.supportOptions(); }),
+            onPressed: () => setState(() { details = widget.api.supportOptions(signedIn: widget.signedIn); }),
             child: const Text('Unable to load methods. Retry')));
           return const Center(child: CircularProgressIndicator());
         }
@@ -244,6 +253,7 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
         if (methods.isEmpty) return const Center(child: Text(
           'No payment methods are currently available.'));
         final chosen = methodId ?? methods.first['id']?.toString() ?? '';
+        methodId ??= chosen;
         final selection = methods.firstWhere(
           (m) => m['id']?.toString() == chosen, orElse: () => methods.first);
         return ListView(
@@ -269,6 +279,9 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
             SelectableText('Account/IBAN: ${selection['payment_identifier'] ?? ''}'),
             Text(selection['instructions']?.toString() ?? ''),
             const SizedBox(height: 12),
+            if (!widget.signedIn)
+              TextField(controller: guestName, maxLength: 100,
+                decoration: const InputDecoration(labelText: 'Your name')),
             TextField(controller: amount, keyboardType: TextInputType.number,
               decoration: const InputDecoration(labelText: 'Amount (PKR)')),
             TextField(controller: phone, keyboardType: TextInputType.phone,
