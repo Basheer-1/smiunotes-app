@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'dart:typed_data';
 
 import '../models/student_profile.dart';
 import '../services/mobile_auth_api.dart';
@@ -28,6 +29,8 @@ class StudentAccountGateway extends StatefulWidget {
     this.onProfileChanged,
     this.onThemeChanged,
     this.darkMode = false,
+    this.signOutAll,
+    this.onLoadAvatar,
   });
 
   final MobileAuthApi api;
@@ -47,6 +50,8 @@ class StudentAccountGateway extends StatefulWidget {
   final ValueChanged<StudentProfile?>? onProfileChanged;
   final ValueChanged<bool>? onThemeChanged;
   final bool darkMode;
+  final Future<void> Function()? signOutAll;
+  final Future<Uint8List?> Function()? onLoadAvatar;
 
   @override
   State<StudentAccountGateway> createState() => _StudentAccountGatewayState();
@@ -157,6 +162,26 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
     }
   }
 
+  Future<void> _logoutAll() async {
+    if (_busy || widget.signOutAll == null) return;
+    setState(() { _busy = true; _error = null; });
+    try {
+      await widget.signOutAll!();
+      if (!mounted) return;
+      setState(() { _profile = null; _pushEnabled = false; });
+      widget.onProfileChanged?.call(null);
+    } catch (_) {
+      if (mounted) setState(() {
+        _profile = null;
+        _pushEnabled = false;
+        _error = 'All-device sign out could not be confirmed; this device was cleared.';
+      });
+      widget.onProfileChanged?.call(null);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   void _openLogin() {
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => StudentLoginPage(
@@ -226,7 +251,8 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      ProfileAvatar(name: _profile!.studentName, size: 58),
+                      ProfileAvatar(name: _profile!.studentName, size: 58,
+                        imageLoader: _profile!.avatarVersion == null ? null : widget.onLoadAvatar),
                       const SizedBox(width: 14),
                       Expanded(child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,8 +356,14 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
               label: Text(_busy ? 'Signing out…' : 'Logout'),
             ),
             const SizedBox(height: 8),
-            Text('To sign out on all devices, use account security settings. '
-              'This app never provides admin or contributor dashboards.',
+            OutlinedButton.icon(
+              key: const Key('account-signout-all'),
+              onPressed: _busy || widget.signOutAll == null ? null : _logoutAll,
+              icon: const Icon(Icons.phonelink_erase_rounded),
+              label: const Text('Sign out all devices'),
+            ),
+            const SizedBox(height: 8),
+            Text('This app provides the same student-facing experience for every role.',
               style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant)),
           ],
         ],
