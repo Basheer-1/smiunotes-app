@@ -25,6 +25,12 @@ class FakeStudyLibrary extends BookmarkApi {
     ] : <dynamic>[]};
   }
   @override
+  Future<Map<String, dynamic>> complete(String token, String id) async {
+    seen.add('complete:$token');
+    completed = true;
+    return {'ok': true, 'completed': true};
+  }
+  @override
   Future<Map<String, dynamic>> uncomplete(String token, String id) async {
     seen.add('uncomplete:$token');
     completed = false;
@@ -53,5 +59,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Notes A'), findsOneWidget);
     expect(api.seen.where((x) => x.startsWith('uncomplete:')).length, 1);
+    await tester.tap(find.byKey(const Key(
+      'toggle-completed-11111111-1111-4111-8111-111111111111')));
+    await tester.pumpAndSettle();
+    expect(api.completed, isTrue);
+    expect(api.seen.last, startsWith('bookmarks:'));
+    expect(api.seen.where((x) => x.startsWith('complete:')).length, 1);
   });
 }
