@@ -234,7 +234,27 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                   decoration: const InputDecoration(
                     labelText: 'Email address'),
                   validator: (value) =>
-                    RegExp(r'^[^\\s@]+@[^\\s@]+\\.[^\\s@]+
+                    RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
+                      .hasMatch((value ?? '').trim())
+                      ? null : 'Enter a valid email address',
+                ),
+                TextFormField(
+                  key: const Key('new-password'),
+                  controller: newPassword,
+                  obscureText: !revealPassword,
+                  decoration: const InputDecoration(labelText: 'Create password'),
+                  validator: (v) => (v?.length ?? 0) >= 12 &&
+                          (v?.length ?? 0) <= 128
+                      ? null : 'Use 12–128 characters',
+                ),
+                TextFormField(
+                  key: const Key('confirm-password'),
+                  controller: confirmPassword,
+                  obscureText: !revealPassword,
+                  decoration: const InputDecoration(labelText: 'Confirm password'),
+                  validator: (v) => v == newPassword.text
+                      ? null : 'Passwords do not match',
+                ),
               ] else if (registration) ...[
                 TextFormField(
                   key: const Key('otp-code'),
