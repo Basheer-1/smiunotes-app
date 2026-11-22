@@ -126,7 +126,7 @@ class _MyBookmarksPageState extends State<MyBookmarksPage> {
             if (_actionError != null)
               Text(_actionError!, key: const Key('bookmark-action-error')),
             if (raw.isEmpty)
-              const Padding(padding: EdgeInsets.all(20),
+              Padding(padding: EdgeInsets.all(20),
                 child: Text(_completedView
                   ? 'No completed notes yet.' : 'No bookmarked notes yet.')),
             for (final entry in raw)
