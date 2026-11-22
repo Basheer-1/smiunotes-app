@@ -63,10 +63,10 @@ class StudentAccountGateway extends StatefulWidget {
   final Future<Uint8List?> Function()? onLoadAvatar;
 
   @override
-  State<StudentAccountGateway> createState() => _StudentAccountGatewayState();
+  State<StudentAccountGateway> createState() => StudentAccountGatewayState();
 }
 
-class _StudentAccountGatewayState extends State<StudentAccountGateway> {
+class StudentAccountGatewayState extends State<StudentAccountGateway> {
   late Future<bool> _restoring;
   StudentProfile? _profile;
   bool _busy = false;
@@ -211,6 +211,29 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// Authenticate in place without navigating away from the current tab.
+  /// The same onSession verification and secure storage as Profile sign-in.
+  Future<bool> promptSignIn() async {
+    if (_profile != null) return true;
+    if (!mounted || _busy) return false;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: .92,
+        child: StudentLoginPage(
+          api: widget.api,
+          challengeProvider: widget.challengeProvider,
+          onSession: _onSession,
+        ),
+      ),
+    );
+    return mounted && _profile != null;
   }
 
   void _openLogin() {
