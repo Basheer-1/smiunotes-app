@@ -9,6 +9,8 @@ import '../services/bookmark_api.dart';
 import '../services/mobile_auth_api.dart';
 import '../services/mobile_notification_api.dart';
 import '../services/mobile_preferences_api.dart';
+import '../services/native_student_forms_api.dart';
+import 'native_student_forms.dart';
 import 'native_notification_preferences_page.dart';
 import '../services/push_registration_api.dart';
 import '../services/student_push_enrollment.dart';
@@ -151,6 +153,34 @@ class StagingStudentAccountPageState
     return true;
   }
 
+  NativeStudentFormsApi get _forms => NativeStudentFormsApi(
+    baseUrl: widget.httpsBaseUrl,
+    tokenProvider: _currentVerifiedToken,
+  );
+
+  void openNativeCardVerification() {
+    if (!mounted || !runtime.coordinator.authenticated) return;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => NativeStudentCardFormPage(api: _forms),
+    ));
+  }
+
+  void openNativeSupport() {
+    if (!mounted || !runtime.coordinator.authenticated) return;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => NativeSupportFormPage(api: _forms),
+    ));
+  }
+
+  void openNativeContact() {
+    if (!mounted) return;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => NativeContactFormPage(
+        api: _forms, baseUrl: widget.httpsBaseUrl, signedIn: true,
+      ),
+    ));
+  }
+
   void openNotificationPreferences() {
     if (!mounted || !runtime.coordinator.authenticated ||
         runtime.controller.accessToken == null) return;
@@ -241,6 +271,9 @@ class StagingStudentAccountPageState
     onCreateDiscussion: openCommunityComposer,
     onOpenNotifications: openNotifications,
     onOpenNotificationPreferences: openNotificationPreferences,
+    onOpenNativeCardVerification: openNativeCardVerification,
+    onOpenNativeSupport: openNativeSupport,
+    onOpenNativeContact: openNativeContact,
     onOpenBookmarks: openSavedNotes,
     pushAvailable: pushEnabled,
     onEnablePush: pushEnabled ? enablePush : null,
