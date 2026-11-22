@@ -6,6 +6,7 @@ import '../services/mobile_auth_api.dart';
 import 'student_login_page.dart';
 import '../widgets/profile_avatar.dart';
 import 'native_information_pages.dart';
+import 'native_notification_preferences_page.dart';
 import 'native_public_content_page.dart';
 
 /// Staging-only account experience; NOT constructed by the default app.
@@ -32,6 +33,8 @@ class StudentAccountGateway extends StatefulWidget {
     this.darkMode = false,
     this.signOutAll,
     this.onLoadAvatar,
+    this.onLoadUpdatePreference,
+    this.onSaveUpdatePreference,
   });
 
   final MobileAuthApi api;
@@ -53,6 +56,8 @@ class StudentAccountGateway extends StatefulWidget {
   final bool darkMode;
   final Future<void> Function()? signOutAll;
   final Future<Uint8List?> Function()? onLoadAvatar;
+  final Future<bool> Function()? onLoadUpdatePreference;
+  final Future<void> Function(bool)? onSaveUpdatePreference;
 
   @override
   State<StudentAccountGateway> createState() => _StudentAccountGatewayState();
@@ -355,6 +360,22 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                 ),
             ]),
           ),
+          if (_profile != null &&
+              widget.onLoadUpdatePreference != null &&
+              widget.onSaveUpdatePreference != null) ...[
+            const SizedBox(height: 12),
+            _AccountEntry(
+              icon: Icons.campaign_outlined,
+              label: 'University notification preferences',
+              entryKey: const Key('account-update-preferences'),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) =>
+                  NativeNotificationPreferencesPage(
+                    load: widget.onLoadUpdatePreference!,
+                    save: widget.onSaveUpdatePreference!,
+                  ))),
+            ),
+          ],
           const SizedBox(height: 16),
           Text('Explore & help', style: TextStyle(
             color: colors.onSurface, fontWeight: FontWeight.w800, fontSize: 19)),
