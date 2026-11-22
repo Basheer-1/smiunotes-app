@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import '../services/external_link_opener.dart';
+import 'secure_website_form_page.dart';
 
 const _brand = Color(0xFF183C68);
 
@@ -69,21 +70,18 @@ class NativeInformationPage extends StatelessWidget {
           const SizedBox(height: 14),
           FilledButton.icon(
             key: Key(support ? 'native-support-action' : 'native-contact-action'),
-            onPressed: () async {
-              try {
-                await opener.openHttps(support
-                  ? 'https://smiunotes.com/support'
-                  : 'https://smiunotes.com/contact');
-              } catch (_) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Unable to open the secure form. Try again.'),
-                ));
-              }
-            },
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => SecureWebsiteFormPage(
+                  path: support ? '/support' : '/contact',
+                  title: support ? 'Secure support form' : 'Secure contact form',
+                  opener: opener,
+                ),
+              ),
+            ),
             icon: Icon(support ? Icons.favorite_outline : Icons.send_outlined),
-            label: Text(support ? 'Continue to secure support form'
-                : 'Continue to secure contact form'),
+            label: Text(support ? 'Open support form in app'
+                : 'Open contact form in app'),
             style: FilledButton.styleFrom(
               backgroundColor: _brand, foregroundColor: Colors.white,
               minimumSize: const Size.fromHeight(52),
