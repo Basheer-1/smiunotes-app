@@ -5,6 +5,7 @@ import 'screens/community_feed_page.dart';
 import 'screens/public_feed_page.dart';
 import 'screens/native_information_pages.dart';
 import 'screens/contributors_directory_page.dart';
+import 'screens/native_public_content_page.dart';
 import 'models/student_profile.dart';
 import 'widgets/profile_avatar.dart';
 import 'dart:ui';
@@ -107,7 +108,9 @@ class _AppShellState extends State<AppShell> {
     await Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => kind == 'contributors'
         ? const ContributorsDirectoryPage()
-        : NativeInformationPage(kind: kind)));
+        : const ['about', 'privacy', 'disclaimer'].contains(kind)
+          ? NativePublicContentPage(kind: kind)
+          : NativeInformationPage(kind: kind)));
   }
   static const labels = ['Home', 'Notes', 'Updates', 'Community', 'Profile'];
   static const icons = [
@@ -418,6 +421,9 @@ class _HomePage extends StatelessWidget {
               _QuickLink(icon: Icons.diversity_3_outlined, title: 'Contributors',
                 caption: 'Meet note creators',
                 onTap: () => onOpenInformation('contributors')),
+              _QuickLink(icon: Icons.info_outline_rounded, title: 'About',
+                caption: 'Our student project',
+                onTap: () => onOpenInformation('about')),
             ];
             return GridView.count(
               crossAxisCount: wide ? 4 : 2,
