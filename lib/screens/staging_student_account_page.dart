@@ -10,6 +10,7 @@ import '../services/mobile_auth_api.dart';
 import '../services/mobile_notification_api.dart';
 import '../services/mobile_preferences_api.dart';
 import '../services/native_student_forms_api.dart';
+import '../services/native_profile_settings_api.dart';
 import 'native_student_forms.dart';
 import 'native_notification_preferences_page.dart';
 import '../services/push_registration_api.dart';
@@ -291,6 +292,11 @@ class StagingStudentAccountPageState
     signOut: runtime.coordinator.signOut,
     signOutAll: signOutAllDevices,
     onLoadAvatar: loadOwnAvatar,
+    profileSettingsApi: NativeProfileSettingsApi(
+      baseUrl: widget.httpsBaseUrl,
+      tokenProvider: _currentVerifiedToken,
+    ),
+    onRefreshProfile: runtime.coordinator.refreshValidatedProfile,
     onOpenVerifiedNote: openVerifiedNote,
     onCreateDiscussion: openCommunityComposer,
     onOpenNotifications: openNotifications,
