@@ -21,7 +21,7 @@ class NativeStudentFormsApi {
   }
 
   Future<Map<String, dynamic>> _send(String path, {
-    Map<String, String>? fields,
+    Map<String, dynamic>? fields,
     Uint8List? image,
     String imageField = 'card',
     bool get = false,
@@ -101,7 +101,7 @@ class NativeStudentFormsApi {
     final result = await _send('contact', authorized: signedIn, fields: {
       'name': name, 'email': email, 'topic': topic,
       'subject': subject, 'message': message,
-      'token': proof, 'elapsedMs': '$elapsedMs',
+      'token': proof, 'elapsedMs': elapsedMs,
     });
     if (result['ok'] != true) throw StateError('Message was not confirmed.');
   }
