@@ -207,6 +207,8 @@ class _AppShellState extends State<AppShell> {
                             onOpenInformation: (kind) => _openInformation(context, kind),
                             onNavigate: (index) => setState(() => selectedIndex = index),
                             apiConfigured: stagingApiBase.isNotEmpty,
+                            studentProfile: _activeProfile,
+                            onOpenVerification: () => _studentAccountKey.currentState?.openVerificationStatus(),
                           ),
                           PublicFeedPage(
                             type: 'notes',
@@ -232,19 +234,21 @@ class _AppShellState extends State<AppShell> {
                           CommunityFeedPage(
                             onReply: (threadId) async {
                               if (!accountAuthEnabled || stagingApiBase.isEmpty) {
-                                if (mounted) setState(() => selectedIndex = 4);
                                 return false;
                               }
                               final state = _studentAccountKey.currentState;
-                              if (state == null) {
-                                if (mounted) setState(() => selectedIndex = 4);
+                              if (state == null) return false;
+                              final authenticated = await state.promptStudentSignIn();
+                              if (!authenticated || !mounted) return false;
+                              if (state.runtime.coordinator.profile
+                                  ?.verificationStatus != 'verified') {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text(
+                                    'Verify your Student Card before posting in Community.')),
+                                );
                                 return false;
                               }
-                              final posted = await state.openCommunityReply(threadId);
-                              if (!posted && mounted && !state.runtime.coordinator.authenticated) {
-                                setState(() => selectedIndex = 4);
-                              }
-                              return posted;
+                              return state.openCommunityReply(threadId);
                             },
                           ),
                           if (accountAuthEnabled && stagingApiBase.isNotEmpty)
@@ -398,7 +402,11 @@ class _HomePage extends StatelessWidget {
     required this.onOpenInformation,
     required this.onNavigate,
     required this.apiConfigured,
+    this.studentProfile,
+    this.onOpenVerification,
   });
+  final StudentProfile? studentProfile;
+  final VoidCallback? onOpenVerification;
   final ValueChanged<int> onNavigate;
   final ValueChanged<String> onOpenInformation;
   final bool apiConfigured;
@@ -422,6 +430,43 @@ class _HomePage extends StatelessWidget {
           key: const Key('testing-build-status'),
           style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11),
         ),
+        if (studentProfile != null &&
+            (studentProfile!.verificationStatus == 'pending' ||
+             studentProfile!.verificationStatus == 'submitted')) ...[
+          const SizedBox(height: 14),
+          Card(
+            key: const Key('home-verification-banner'),
+            color: Theme.of(context).colorScheme.primaryContainer,
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Icon(Icons.verified_user_outlined,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text('Student identity not verified',
+                    style: TextStyle(fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer))),
+                ]),
+                const SizedBox(height: 9),
+                Text(studentProfile!.verificationStatus == 'submitted'
+                  ? 'Your Student Card is awaiting review. Provisional access '
+                    'lasts until the deadline set by SMIUNotes.'
+                  : 'Your email is registered, but Student Card verification '
+                    'is still pending. Complete it to retain access.',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimaryContainer)),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  key: const Key('home-open-verification'),
+                  onPressed: onOpenVerification,
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text('View verification status'),
+                ),
+              ]),
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         _Glass(
           padding: const EdgeInsets.all(22),
