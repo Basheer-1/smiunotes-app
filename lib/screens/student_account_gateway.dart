@@ -171,7 +171,7 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
       setState(() { _profile = null; _pushEnabled = false; });
       widget.onProfileChanged?.call(null);
     } catch (_) {
-      if (mounted) setState(() {
+      if (mounted) { setState(() {
         _profile = null;
         _pushEnabled = false;
         _error = 'All-device sign out could not be confirmed; this device was cleared.';
