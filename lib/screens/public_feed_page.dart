@@ -1,4 +1,5 @@
 import 'note_reader_page.dart';
+import '../services/external_link_opener.dart';
 import 'package:material_ui/material_ui.dart';
 import '../services/public_feed_api.dart';
 
@@ -259,112 +260,232 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
 }
 
 class _FeedTile extends StatelessWidget {
-  const _FeedTile({required this.data, required this.isNote, required this.api, this.onSaveNote});
+  const _FeedTile({
+    required this.data, required this.isNote, required this.api,
+    this.onSaveNote,
+  });
   final Map<String, dynamic> data;
   final bool isNote;
   final PublicFeedApi api;
   final Future<bool> Function(String noteId)? onSaveNote;
+
+  String get title => data['title']?.toString() ?? 'Untitled';
+  String get summary => isNote
+    ? '${data['department_name'] ?? ''} · ${data['subject_code'] ?? ''} · Semester ${data['semester'] ?? '?'}'
+    : data['summary']?.toString() ?? '';
+  bool get restricted => isNote && data['is_sensitive'] == true;
+
+  Future<void> _openExternal(BuildContext context, Object? url) async {
+    try {
+      await const ExternalLinkOpener().openHttps(url);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Unable to open this link safely.'),
+      ));
+    }
+  }
+
+  void _openDetail(BuildContext context) {
+    if (isNote) {
+      if (restricted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Verified Student Card access is required.'),
+        ));
+        return;
+      }
+      Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => NoteReaderPage(
+          noteId: data['id']?.toString() ?? '', api: api),
+      ));
+      return;
+    }
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: FractionallySizedBox(
+          heightFactor: .86,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(24, 10, 24, 38),
+            children: [
+              if (data['is_pinned'] == true)
+                const Text('IMPORTANT UPDATE', style: TextStyle(
+                  color: Color(0xFF183C68), fontWeight: FontWeight.w800,
+                  letterSpacing: 1.1)),
+              const SizedBox(height: 8),
+              Text(title, style: const TextStyle(fontSize: 26,
+                fontWeight: FontWeight.w900, height: 1.18)),
+              const SizedBox(height: 14),
+              Text(summary, style: const TextStyle(
+                fontSize: 15, height: 1.55)),
+              const SizedBox(height: 18),
+              if ((data['stream']?.toString() ?? '').isNotEmpty)
+                Text('Section: ${data['stream']}'),
+              if ((data['category']?.toString() ?? '').isNotEmpty)
+                Text('Category: ${data['category']}'),
+              if ((data['event_date']?.toString() ?? '').isNotEmpty)
+                Text('Event: ${data['event_date']}'),
+              if ((data['deadline_date']?.toString() ?? '').isNotEmpty)
+                Text('Deadline: ${data['deadline_date']}'),
+              const Divider(height: 34),
+              SelectableText(data['body']?.toString() ??
+                'No article body available.',
+                style: const TextStyle(fontSize: 16, height: 1.7)),
+              const SizedBox(height: 24),
+              if (ExternalLinkOpener.trustedHttps(data['application_url']) != null)
+                FilledButton.icon(
+                  key: const Key('update-apply-now-detail'),
+                  onPressed: () => _openExternal(sheetContext,
+                    data['application_url']),
+                  icon: const Icon(Icons.open_in_new_rounded),
+                  label: const Text('Apply Now'),
+                ),
+              if (ExternalLinkOpener.trustedHttps(data['source_url']) != null)
+                OutlinedButton.icon(
+                  onPressed: () => _openExternal(sheetContext,
+                    data['source_url']),
+                  icon: const Icon(Icons.verified_outlined),
+                  label: const Text('Original source'),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final title = data['title']?.toString() ?? 'Untitled';
-    final subtitle = isNote
-      ? '${data['department_name'] ?? ''} · ${data['subject_code'] ?? ''} · Semester ${data['semester'] ?? '?'}'
-      : data['summary']?.toString() ?? '';
-    final restricted = isNote && data['is_sensitive'] == true;
+    final scheme = Theme.of(context).colorScheme;
+    final imagePath = data['image_url']?.toString() ?? '';
+    final origin = Uri.tryParse(api.baseUrl);
+    final image = !isNote &&
+      RegExp(r'^/api/updates/image/[0-9a-f-]{36}$', caseSensitive: false)
+        .hasMatch(imagePath) &&
+      origin != null && origin.scheme == 'https' && origin.host.isNotEmpty &&
+      origin.userInfo.isEmpty
+      ? origin.resolve(imagePath).toString() : null;
+    final applyUrl = ExternalLinkOpener.trustedHttps(data['application_url']);
     return Card(
-      color: Colors.white.withValues(alpha: 0.86),
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
-        subtitle: Text('$subtitle${restricted ? '\nVerified only' : ''}',
-          maxLines: 3, overflow: TextOverflow.ellipsis),
-        trailing: isNote && onSaveNote != null
-          ? IconButton(
-              key: Key('save-note-${data['id']}'),
-              tooltip: 'Save note to bookmarks',
-              icon: const Icon(Icons.bookmark_add_outlined),
-              onPressed: () async {
-                final id = data['id']?.toString() ?? '';
-                final saved = await onSaveNote!(id);
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(saved
-                    ? 'Note saved to your account.'
-                    : 'Sign in or retry to save this note.'),
-                ));
-              },
-            )
-          : const Icon(Icons.chevron_right),
-        onTap: () {
-          if (isNote) {
-            if (restricted) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Verified student access is required for this note.'),
-              ));
-              return;
-            }
-            Navigator.of(context).push(MaterialPageRoute<void>(
-              builder: (_) => NoteReaderPage(
-                noteId: data['id']?.toString() ?? '', api: api,
-              ),
-            ));
-            return;
-          }
-          showModalBottomSheet<void>(
-          context: context,
-          isScrollControlled: true,
-          showDragHandle: true,
-          builder: (sheetContext) => SafeArea(
-            child: FractionallySizedBox(
-              heightFactor: 0.78,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-                children: [
-                  Text(title, style: const TextStyle(
-                    fontSize: 23, fontWeight: FontWeight.bold)),
-                  if (!isNote && data['is_pinned'] == true)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 6),
-                      child: Text('Pinned update', style: TextStyle(
-                        color: Color(0xFF183C68), fontWeight: FontWeight.w700)),
-                    ),
-                  const SizedBox(height: 12),
-                  Text(subtitle),
-                  if (!isNote) ...[
-                    if ((data['stream']?.toString() ?? '').isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Text('Section: ${data['stream']}'),
-                      ),
-                    const SizedBox(height: 8),
-                    if ((data['category']?.toString() ?? '').isNotEmpty)
-                      Text('Category: ${data['category']}'),
-                    if ((data['event_date']?.toString() ?? '').isNotEmpty)
-                      Text('Event: ${data['event_date']}'),
-                    if ((data['deadline_date']?.toString() ?? '').isNotEmpty)
-                      Text('Deadline: ${data['deadline_date']}'),
-                  ],
-                  const Divider(height: 32),
-                  if (isNote) ...[
-                    if (restricted)
-                      const Text('Verified Student Card access is required.'),
-                    const Text(
-                      'The native secure note reader is not available yet. '
-                      'It will use the same server-side permissions as the website.',
-                    ),
-                  ] else
-                    SelectableText(
-                      data['body']?.toString() ?? 'No article body available.',
-                      style: const TextStyle(height: 1.55),
-                    ),
-                ],
-              ),
-            ),
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: scheme.outlineVariant)),
+      color: scheme.surface.withValues(alpha: .96),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        if (image != null)
+          SizedBox(
+            height: 176,
+            width: double.infinity,
+            child: Image.network(image, fit: BoxFit.cover,
+              errorBuilder: (context, error, stack) => Container(
+                color: scheme.primaryContainer,
+                child: Icon(Icons.article_outlined, size: 48,
+                  color: scheme.primary),
+              )),
+          )
+        else if (!isNote)
+          Container(
+            height: 95,
+            width: double.infinity,
+            decoration: BoxDecoration(gradient: LinearGradient(
+              colors: [scheme.primary, scheme.tertiary])),
+            child: const Icon(Icons.campaign_outlined, size: 42,
+              color: Colors.white),
           ),
-        );
-        },
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 15),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Wrap(spacing: 7, runSpacing: 6, children: [
+              if (!isNote) ...[
+                _FeedPill((data['stream']?.toString() ?? 'Update') ==
+                      'opportunities' ? 'Opportunities' : 'Campus'),
+                if ((data['category']?.toString() ?? '').isNotEmpty)
+                  _FeedPill(data['category'].toString()),
+                if (data['is_pinned'] == true)
+                  const _FeedPill('Important'),
+                if ((data['deadline_date']?.toString() ?? '').isNotEmpty)
+                  _FeedPill('Deadline ${data['deadline_date']}'),
+              ] else ...[
+                _FeedPill('Semester ${data['semester'] ?? '?'}'),
+                if (restricted) const _FeedPill('Verified only'),
+              ]
+            ]),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () => _openDetail(context),
+              child: Text(title,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900,
+                  height: 1.23, color: scheme.onSurface)),
+            ),
+            const SizedBox(height: 9),
+            Text(summary, maxLines: 3, overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: scheme.onSurfaceVariant, height: 1.5)),
+            if (!isNote && data['published_at'] != null) ...[
+              const SizedBox(height: 11),
+              Text(data['published_at'].toString().split('T').first,
+                style: TextStyle(color: scheme.onSurfaceVariant,
+                  fontSize: 12)),
+            ],
+            const SizedBox(height: 14),
+            Row(children: [
+              Expanded(child: OutlinedButton.icon(
+                onPressed: () => _openDetail(context),
+                icon: Icon(isNote ? Icons.menu_book_outlined
+                  : Icons.article_outlined),
+                label: Text(isNote ? 'Read notes' : 'Read update'),
+              )),
+              if (isNote && onSaveNote != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  key: Key('save-note-${data['id']}'),
+                  tooltip: 'Save note to bookmarks',
+                  icon: const Icon(Icons.bookmark_add_outlined),
+                  onPressed: () async {
+                    final saved = await onSaveNote!(data['id']?.toString() ?? '');
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(saved ? 'Note saved to your account.'
+                        : 'Sign in or retry to save this note.'),
+                    ));
+                  },
+                ),
+              ],
+              if (!isNote && applyUrl != null) ...[
+                const SizedBox(width: 8),
+                Expanded(child: FilledButton.icon(
+                  key: Key('update-apply-${data['id']}'),
+                  onPressed: () => _openExternal(context, applyUrl.toString()),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                  label: const Text('Apply Now'),
+                )),
+              ],
+            ]),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+class _FeedPill extends StatelessWidget {
+  const _FeedPill(this.label);
+  final String label;
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer.withValues(alpha: .7),
+        borderRadius: BorderRadius.circular(20),
       ),
+      child: Text(label, style: TextStyle(
+        fontSize: 11, fontWeight: FontWeight.w700,
+        color: scheme.onPrimaryContainer)),
     );
   }
 }
