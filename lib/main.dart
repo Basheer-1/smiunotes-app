@@ -1,4 +1,5 @@
 import 'screens/notification_inbox_page.dart';
+import 'screens/native_catalogue_page.dart';
 import 'screens/staging_student_account_page.dart';
 import 'screens/student_profile_page.dart';
 import 'screens/community_feed_page.dart';
@@ -107,7 +108,9 @@ class _AppShellState extends State<AppShell> {
     await Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => kind == 'contributors'
         ? const ContributorsDirectoryPage()
-        : NativeInformationPage(kind: kind)));
+        : kind == 'catalogue'
+          ? const NativeCataloguePage()
+          : NativeInformationPage(kind: kind)));
   }
   static const labels = ['Home', 'Notes', 'Updates', 'Community', 'Profile'];
   static const icons = [
@@ -407,6 +410,9 @@ class _HomePage extends StatelessWidget {
             final wide = constraints.maxWidth > 600;
             final items = [
               _QuickLink(icon: Icons.menu_book_outlined, title: 'Notes', caption: 'Study smarter', onTap: () => onNavigate(1)),
+              _QuickLink(icon: Icons.view_list_outlined, title: 'Browse catalogue',
+                caption: 'By department & semester',
+                onTap: () => onOpenInformation('catalogue')),
               _QuickLink(icon: Icons.campaign_outlined, title: 'Updates', caption: 'Stay informed', onTap: () => onNavigate(2)),
               _QuickLink(icon: Icons.forum_outlined, title: 'Community', caption: 'Connect & discuss', onTap: () => onNavigate(3)),
               _QuickLink(icon: Icons.person_outline, title: 'Profile',
