@@ -4,11 +4,13 @@ import 'package:material_ui/material_ui.dart';
 /// Website-style photo avatar with a deterministic two-initial fallback.
 class ProfileAvatar extends StatefulWidget {
   const ProfileAvatar({
-    super.key, this.name, this.imageLoader, this.size = 38,
+    super.key, this.name, this.imageLoader, this.size = 38, this.cacheKey,
   });
   final String? name;
   final Future<Uint8List?> Function()? imageLoader;
   final double size;
+  /// Stable identity for the photo. Avoid refetching on unrelated widget rebuilds.
+  final Object? cacheKey;
 
   static String initials(String? name) {
     final words = (name ?? '').trim().split(RegExp(r'\s+'))
@@ -28,8 +30,11 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
   @override
   void didUpdateWidget(covariant ProfileAvatar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.imageLoader != widget.imageLoader ||
-        oldWidget.name != widget.name) { _reload(); }
+    if (oldWidget.name != widget.name ||
+        oldWidget.cacheKey != widget.cacheKey ||
+        (widget.cacheKey == null && oldWidget.imageLoader != widget.imageLoader)) {
+      _reload();
+    }
   }
   void _reload() {
     final load = widget.imageLoader;
