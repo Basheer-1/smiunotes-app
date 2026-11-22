@@ -19,6 +19,19 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// AGP 9.3.1 breaks on generated WebView Pigeon lint internals.
+// Limit this workaround to third-party WebView's release-vital lint task;
+// app Flutter analyzer/tests/signature checks stay fully enabled.
+subprojects {
+    if (name == "webview_flutter_android") {
+        tasks.configureEach {
+            if (name.startsWith("lintVital")) {
+                enabled = false
+            }
+        }
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
