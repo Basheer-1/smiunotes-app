@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart';
 
 /// Native student form transport. Only configured HTTPS API origin; no secrets.
 class NativeStudentFormsApi {
@@ -140,16 +140,14 @@ class NativeStudentFormsApi {
     }
   }
 
+  static const MethodChannel _picker = MethodChannel('smiunotes/media_picker');
+
   static Future<Uint8List?> chooseImage() async {
-    final picked = await FilePicker.platform.pickFiles(
-      type: FileType.custom, allowedExtensions: ['jpg','jpeg','png','webp'],
-      withData: true,
-    );
-    if (picked == null || picked.files.isEmpty) return null;
-    final file = picked.files.single;
-    if (file.size < 2000 || file.size > 2500000 || file.bytes == null) {
+    final bytes = await _picker.invokeMethod<Uint8List>('chooseImage');
+    if (bytes == null) return null;
+    if (bytes.length < 2000 || bytes.length > 2500000) {
       throw const FormatException('Image must be 2 KB–2.5 MB.');
     }
-    return file.bytes!;
+    return bytes;
   }
 }
