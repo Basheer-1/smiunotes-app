@@ -239,7 +239,7 @@ class _AppShellState extends State<AppShell> {
                               final state = _studentAccountKey.currentState;
                               if (state == null) return false;
                               final authenticated = await state.promptStudentSignIn();
-                              if (!authenticated || !mounted) return false;
+                              if (!authenticated || !context.mounted) return false;
                               if (state.runtime.coordinator.profile
                                   ?.verificationStatus != 'verified') {
                                 ScaffoldMessenger.of(context).showSnackBar(
