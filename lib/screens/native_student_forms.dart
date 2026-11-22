@@ -41,10 +41,10 @@ class _NativeContactFormPageState extends State<NativeContactFormPage> {
         proof: proof, elapsedMs: elapsed, signedIn: widget.signedIn);
       if (mounted) { setState(() => success = true); }
     } catch (_) {
-      if (mounted) setState(() => error =
-        'Message could not be sent. Check your connection and try again.');
+      if (mounted) { setState(() => error =
+        'Message could not be sent. Check your connection and try again.'); }
     } finally {
-      if (mounted) setState(() => sending = false);
+      if (mounted) { setState(() => sending = false); }
     }
   }
   @override
@@ -123,8 +123,8 @@ class _NativeStudentCardFormPageState extends State<NativeStudentCardFormPage> {
       final bytes = await NativeStudentFormsApi.chooseImage();
       if (bytes != null && mounted) { setState(() { card = bytes; error = null; }); }
     } catch (_) {
-      if (mounted) setState(() => error =
-        'Choose a JPG, PNG or WebP between 2 KB and 2.5 MB.');
+      if (mounted) { setState(() => error =
+        'Choose a JPG, PNG or WebP between 2 KB and 2.5 MB.'); }
     }
   }
   Future<void> send() async {
@@ -134,10 +134,10 @@ class _NativeStudentCardFormPageState extends State<NativeStudentCardFormPage> {
       await widget.api.submitStudentCard(card!);
       if (mounted) { setState(() { done = true; card = null; }); }
     } catch (_) {
-      if (mounted) setState(() => error =
-        'Card was not submitted. Check your status and try again.');
+      if (mounted) { setState(() => error =
+        'Card was not submitted. Check your status and try again.'); }
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) { setState(() => busy = false); }
     }
   }
   @override
@@ -210,7 +210,7 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
       final bytes = await NativeStudentFormsApi.chooseImage();
       if (bytes != null && mounted) setState(() { receipt = bytes; error = null; });
     } catch (_) {
-      if (mounted) setState(() => error = 'Select a valid receipt image (max 2.5 MB).');
+      if (mounted) { setState(() => error = 'Select a valid receipt image (max 2.5 MB).'); }
     }
   }
 
@@ -238,11 +238,11 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
         signedIn: widget.signedIn);
       if (mounted) { setState(() { done = true; receipt = null; }); }
     } catch (_) {
-      if (mounted) setState(() => error =
+      if (mounted) { setState(() => error =
         'Submission could not be confirmed. If the receipt was uploaded, '
-        'contact the team before submitting again.');
+        'contact the team before submitting again.'); }
     } finally {
-      if (mounted) setState(() => busy = false);
+      if (mounted) { setState(() => busy = false); }
     }
   }
 
