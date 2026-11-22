@@ -15,8 +15,9 @@ class NativeInformationPage extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: Text(support ? 'Support SMIUNotes' : 'Contact Us')),
-      body: SafeArea(child: ListView(
+      body: SafeArea(child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 36),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
             decoration: BoxDecoration(
@@ -92,7 +93,7 @@ class NativeInformationPage extends StatelessWidget {
           const Text('Independent student-run resource, not an official SMIU service.',
             style: TextStyle(fontSize: 12, height: 1.5),
             textAlign: TextAlign.center),
-        ],
+        ]),
       )),
     );
   }
