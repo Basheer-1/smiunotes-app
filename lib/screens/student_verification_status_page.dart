@@ -5,8 +5,10 @@ import 'secure_website_form_page.dart';
 /// Native status view. Does not upload identity documents or bypass the
 /// website's existing authenticated verification workflow.
 class StudentVerificationStatusPage extends StatelessWidget {
-  const StudentVerificationStatusPage({super.key, required this.profile});
+  const StudentVerificationStatusPage({super.key, required this.profile,
+    this.onOpenNativeCardVerification});
   final StudentProfile profile;
+  final VoidCallback? onOpenNativeCardVerification;
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +48,7 @@ class StudentVerificationStatusPage extends StatelessWidget {
             const SizedBox(height: 16),
             FilledButton.icon(
               key: const Key('verification-website-action'),
-              onPressed: () => Navigator.of(context).push(
+              onPressed: onOpenNativeCardVerification ?? () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => const SecureWebsiteFormPage(
                     path: '/profile/verification',
@@ -55,7 +57,8 @@ class StudentVerificationStatusPage extends StatelessWidget {
                 ),
               ),
               icon: const Icon(Icons.verified_outlined),
-              label: const Text('Open account verification'),
+              label: Text(onOpenNativeCardVerification == null
+                ? 'Open secure verification page' : 'Upload Student Card'),
             ),
             const SizedBox(height: 8),
             const Text('The website may ask you to sign in separately. '
