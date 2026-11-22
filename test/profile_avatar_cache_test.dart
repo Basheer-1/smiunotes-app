@@ -10,6 +10,15 @@ void main() {
     expect(ProfileAvatar.initials(''), '?');
   });
 
+  testWidgets('guest avatar is a person icon instead of a question mark',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: ProfileAvatar(name: null)),
+    ));
+    expect(find.byKey(const Key('guest-profile-avatar')), findsOneWidget);
+    expect(find.text('?'), findsNothing);
+  });
+
   testWidgets('avatar is not fetched again when parent rebuilds',
       (tester) async {
     var calls = 0;
