@@ -111,7 +111,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
         for (final raw in threads)
           if (raw is Map<String, dynamic>)
             Card(
-              color: Colors.white.withValues(alpha: 0.85),
+              color: Theme.of(context).colorScheme.surface.withValues(alpha: .92),
               child: ListTile(
                 contentPadding: const EdgeInsets.all(16),
                 title: Text(raw['title']?.toString() ?? 'Discussion',
