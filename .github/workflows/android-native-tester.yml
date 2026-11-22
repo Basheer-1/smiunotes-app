@@ -53,7 +53,7 @@ jobs:
             --dart-define=SMIUNOTES_ENABLE_STAGING_AUTH=false \
             --dart-define=SMIUNOTES_ENABLE_NATIVE_PUSH=false
           test -s build/app/outputs/flutter-apk/app-debug.apk
-          printf 'SMIUNotes LIVE API DEBUG TESTER ONLY\nCommit: %s\nBackend: https://smiunotes.com\nNative student sign-in: ENABLED\nNative push: DISABLED\nNative Contact/Support/Verification submission routes require backend PR #107 deployment; these are not live yet.\nDo not use for real identity/payment uploads before backend QA.\n' \
+          printf 'SMIUNotes LIVE API DEBUG TESTER ONLY\nCommit: %s\nBackend: https://smiunotes.com\nNative student sign-in: ENABLED\nNative push: DISABLED\nNative Contact/Support/Verification API routes are deployed, but signed-in uploads/payment review still require device QA.\nDo not treat this debug APK as a signed release or Play Store package.\n' \
             "$GITHUB_SHA" > build/app/outputs/flutter-apk/TESTER-INFO.txt
           (cd build/app/outputs/flutter-apk && sha256sum app-debug.apk > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
