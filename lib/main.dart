@@ -109,7 +109,7 @@ class _AppShellState extends State<AppShell> {
                         children: [
                           const Icon(Icons.auto_stories_rounded, color: archiveBlue, size: 28),
                           const SizedBox(width: 9),
-                          const Text('SMIUNotes', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+                          Text('SMIUNotes', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
                           const Spacer(),
                           IconButton(
                             tooltip: 'Notifications',
