@@ -29,7 +29,7 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
   void didUpdateWidget(covariant ProfileAvatar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.imageLoader != widget.imageLoader ||
-        oldWidget.name != widget.name) _reload();
+        oldWidget.name != widget.name) { _reload(); }
   }
   void _reload() {
     final load = widget.imageLoader;
