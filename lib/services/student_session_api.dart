@@ -61,6 +61,26 @@ class StudentSessionApi {
     return MobileSession.fromJson(data);
   }
 
+  Future<void> revokeAll(String accessToken) async {
+    if (!RegExp(r'^[A-Za-z0-9._-]{30,4096}
+    if (!RegExp(r'^[A-Za-z0-9._-]{30,4096}$').hasMatch(accessToken)) {
+      throw const FormatException('Invalid access token.');
+    }
+    final data = await _send({'op': 'logout'}, bearer: accessToken);
+    if (data['signed_out'] != true) {
+      throw const FormatException('Session revoke not confirmed.');
+    }
+  }
+}
+).hasMatch(accessToken)) {
+      throw const FormatException('Invalid access token.');
+    }
+    final data = await _send({'op': 'logout_all'}, bearer: accessToken);
+    if (data['signed_out'] != true) {
+      throw const FormatException('All-device revoke not confirmed.');
+    }
+  }
+
   Future<void> revoke(String accessToken) async {
     if (!RegExp(r'^[A-Za-z0-9._-]{30,4096}$').hasMatch(accessToken)) {
       throw const FormatException('Invalid access token.');
