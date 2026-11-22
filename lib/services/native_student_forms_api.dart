@@ -113,7 +113,8 @@ class NativeStudentFormsApi {
     }
   }
 
-  Future<Map<String, dynamic>> supportOptions() => _send('support', get: true);
+  Future<Map<String, dynamic>> supportOptions({bool signedIn = true}) =>
+      _send('support', get: true, authorized: signedIn);
 
   Future<void> submitSupport({
     required Uint8List receipt,
@@ -124,8 +125,10 @@ class NativeStudentFormsApi {
     required String name,
     required bool publicName,
     required bool publicAmount,
+    bool signedIn = true,
   }) async {
     final result = await _send('support', image: receipt, imageField: 'proof',
+      authorized: signedIn,
       fields: {
         'method_id': methodId, 'amount': amount, 'phone': phone,
         'name': name, 'note': note, 'consent': 'yes',
