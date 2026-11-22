@@ -140,7 +140,13 @@ void main() {
     expect(api.lastCategory, 'scholarships');
 
     final campusChip = find.byKey(const Key('update-stream-campus'));
+    // Pull the filter strip well within the viewport after closing
+    // the category popup; merely ensuring visibility can align at y < 0.
+    await tester.drag(find.byKey(const Key('feed-updates')),
+      const Offset(0, 260));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(campusChip);
+    await tester.pumpAndSettle();
     await tester.tap(campusChip);
     await tester.pumpAndSettle();
     expect(api.lastStream, 'campus');
