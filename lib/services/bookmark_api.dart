@@ -39,6 +39,19 @@ class BookmarkApi {
   Future<Map<String, dynamic>> list(String accessToken) =>
       _request(accessToken);
 
+  Future<Map<String, dynamic>> listCompleted(String accessToken) =>
+      _request(accessToken, completedView: true);
+
+  Future<Map<String, dynamic>> complete(String accessToken, String noteId) =>
+      _request(accessToken, action: {
+        'op': 'complete', 'note_id': checkedNoteId(noteId),
+      });
+
+  Future<Map<String, dynamic>> uncomplete(String accessToken, String noteId) =>
+      _request(accessToken, action: {
+        'op': 'uncomplete', 'note_id': checkedNoteId(noteId),
+      });
+
   Future<Map<String, dynamic>> save(String accessToken, String noteId) =>
       _request(accessToken, action: {
         'op': 'save', 'note_id': checkedNoteId(noteId),
@@ -50,8 +63,9 @@ class BookmarkApi {
       });
 
   Future<Map<String, dynamic>> _request(String accessToken,
-      {Map<String, String>? action}) async {
-    final url = endpoint;
+      {Map<String, String>? action, bool completedView = false}) async {
+    final url = completedView ? endpoint.replace(
+      queryParameters: {'view': 'completed'}) : endpoint;
     final authorization = bearer(accessToken);
     final client = HttpClient()..connectionTimeout = const Duration(seconds: 8);
     try {
