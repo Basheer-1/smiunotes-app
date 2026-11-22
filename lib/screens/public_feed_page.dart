@@ -1,5 +1,6 @@
 import 'note_reader_page.dart';
 import '../services/external_link_opener.dart';
+import '../services/update_deadline.dart';
 import 'package:material_ui/material_ui.dart';
 import '../services/public_feed_api.dart';
 
@@ -345,10 +346,12 @@ class _FeedTile extends StatelessWidget {
               if (ExternalLinkOpener.trustedHttps(data['application_url']) != null)
                 FilledButton.icon(
                   key: const Key('update-apply-now-detail'),
-                  onPressed: () => _openExternal(sheetContext,
-                    data['application_url']),
-                  icon: const Icon(Icons.open_in_new_rounded),
-                  label: const Text('Apply Now'),
+                  onPressed: isUpdateApplicationExpired(data['deadline_date'])
+                     ? null : () => _openExternal(sheetContext, data['application_url']),
+                  icon: Icon(isUpdateApplicationExpired(data['deadline_date'])
+                     ? Icons.lock_clock_outlined : Icons.open_in_new_rounded),
+                   label: Text(isUpdateApplicationExpired(data['deadline_date'])
+                     ? 'Applications Closed' : 'Apply Now'),
                 ),
               if (ExternalLinkOpener.trustedHttps(data['source_url']) != null)
                 OutlinedButton.icon(
@@ -376,6 +379,7 @@ class _FeedTile extends StatelessWidget {
       origin.userInfo.isEmpty
       ? origin.resolve(imagePath).toString() : null;
     final applyUrl = ExternalLinkOpener.trustedHttps(data['application_url']);
+    final applyExpired = isUpdateApplicationExpired(data['deadline_date']);
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 0,
@@ -466,9 +470,12 @@ class _FeedTile extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(child: FilledButton.icon(
                   key: Key('update-apply-${data['id']}'),
-                  onPressed: () => _openExternal(context, applyUrl.toString()),
-                  icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                  label: const Text('Apply Now'),
+                  onPressed: applyExpired ? null :
+                     () => _openExternal(context, applyUrl.toString()),
+                  icon: Icon(applyExpired ? Icons.lock_clock_outlined
+                     : Icons.open_in_new_rounded, size: 18),
+                   label: Text(applyExpired ? 'Applications Closed'
+                     : 'Apply Now'),
                 )),
               ],
             ]),
