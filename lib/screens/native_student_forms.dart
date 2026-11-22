@@ -63,7 +63,7 @@ class _NativeContactFormPageState extends State<NativeContactFormPage> {
             TextFormField(controller: email, maxLength: 254,
               keyboardType: TextInputType.emailAddress,
               decoration: const InputDecoration(labelText: 'Email'),
-              validator: (v) => RegExp(r'^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+              validator: (v) => RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
                 .hasMatch((v ?? '').trim()) ? null : 'Enter a valid email'),
           ] else
             TextFormField(controller: subject, maxLength: 160,
@@ -200,7 +200,7 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
 
   Future<void> submit() async {
     if (busy || !consent || receipt == null || methodId == null) return;
-    if (!RegExp(r'^(?:0|[1-9][0-9]*)(?:\\.[0-9]{1,2})?$')
+    if (!RegExp(r'^(?:0|[1-9][0-9]*)(?:\.[0-9]{1,2})?$')
         .hasMatch(amount.text.trim()) ||
         !RegExp(r'^03[0-9]{9}$').hasMatch(phone.text.trim())) {
       setState(() => error = 'Check your amount and 11-digit phone number.');
