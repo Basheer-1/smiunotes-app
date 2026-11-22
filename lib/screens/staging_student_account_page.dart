@@ -183,7 +183,7 @@ class StagingStudentAccountPageState
 
   void openNotificationPreferences() {
     if (!mounted || !runtime.coordinator.authenticated ||
-        runtime.controller.accessToken == null) return;
+        runtime.controller.accessToken == null) { return; }
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => NativeNotificationPreferencesPage(
         api: MobilePreferencesApi(baseUrl: widget.httpsBaseUrl),
