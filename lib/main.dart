@@ -227,7 +227,7 @@ class _AppShellState extends State<AppShell> {
                                 name: _activeProfile?.studentName,
                                 size: 28,
                                 imageLoader: _activeProfile?.avatarVersion == null
-                                  ? null : () async => _studentAccountKey.currentState
+                                  ? null : () async => await _studentAccountKey.currentState
                                       ?.loadOwnAvatar(),
                               )
                             else
