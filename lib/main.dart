@@ -68,8 +68,21 @@ class _SmiuNotesAppState extends State<SmiuNotesApp> {
       darkTheme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: archiveBlue, brightness: Brightness.dark),
-        scaffoldBackgroundColor: const Color(0xFF0C1726),
+          seedColor: const Color(0xFF87B9F8),
+          brightness: Brightness.dark,
+          surface: const Color(0xFF101E32),
+        ).copyWith(
+          primary: const Color(0xFF8EC5FF),
+          onPrimary: const Color(0xFF09213C),
+          primaryContainer: const Color(0xFF18395B),
+          onPrimaryContainer: const Color(0xFFD9EAFD),
+          secondary: const Color(0xFFACD7F7),
+          surface: const Color(0xFF101E32),
+          onSurface: const Color(0xFFEAF3FF),
+          onSurfaceVariant: const Color(0xFFB7C9DE),
+          outlineVariant: const Color(0xFF324862),
+        ),
+        scaffoldBackgroundColor: const Color(0xFF081321),
         fontFamily: 'Roboto',
       ),
       themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
@@ -163,7 +176,7 @@ class _AppShellState extends State<AppShell> {
                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                       child: Row(
                         children: [
-                          const Icon(Icons.auto_stories_rounded, color: archiveBlue, size: 28),
+                          const Icon(Icons.auto_stories_rounded, color: Theme.of(context).colorScheme.primary, size: 28),
                           const SizedBox(width: 9),
                           Text('SMIUNotes', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
                           const Spacer(),
@@ -181,7 +194,7 @@ class _AppShellState extends State<AppShell> {
                                 builder: (_) => const NotificationInboxPage(),
                               ));
                             },
-                            icon: const Icon(Icons.notifications_none_rounded, color: archiveBlue),
+                            icon: const Icon(Icons.notifications_none_rounded, color: Theme.of(context).colorScheme.primary),
                           ),
                         ],
                       ),
@@ -323,14 +336,18 @@ class _Backdrop extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: Theme.of(context).brightness == Brightness.dark
-              ? [const Color(0xFF0A1729), const Color(0xFF16283E), const Color(0xFF0B182B)]
+              ? [const Color(0xFF07111F), const Color(0xFF102744), const Color(0xFF091728)]
               : [const Color(0xFFE8F3FF), const Color(0xFFF7F9FD), const Color(0xFFE6EFFB)],
           ),
         ),
         child: Stack(
           children: [
-            Positioned(top: -135, right: -100, child: _Glow(color: const Color(0xFF9CCCF8), size: 340)),
-            Positioned(bottom: 40, left: -110, child: _Glow(color: const Color(0xFFB7C9F2), size: 310)),
+            Positioned(top: -135, right: -100, child: _Glow(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1A5A9D) : const Color(0xFF9CCCF8), size: 340)),
+            Positioned(bottom: 40, left: -110, child: _Glow(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF25457C) : const Color(0xFFB7C9F2), size: 310)),
           ],
         ),
       ),
@@ -346,7 +363,7 @@ class _Glow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ImageFiltered(
     imageFilter: ImageFilter.blur(sigmaX: 75, sigmaY: 75),
-    child: Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.65))),
+    child: Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.45))),
   );
 }
 
@@ -364,7 +381,8 @@ class _Glass extends StatelessWidget {
       child: Container(
         padding: padding,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.74),
+          color: Theme.of(context).colorScheme.surface.withValues(
+            alpha: Theme.of(context).brightness == Brightness.dark ? 0.82 : 0.74),
           borderRadius: BorderRadius.circular(radius),
           border: Border.all(color: Theme.of(context).colorScheme.outlineVariant, width: 1.2),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 28, offset: const Offset(0, 10))],
@@ -391,7 +409,7 @@ class _HomePage extends StatelessWidget {
       key: const Key('home-page'),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 112),
       children: [
-        Text('YOUR STUDENT COMPANION', style: TextStyle(fontSize: 11, letterSpacing: 2, fontWeight: FontWeight.w800, color: archiveBlue)),
+        Text('YOUR STUDENT COMPANION', style: TextStyle(fontSize: 11, letterSpacing: 2, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary)),
         const SizedBox(height: 10),
         Text('Everything SMIU,\nin one place.', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1.15, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 10),
@@ -410,7 +428,7 @@ class _HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.auto_stories_rounded, color: archiveBlue, size: 32),
+              const Icon(Icons.auto_stories_rounded, color: Theme.of(context).colorScheme.primary, size: 32),
               const SizedBox(height: 12),
               Text('Ready to learn?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22, fontWeight: FontWeight.w800)),
               const SizedBox(height: 7),
@@ -419,7 +437,8 @@ class _HomePage extends StatelessWidget {
               FilledButton.icon(
                 key: const Key('explore-notes'),
                 onPressed: () => onNavigate(1),
-                style: FilledButton.styleFrom(backgroundColor: archiveBlue, foregroundColor: Colors.white),
+                style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary,
+                     foregroundColor: Theme.of(context).colorScheme.onPrimary),
                 icon: const Icon(Icons.arrow_forward_rounded),
                 label: const Text('Explore notes'),
               ),
