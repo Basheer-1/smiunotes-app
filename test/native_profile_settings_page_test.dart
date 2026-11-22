@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smiunotes_mobile/models/student_profile.dart';
 import 'package:smiunotes_mobile/screens/native_profile_settings_page.dart';
