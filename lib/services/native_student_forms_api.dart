@@ -71,17 +71,15 @@ class NativeStudentFormsApi {
         request.write('\r\n--$boundary--\r\n');
       }
       final response = await request.close().timeout(const Duration(seconds: 35));
+      if (path == 'support' && response.statusCode == HttpStatus.notFound) {
+        throw const NativeSupportNotAvailable();
+      }
       final bytes = <int>[];
       await for (final chunk in response.timeout(const Duration(seconds: 15))) {
         if (bytes.length + chunk.length > 32768) {
           throw const FormatException('Response too large.');
         }
         bytes.addAll(chunk);
-      }
-      // An unimplemented Next.js API route often responds with HTML,
-      // so recognize HTTP 404 *before* trying to parse JSON.
-      if (path == 'support' && response.statusCode == 404) {
-        throw const NativeSupportNotAvailable();
       }
       final parsed = jsonDecode(utf8.decode(bytes));
       if (parsed is! Map<String, dynamic>) {
