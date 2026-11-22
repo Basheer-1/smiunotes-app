@@ -551,22 +551,63 @@ class _QuickLink extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => _Glass(
-    padding: const EdgeInsets.all(12),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Theme.of(context).colorScheme.primary, size: 27),
-          const SizedBox(height: 9),
-          Text(title, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 4),
-          Text(caption, textAlign: TextAlign.center, maxLines: 2, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(21),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft, end: Alignment.bottomRight,
+          colors: [
+            scheme.primaryContainer.withValues(alpha: dark ? .58 : .64),
+            scheme.surface.withValues(alpha: dark ? .93 : .86),
+          ],
+        ),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: .85)),
+        boxShadow: [
+          BoxShadow(color: scheme.shadow.withValues(alpha: dark ? .14 : .07),
+            blurRadius: 19, offset: const Offset(0, 7)),
         ],
       ),
-    ),
-  );
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(21),
+          child: Padding(
+            padding: const EdgeInsets.all(13),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: scheme.primary.withValues(alpha: .12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(icon, color: scheme.primary, size: 23),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.arrow_outward_rounded, size: 16,
+                    color: scheme.primary.withValues(alpha: .70)),
+                ]),
+                const SizedBox(height: 10),
+                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13.5,
+                    color: scheme.onSurface, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 3),
+                Text(caption, maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 10.5, height: 1.15,
+                    color: scheme.onSurfaceVariant)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
-
