@@ -5,10 +5,10 @@ import 'student_login_page.dart';
 import 'student_recovery_page.dart';
 import '../widgets/profile_avatar.dart';
 
-/// Native, read-only account settings backed by the validated /me profile.
+/// Native, read-only account settings backed by the validated /me widget.profile.
 /// Mutations are deliberately not offered until equivalent secured mobile
 /// endpoints exist; account recovery already has a Turnstile-protected API.
-class NativeProfileSettingsPage extends StatelessWidget {
+class NativeProfileSettingsPage extends StatefulWidget {
   const NativeProfileSettingsPage({
     super.key,
     required this.profile,
@@ -33,6 +33,28 @@ class NativeProfileSettingsPage extends StatelessWidget {
   final Future<void> Function()? onSignOutAll;
 
   @override
+  State<NativeProfileSettingsPage> createState() => _NativeProfileSettingsPageState();
+}
+
+class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
+  late bool _darkMode;
+  late bool _pushEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _darkMode = widget.darkMode;
+    _pushEnabled = widget.pushEnabled;
+  }
+
+  @override
+  void didUpdateWidget(covariant NativeProfileSettingsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.darkMode != oldWidget.darkMode) _darkMode = widget.darkMode;
+    if (widget.pushEnabled != oldWidget.pushEnabled) _pushEnabled = widget.pushEnabled;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
@@ -46,14 +68,14 @@ class NativeProfileSettingsPage extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               child: Column(children: [
                 ProfileAvatar(
-                  name: profile.studentName,
+                  name: widget.profile.studentName,
                   size: 70,
-                  cacheKey: '${profile.studentId}:${profile.avatarVersion}',
+                  cacheKey: '${widget.profile.studentId}:${widget.profile.avatarVersion}',
                 ),
                 const SizedBox(height: 12),
-                Text(profile.studentName,
+                Text(widget.profile.studentName,
                   style: Theme.of(context).textTheme.titleLarge),
-                if (profile.studentId != null) Text(profile.studentId!),
+                if (widget.profile.studentId != null) Text(widget.profile.studentId!),
                 const SizedBox(height: 10),
                 Text('Profile data is synced from your verified SMIUNotes account.',
                   textAlign: TextAlign.center,
@@ -67,22 +89,22 @@ class NativeProfileSettingsPage extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.alternate_email),
             title: const Text('Verified email'),
-            subtitle: Text(profile.verifiedEmail ?? 'Not provided'),
+            subtitle: Text(widget.profile.verifiedEmail ?? 'Not provided'),
           ),
           ListTile(
             leading: const Icon(Icons.apartment_outlined),
             title: const Text('Department'),
-            subtitle: Text(profile.department ?? 'Not provided'),
+            subtitle: Text(widget.profile.department ?? 'Not provided'),
           ),
           ListTile(
             leading: const Icon(Icons.verified_user_outlined),
             title: const Text('Student verification'),
-            subtitle: Text(profile.verificationStatus),
+            subtitle: Text(widget.profile.verificationStatus),
           ),
           ListTile(
             leading: const Icon(Icons.shield_outlined),
             title: const Text('Account status'),
-            subtitle: Text(profile.accountStatus),
+            subtitle: Text(widget.profile.accountStatus),
           ),
           const Divider(height: 30),
           Text('Appearance & notifications',
@@ -91,16 +113,23 @@ class NativeProfileSettingsPage extends StatelessWidget {
             key: const Key('settings-theme'),
             title: const Text('Dark mode'),
             secondary: const Icon(Icons.contrast),
-            value: darkMode,
-            onChanged: onThemeChanged,
+            value: _darkMode,
+            onChanged: widget.onThemeChanged == null ? null : (enabled) {
+              setState(() => _darkMode = enabled);
+              widget.onThemeChanged!(enabled);
+            },
           ),
-          if (pushAvailable)
+          if (widget.pushAvailable)
             SwitchListTile(
               key: const Key('settings-push'),
               title: const Text('Phone notifications'),
               subtitle: const Text('Account and university updates'),
-              value: pushEnabled,
-              onChanged: pushBusy ? null : onPushChanged,
+              value: _pushEnabled,
+              onChanged: widget.pushBusy || widget.onPushChanged == null
+                ? null : (enabled) {
+                  widget.onPushChanged!(enabled);
+                  // Parent refresh confirms remote enrollment; no optimistic success.
+                },
             ),
           const Divider(height: 30),
           Text('Security & recovery',
@@ -113,18 +142,21 @@ class NativeProfileSettingsPage extends StatelessWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
               builder: (_) => StudentRecoveryPage(
-                api: api,
-                challengeProvider: challengeProvider,
+                api: widget.api,
+                challengeProvider: widget.challengeProvider,
               ),
             )),
           ),
-          if (onSignOutAll != null)
+          if (widget.onSignOutAll != null)
             ListTile(
               key: const Key('settings-all-devices'),
               leading: const Icon(Icons.phonelink_erase_outlined),
               title: const Text('Sign out all devices'),
               subtitle: const Text('Revoke active sessions'),
-              onTap: () => onSignOutAll!(),
+              onTap: () async {
+                await widget.onSignOutAll!();
+                if (context.mounted) Navigator.of(context).pop();
+              },
             ),
           const SizedBox(height: 14),
           Text(
