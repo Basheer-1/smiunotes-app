@@ -21,6 +21,7 @@ class _MyBookmarksPageState extends State<MyBookmarksPage> {
   late Future<Map<String, dynamic>> _result;
   String? _actionError;
   final Set<String> _removing = <String>{};
+  bool _completedView = false;
 
   @override
   void initState() {
@@ -31,7 +32,9 @@ class _MyBookmarksPageState extends State<MyBookmarksPage> {
   void _reload() {
     // Fetches current session at request time (supports rotation/sign-out).
     _result = Future.sync(
-      () => widget.api.list(widget.currentAccessToken()),
+      () => _completedView
+        ? widget.api.listCompleted(widget.currentAccessToken())
+        : widget.api.list(widget.currentAccessToken()),
     );
   }
 
@@ -42,6 +45,12 @@ class _MyBookmarksPageState extends State<MyBookmarksPage> {
     });
   }
 
+  void _selectView(bool completed) {
+    if (_completedView == completed) return;
+    _completedView = completed;
+    _refresh();
+  }
+
   Future<void> _remove(String noteId) async {
     if (_removing.contains(noteId)) return;
     setState(() {
@@ -49,17 +58,19 @@ class _MyBookmarksPageState extends State<MyBookmarksPage> {
       _actionError = null;
     });
     try {
-      final response = await widget.api.remove(
-        widget.currentAccessToken(), noteId,
-      );
-      if (response['ok'] != true || response['bookmarked'] != false) {
+      final response = _completedView
+        ? await widget.api.uncomplete(widget.currentAccessToken(), noteId)
+        : await widget.api.remove(widget.currentAccessToken(), noteId);
+      if (response['ok'] != true ||
+          (_completedView ? response['completed'] != false
+                          : response['bookmarked'] != false)) {
         throw const FormatException('Remove not confirmed.');
       }
       if (mounted) _refresh();
     } catch (_) {
       if (mounted) {
         setState(() => _actionError =
-          'Unable to remove saved note. Check your sign-in and retry.');
+          'Unable to update study library. Check your sign-in and retry.');
       }
     } finally {
       if (mounted) setState(() => _removing.remove(noteId));
@@ -68,7 +79,7 @@ class _MyBookmarksPageState extends State<MyBookmarksPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('My saved notes'),
+    appBar: AppBar(title: const Text('My study library'),
       actions: [IconButton(
         icon: const Icon(Icons.refresh),
         tooltip: 'Refresh bookmarks',
@@ -95,24 +106,46 @@ class _MyBookmarksPageState extends State<MyBookmarksPage> {
           key: const Key('my-bookmarks'),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
-            const Text('Saved to your student account',
+            const Text('Your private study progress',
               style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            SegmentedButton<bool>(
+              key: const Key('study-library-selector'),
+              segments: const [
+                ButtonSegment(value: false,
+                  icon: Icon(Icons.bookmark_outline),
+                  label: Text('Bookmarks')),
+                ButtonSegment(value: true,
+                  icon: Icon(Icons.task_alt_outlined),
+                  label: Text('Completed')),
+              ],
+              selected: {_completedView},
+              onSelectionChanged: (choice) => _selectView(choice.first),
+            ),
             const SizedBox(height: 10),
             if (_actionError != null)
               Text(_actionError!, key: const Key('bookmark-action-error')),
             if (raw.isEmpty)
               const Padding(padding: EdgeInsets.all(20),
-                child: Text('No bookmarked notes yet.')),
+                child: Text(_completedView
+                  ? 'No completed notes yet.' : 'No bookmarked notes yet.')),
             for (final entry in raw)
               if (entry is Map<String, dynamic> &&
                   entry['note_id'] is String)
                 Card(child: ListTile(
                   title: Text(entry['title']?.toString() ?? 'Saved note'),
-                  subtitle: const Text('Saved note'),
+                  subtitle: Text(_completedView
+                    ? 'Completed note' : (entry['completed'] == true
+                      ? 'Bookmarked · Also completed' : 'Saved note')),
                   trailing: IconButton(
-                    key: Key('remove-bookmark-${entry['note_id']}'),
-                    tooltip: 'Remove bookmark',
-                    icon: const Icon(Icons.bookmark_remove_outlined),
+                    key: Key(_completedView
+                      ? 'uncomplete-note-${entry['note_id']}'
+                      : 'remove-bookmark-${entry['note_id']}'),
+                    tooltip: _completedView ? 'Remove completed status'
+                      : 'Remove bookmark',
+                    icon: Icon(_completedView
+                      ? Icons.remove_done_outlined
+                      : Icons.bookmark_remove_outlined),
                     onPressed: _removing.contains(entry['note_id'])
                         ? null : () => _remove(entry['note_id'] as String),
                   ),
