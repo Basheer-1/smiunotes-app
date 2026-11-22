@@ -24,6 +24,7 @@ class NativeProfileSettingsPage extends StatefulWidget {
     this.onPushChanged,
     this.onSignOutAll,
     this.onLoadAvatar,
+    this.onOpenNativeCardVerification,
   });
 
   final StudentProfile profile;
@@ -35,6 +36,7 @@ class NativeProfileSettingsPage extends StatefulWidget {
   final ValueChanged<bool>? onPushChanged;
   final Future<bool> Function()? onSignOutAll;
   final Future<Uint8List?> Function()? onLoadAvatar;
+  final VoidCallback? onOpenNativeCardVerification;
 
   @override
   State<NativeProfileSettingsPage> createState() => _NativeProfileSettingsPageState();
@@ -111,6 +113,7 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
             onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
               builder: (_) => StudentVerificationStatusPage(
                 profile: widget.profile,
+                onOpenNativeCardVerification: widget.onOpenNativeCardVerification,
               ),
             )),
           ),
