@@ -323,19 +323,22 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
             blurRadius: 24, offset: const Offset(0, 9)),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Icon(icon, color: c.primary),
-            const SizedBox(width: 10),
-            Expanded(child: Text(title, style:
-              Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800))),
+      child: Material(
+        type: MaterialType.transparency,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Icon(icon, color: c.primary),
+              const SizedBox(width: 10),
+              Expanded(child: Text(title, style:
+                Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800))),
+            ]),
+            const SizedBox(height: 12),
+            content,
           ]),
-          const SizedBox(height: 12),
-          content,
-        ]),
+        ),
       ),
     );
   }
