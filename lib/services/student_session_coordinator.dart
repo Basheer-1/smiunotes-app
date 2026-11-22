@@ -90,6 +90,29 @@ class StudentSessionCoordinator {
     }
   }
 
+  /// Re-fetch the signed-in account from /me after an avatar update.
+  /// A failure does not erase a previously verified live session, but an
+  /// unvalidated response is never applied to the UI.
+  Future<StudentProfile?> refreshValidatedProfile() async {
+    if (_running || !authenticated) return null;
+    final token = _controller.accessToken;
+    if (token == null) return null;
+    _running = true;
+    try {
+      final fresh = await _loadProfile(token);
+      if (fresh.accountStatus != 'active' ||
+          fresh.studentId != _profile?.studentId) {
+        throw const FormatException('Profile identity changed.');
+      }
+      _profile = fresh;
+      return fresh;
+    } catch (_) {
+      return null;
+    } finally {
+      _running = false;
+    }
+  }
+
   Future<void> signOut() async {
     if (_running) throw StateError('Session operation already in progress.');
     _running = true;
