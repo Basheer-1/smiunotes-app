@@ -2,7 +2,7 @@
 /// As with the website, an absent deadline means no recorded expiry.
 bool isUpdateApplicationExpired(Object? deadline, {DateTime? now}) {
   if (deadline is! String || !RegExp(r'^\d{4}-\d{2}-\d{2}$')
-      .hasMatch(deadline)) return false;
+      .hasMatch(deadline)) { return false; }
   final instant = (now ?? DateTime.now()).toUtc()
       .add(const Duration(hours: 5));
   final localDate = '${instant.year.toString().padLeft(4, '0')}-'
