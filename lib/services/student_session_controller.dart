@@ -80,6 +80,23 @@ class StudentSessionController {
     }
   }
 
+  Future<void> signOutAll(RevokeStudentSession revokeAll) async {
+    if (_running) throw StateError('Session action already in progress.');
+    _running = true;
+    try {
+      final current = _session;
+      _session = null;
+      try {
+        if (current != null) await revokeAll(current.accessToken);
+      } finally {
+        // Always erase this device, even when server revoke is unreachable.
+        await _vault.clear();
+      }
+    } finally {
+      _running = false;
+    }
+  }
+
   Future<void> signOut() async {
     if (_running) throw StateError('Session action already in progress.');
     _running = true;
