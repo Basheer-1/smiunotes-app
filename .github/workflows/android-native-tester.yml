@@ -1,0 +1,67 @@
+name: SMIUNotes Live API Tester APK (DEBUG ONLY)
+
+on:
+  push:
+    branches: [feat/student-native-parity]
+    paths:
+      - 'lib/**'
+      - 'android/**'
+      - 'test/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - '.github/workflows/android-native-tester.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smiunotes-live-tester-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live-api-qa:
+    if: github.ref == 'refs/heads/feat/student-native-parity'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the real website mobile API is ready before building
+        env:
+          SMIUNOTES_RELEASE_API_BASE: https://smiunotes.com
+        run: node scripts/check-release-api.mjs
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.1'
+          channel: stable
+          cache: true
+      - uses: gradle/actions/setup-gradle@v4
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+      - name: Build production-API-connected tester (not release)
+        shell: bash
+        run: |
+          set -euo pipefail
+          flutter build apk --debug \
+            --dart-define=SMIUNOTES_API_BASE=https://smiunotes.com \
+            --dart-define=SMIUNOTES_ENABLE_PRODUCTION_AUTH=true \
+            --dart-define=SMIUNOTES_ENABLE_STAGING_AUTH=false \
+            --dart-define=SMIUNOTES_ENABLE_NATIVE_PUSH=false
+          test -s build/app/outputs/flutter-apk/app-debug.apk
+          printf 'SMIUNotes LIVE API DEBUG TESTER ONLY\nCommit: %s\nBackend: https://smiunotes.com\nNative student sign-in: ENABLED\nNative push: DISABLED\nNative Contact/Support/Verification submission routes require backend PR #107 deployment; these are not live yet.\nDo not use for real identity/payment uploads before backend QA.\n' \
+            "$GITHUB_SHA" > build/app/outputs/flutter-apk/TESTER-INFO.txt
+          (cd build/app/outputs/flutter-apk && sha256sum app-debug.apk > SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smiunotes-live-api-native-tester-apk
+          path: |
+            build/app/outputs/flutter-apk/app-debug.apk
+            build/app/outputs/flutter-apk/TESTER-INFO.txt
+            build/app/outputs/flutter-apk/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 7
