@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'dart:typed_data';
 import '../models/student_profile.dart';
 import '../services/native_avatar_api.dart';
+import '../services/student_notification_preferences_api.dart';
 
 import '../services/authenticated_reader_api.dart';
 import '../services/community_write_api.dart';
@@ -68,6 +69,20 @@ class StagingStudentAccountPageState
       }
     }
     await runtime.controller.signOutAll(runtime.sessionApi.revokeAll);
+  }
+
+  Future<bool> loadUpdatePreference() async {
+    final data = await StudentNotificationPreferencesApi(
+      baseUrl: widget.httpsBaseUrl).read(_currentVerifiedToken());
+    if (data['notify_updates'] is! bool || data['notify_notes'] != false) {
+      throw const FormatException('Invalid notification preferences.');
+    }
+    return data['notify_updates'] as bool;
+  }
+
+  Future<void> saveUpdatePreference(bool enabled) async {
+    await StudentNotificationPreferencesApi(
+      baseUrl: widget.httpsBaseUrl).save(_currentVerifiedToken(), enabled);
   }
 
   Future<void> enablePush() async {
@@ -224,6 +239,8 @@ class StagingStudentAccountPageState
     signOut: runtime.coordinator.signOut,
     signOutAll: signOutAllDevices,
     onLoadAvatar: loadOwnAvatar,
+    onLoadUpdatePreference: loadUpdatePreference,
+    onSaveUpdatePreference: saveUpdatePreference,
     onOpenVerifiedNote: openVerifiedNote,
     onCreateDiscussion: openCommunityComposer,
     onOpenNotifications: openNotifications,
