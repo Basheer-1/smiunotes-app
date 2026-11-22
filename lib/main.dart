@@ -456,6 +456,16 @@ class _HomePage extends StatelessWidget {
                     'is still pending. Complete it to retain access.',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onPrimaryContainer)),
+                if (studentProfile!.verificationExpiresAt != null) ...[
+                  const SizedBox(height: 8),
+                  Text('Provisional access ends: '
+                    '${studentProfile!.verificationExpiresAt!.day}/'
+                    '${studentProfile!.verificationExpiresAt!.month}/'
+                    '${studentProfile!.verificationExpiresAt!.year}',
+                    key: const Key('home-verification-deadline'),
+                    style: TextStyle(fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer)),
+                ],
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                   key: const Key('home-open-verification'),
