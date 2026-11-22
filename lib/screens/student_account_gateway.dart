@@ -22,6 +22,7 @@ class StudentAccountGateway extends StatefulWidget {
     this.onCreateDiscussion,
     this.onOpenVerifiedNote,
     this.onOpenNotifications,
+    this.onOpenNotificationPreferences,
     this.onOpenBookmarks,
     this.onEnablePush,
     this.onDisablePush,
@@ -43,6 +44,7 @@ class StudentAccountGateway extends StatefulWidget {
   final VoidCallback? onCreateDiscussion;
   final VoidCallback? onOpenVerifiedNote;
   final VoidCallback? onOpenNotifications;
+  final VoidCallback? onOpenNotificationPreferences;
   final VoidCallback? onOpenBookmarks;
   final Future<void> Function()? onEnablePush;
   final Future<void> Function()? onDisablePush;
@@ -338,6 +340,13 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
               onTap: widget.onOpenNotifications,
               entryKey: const Key('account-open-notifications'),
             ),
+            if (widget.onOpenNotificationPreferences != null)
+              _AccountEntry(
+                icon: Icons.tune_outlined,
+                label: 'Notification preferences',
+                onTap: widget.onOpenNotificationPreferences,
+                entryKey: const Key('account-notification-preferences'),
+              ),
             if (_profile!.verificationStatus == 'verified' &&
                 widget.onCreateDiscussion != null)
               _AccountEntry(
