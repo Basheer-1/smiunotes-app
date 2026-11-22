@@ -16,7 +16,6 @@ class NativeProfileSettingsPage extends StatelessWidget {
     required this.challengeProvider,
     required this.darkMode,
     required this.onThemeChanged,
-    this.onLoadAvatar,
     this.pushAvailable = false,
     this.pushEnabled = false,
     this.pushBusy = false,
@@ -29,7 +28,6 @@ class NativeProfileSettingsPage extends StatelessWidget {
   final ChallengeProvider challengeProvider;
   final bool darkMode;
   final ValueChanged<bool>? onThemeChanged;
-  final Future<dynamic> Function()? onLoadAvatar;
   final bool pushAvailable, pushEnabled, pushBusy;
   final ValueChanged<bool>? onPushChanged;
   final Future<void> Function()? onSignOutAll;
