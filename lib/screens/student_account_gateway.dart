@@ -162,6 +162,24 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
     }
   }
 
+  Future<void> _confirmLogoutAll() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Sign out all devices?'),
+        content: const Text('This will revoke your other SMIUNotes sessions. '
+          'You will need to sign in again on each device.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Sign out all')),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) { await _logoutAll(); }
+  }
+
   Future<void> _logoutAll() async {
     if (_busy || widget.signOutAll == null) return;
     setState(() { _busy = true; _error = null; });
@@ -359,7 +377,7 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
             const SizedBox(height: 8),
             OutlinedButton.icon(
               key: const Key('account-signout-all'),
-              onPressed: _busy || widget.signOutAll == null ? null : _logoutAll,
+              onPressed: _busy || widget.signOutAll == null ? null : _confirmLogoutAll,
               icon: const Icon(Icons.phonelink_erase_rounded),
               label: const Text('Sign out all devices'),
             ),
