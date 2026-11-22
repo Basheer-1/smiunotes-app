@@ -319,6 +319,7 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                   pushBusy: _pushBusy,
                   onPushChanged: _togglePush,
                   onSignOutAll: _confirmLogoutAll,
+                  onLoadAvatar: widget.onLoadAvatar,
                 ),
               )),
             ),
