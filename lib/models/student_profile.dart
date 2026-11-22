@@ -9,6 +9,8 @@ class StudentProfile {
     required this.verificationStatus,
     this.studentId,
     this.verifiedEmail,
+    this.profileId,
+    this.avatarVersion,
   });
 
   final String studentName;
@@ -18,6 +20,8 @@ class StudentProfile {
   final String accountStatus;
   final String verificationStatus;
   final String? verifiedEmail;
+  final String? profileId;
+  final String? avatarVersion;
 
   factory StudentProfile.fromJson(Map<String, dynamic> json) {
     final name = json['student_name'];
@@ -30,6 +34,8 @@ class StudentProfile {
       department: json['department'] is String ? json['department'] as String : null,
       verifiedEmail: json['verified_email'] is String
           ? json['verified_email'] as String : null,
+      profileId: json['profile_id'] is String ? json['profile_id'] as String : null,
+      avatarVersion: json['avatar_version'] is String ? json['avatar_version'] as String : null,
       role: json['role'] is String ? json['role'] as String : 'student',
       accountStatus: json['account_status'] is String
           ? json['account_status'] as String : 'unknown',
