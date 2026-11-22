@@ -60,6 +60,25 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  # Same typography as smiunotes.com, bundled for instant offline rendering.
+  # Both font families use the SIL Open Font License.
+  assets:
+    - assets/fonts/OFL-Inter.txt
+    - assets/fonts/OFL-SpaceGrotesk.txt
+  fonts:
+    - family: SMIUInter
+      fonts:
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Variable.ttf
+          weight: 700
+    - family: SMIUSpaceGrotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk-Variable.ttf
+          weight: 400
+        - asset: assets/fonts/SpaceGrotesk-Variable.ttf
+          weight: 700
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
