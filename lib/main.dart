@@ -8,6 +8,7 @@ import 'models/student_profile.dart';
 import 'widgets/profile_avatar.dart';
 import 'dart:ui';
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() => runApp(const SmiuNotesApp());
 
@@ -22,7 +23,32 @@ class SmiuNotesApp extends StatefulWidget {
 }
 
 class _SmiuNotesAppState extends State<SmiuNotesApp> {
+  static const _themeKey = 'smiunotes.theme.v1';
+  static const _settings = FlutterSecureStorage();
   bool darkMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreTheme();
+  }
+
+  Future<void> _restoreTheme() async {
+    try {
+      final saved = await _settings.read(key: _themeKey);
+      if (mounted && (saved == 'dark' || saved == 'light')) {
+        setState(() => darkMode = saved == 'dark');
+      }
+    } catch (_) {
+      // No unencrypted fallback; system theme remains usable.
+    }
+  }
+
+  void _changeTheme(bool enabled) {
+    setState(() => darkMode = enabled);
+    _settings.write(key: _themeKey,
+      value: enabled ? 'dark' : 'light').catchError((Object _) {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +71,7 @@ class _SmiuNotesAppState extends State<SmiuNotesApp> {
       themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
       home: AppShell(
         darkMode: darkMode,
-        onThemeChanged: (value) => setState(() => darkMode = value),
+        onThemeChanged: _changeTheme,
       ),
     );
   }
