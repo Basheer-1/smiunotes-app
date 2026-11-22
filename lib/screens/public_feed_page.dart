@@ -4,10 +4,13 @@ import 'package:material_ui/material_ui.dart';
 import '../services/public_feed_api.dart';
 
 class PublicFeedPage extends StatefulWidget {
-  const PublicFeedPage({super.key, required this.type, this.api = const PublicFeedApi(), this.onSaveNote});
+  const PublicFeedPage({super.key, required this.type, this.api = const PublicFeedApi(), this.onSaveNote,
+    this.initialDepartment = '', this.initialSemester = ''});
   final String type;
   final PublicFeedApi api;
   final Future<bool> Function(String noteId)? onSaveNote;
+  final String initialDepartment;
+  final String initialSemester;
   @override
   State<PublicFeedPage> createState() => _PublicFeedPageState();
 }
@@ -29,6 +32,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   @override
   void initState() {
     super.initState();
+    department = widget.initialDepartment;
+    semester = widget.initialSemester;
     if (isNotes) { loadFilters(); }
     load();
   }
@@ -36,13 +41,15 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   @override
   void didUpdateWidget(covariant PublicFeedPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.type != widget.type || oldWidget.api != widget.api) {
+    if (oldWidget.type != widget.type || oldWidget.api != widget.api ||
+        oldWidget.initialDepartment != widget.initialDepartment ||
+        oldWidget.initialSemester != widget.initialSemester) {
       page = 1;
       search.clear();
       stream = '';
       category = '';
-      department = '';
-      semester = '';
+      department = widget.initialDepartment;
+      semester = widget.initialSemester;
       subject = '';
       departments = [];
       subjects = [];
