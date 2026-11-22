@@ -71,6 +71,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(accepted, 1);
     expect(find.text('QA Student'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('account-signout')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('account-signout')));
     await tester.pumpAndSettle();
     expect(revoked, 1);
