@@ -84,7 +84,7 @@ class _CommunityThreadPageState extends State<CommunityThreadPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(thread['category']?.toString() ?? '',
-                      style: const TextStyle(color: Color(0xFF183C68))),
+                      style: TextStyle(color: Theme.of(context).colorScheme.primary)),
                     const SizedBox(height: 8),
                     Text(thread['title']?.toString() ?? 'Discussion',
                       style: const TextStyle(

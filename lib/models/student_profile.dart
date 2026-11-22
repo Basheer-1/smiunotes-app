@@ -11,6 +11,7 @@ class StudentProfile {
     this.verifiedEmail,
     this.profileId,
     this.avatarVersion,
+    this.verificationExpiresAt,
   });
 
   final String studentName;
@@ -22,6 +23,7 @@ class StudentProfile {
   final String? verifiedEmail;
   final String? profileId;
   final String? avatarVersion;
+  final DateTime? verificationExpiresAt;
 
   factory StudentProfile.fromJson(Map<String, dynamic> json) {
     final name = json['student_name'];
@@ -36,6 +38,9 @@ class StudentProfile {
           ? json['verified_email'] as String : null,
       profileId: json['profile_id'] is String ? json['profile_id'] as String : null,
       avatarVersion: json['avatar_version'] is String ? json['avatar_version'] as String : null,
+      verificationExpiresAt: json['verification_expires_at'] is String
+          ? DateTime.tryParse(json['verification_expires_at'] as String)?.toLocal()
+          : null,
       role: json['role'] is String ? json['role'] as String : 'student',
       accountStatus: json['account_status'] is String
           ? json['account_status'] as String : 'unknown',

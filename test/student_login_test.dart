@@ -61,6 +61,27 @@ void main() {
     expect(find.byKey(const Key('login-disabled')), findsOneWidget);
     expect(find.byKey(const Key('password')), findsNothing);
   });
+  testWidgets('website-style registration asks for email and matching password',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: StudentLoginPage(
+        api: const FakeEnabledAuth(),
+        challengeProvider: () async => 'mock-proof',
+        onSession: (_) async {},
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('login-mode-register')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('email')), findsOneWidget);
+    expect(find.byKey(const Key('new-password')), findsOneWidget);
+    expect(find.byKey(const Key('confirm-password')), findsOneWidget);
+    expect(find.byKey(const Key('otp-code')), findsNothing);
+    await tester.tap(find.byKey(const Key('login-mode-signin')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('password')), findsOneWidget);
+  });
+
   testWidgets('Enabled mock login sends proof and hands session to receiver',
       (tester) async {
     final api = FakeLoginAuth();

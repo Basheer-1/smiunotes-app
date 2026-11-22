@@ -26,7 +26,6 @@ Guest, student, contributor, admin and Updates Editor should all see the **same 
 | Profile settings, devices and security | Native partial | Active sessions, revoke one/all, recovery, notification preferences |
 | Student ID verification | Status only | Native card capture/upload, review status, deadline and lifecycle |
 | Notification inbox | Native | Same list/read/clear and expected badge state, per-account security |
-| University Updates notification preferences | Native in this increment | Same owner-only update announcements switch, essential/security alerts always on, new-note broadcasts always off |
 | Push notifications | Native; real device PASS | Permission, background, foreground, tap, opt-out, rotation and multiple accounts |
 | Non-public admin, contributor and Updates Editor management | Explicitly excluded | Never embed these pages or create admin/staff/editor operations in the consumer app |
 
@@ -47,3 +46,5 @@ C. Transaction parity: native Contact + Support receipt upload (anti-abuse + sig
 D. Accessibility, regression, security and multi-device QA.
 
 Tracking: https://github.com/Basheer-1/smiunotes-app/issues/15 .
+
+| University Updates notification preferences | Native in this increment | Same owner-only update announcements switch, essential/security alerts always on, new-note broadcasts always off |

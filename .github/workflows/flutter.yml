@@ -2,7 +2,7 @@ name: Flutter M2 validation
 
 on:
   push:
-    branches: [main, feat/m2-public-feeds]
+    branches: [main, feat/m2-public-feeds, feat/student-native-parity]
   pull_request:
 
 concurrency:

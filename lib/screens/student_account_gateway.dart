@@ -5,9 +5,11 @@ import '../models/student_profile.dart';
 import '../services/mobile_auth_api.dart';
 import 'student_login_page.dart';
 import '../widgets/profile_avatar.dart';
+import '../services/native_profile_settings_api.dart';
 import 'native_information_pages.dart';
 import 'native_notification_preferences_page.dart';
 import 'native_public_content_page.dart';
+import 'native_profile_settings_page.dart';
 
 /// Staging-only account experience; NOT constructed by the default app.
 /// A login is visible only after encrypted storage and live profile validation.
@@ -23,6 +25,10 @@ class StudentAccountGateway extends StatefulWidget {
     this.onCreateDiscussion,
     this.onOpenVerifiedNote,
     this.onOpenNotifications,
+    this.onOpenNotificationPreferences,
+    this.onOpenNativeCardVerification,
+    this.onOpenNativeSupport,
+    this.onOpenNativeContact,
     this.onOpenBookmarks,
     this.onEnablePush,
     this.onDisablePush,
@@ -33,6 +39,8 @@ class StudentAccountGateway extends StatefulWidget {
     this.darkMode = false,
     this.signOutAll,
     this.onLoadAvatar,
+    this.profileSettingsApi,
+    this.onRefreshProfile,
     this.onLoadUpdatePreference,
     this.onSaveUpdatePreference,
   });
@@ -46,6 +54,10 @@ class StudentAccountGateway extends StatefulWidget {
   final VoidCallback? onCreateDiscussion;
   final VoidCallback? onOpenVerifiedNote;
   final VoidCallback? onOpenNotifications;
+  final VoidCallback? onOpenNotificationPreferences;
+  final VoidCallback? onOpenNativeCardVerification;
+  final VoidCallback? onOpenNativeSupport;
+  final VoidCallback? onOpenNativeContact;
   final VoidCallback? onOpenBookmarks;
   final Future<void> Function()? onEnablePush;
   final Future<void> Function()? onDisablePush;
@@ -56,14 +68,16 @@ class StudentAccountGateway extends StatefulWidget {
   final bool darkMode;
   final Future<void> Function()? signOutAll;
   final Future<Uint8List?> Function()? onLoadAvatar;
+  final NativeProfileSettingsApi? profileSettingsApi;
+  final Future<StudentProfile?> Function()? onRefreshProfile;
   final Future<bool> Function()? onLoadUpdatePreference;
   final Future<void> Function(bool)? onSaveUpdatePreference;
 
   @override
-  State<StudentAccountGateway> createState() => _StudentAccountGatewayState();
+  State<StudentAccountGateway> createState() => StudentAccountGatewayState();
 }
 
-class _StudentAccountGatewayState extends State<StudentAccountGateway> {
+class StudentAccountGatewayState extends State<StudentAccountGateway> {
   late Future<bool> _restoring;
   StudentProfile? _profile;
   bool _busy = false;
@@ -168,7 +182,7 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
     }
   }
 
-  Future<void> _confirmLogoutAll() async {
+  Future<bool> _confirmLogoutAll() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -183,7 +197,11 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
         ],
       ),
     );
-    if (confirmed == true && mounted) { await _logoutAll(); }
+    if (confirmed == true && mounted) {
+      await _logoutAll();
+      return true;
+    }
+    return false;
   }
 
   Future<void> _logoutAll() async {
@@ -204,6 +222,29 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// Authenticate in place without navigating away from the current tab.
+  /// The same onSession verification and secure storage as Profile sign-in.
+  Future<bool> promptSignIn() async {
+    if (_profile != null) return true;
+    if (!mounted || _busy) return false;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: .92,
+        child: StudentLoginPage(
+          api: widget.api,
+          challengeProvider: widget.challengeProvider,
+          onSession: _onSession,
+        ),
+      ),
+    );
+    return mounted && _profile != null;
   }
 
   void _openLogin() {
@@ -277,6 +318,7 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                   children: [
                     Row(children: [
                       ProfileAvatar(name: _profile!.studentName, size: 58,
+                        cacheKey: '${_profile!.studentId}:${_profile!.avatarVersion}',
                         imageLoader: _profile!.avatarVersion == null ? null : widget.onLoadAvatar),
                       const SizedBox(width: 14),
                       Expanded(child: Column(
@@ -308,6 +350,40 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
             ),
             const SizedBox(height: 16),
             _AccountEntry(
+              icon: Icons.manage_accounts_outlined,
+              label: 'Profile settings',
+              entryKey: const Key('account-profile-settings'),
+              onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) => NativeProfileSettingsPage(
+                  profile: _profile!,
+                  api: widget.api,
+                  challengeProvider: widget.challengeProvider,
+                  darkMode: widget.darkMode,
+                  onThemeChanged: widget.onThemeChanged,
+                  pushAvailable: widget.pushAvailable,
+                  pushEnabled: _pushEnabled,
+                  pushBusy: _pushBusy,
+                  onPushChanged: _togglePush,
+                  onSignOutAll: _confirmLogoutAll,
+                  onLoadAvatar: widget.onLoadAvatar,
+                  profileSettingsApi: widget.profileSettingsApi,
+                  onAvatarChanged: () async {
+                    final fresh = await widget.onRefreshProfile?.call();
+                    if (fresh != null && mounted) {
+                      setState(() => _profile = fresh);
+                      widget.onProfileChanged?.call(fresh);
+                    }
+                    return fresh;
+                  },
+                  onOpenLibrary: widget.onOpenBookmarks,
+                  onOpenNotifications: widget.onOpenNotifications,
+                  onOpenNotificationPreferences:
+                    widget.onOpenNotificationPreferences,
+                  onOpenNativeCardVerification: widget.onOpenNativeCardVerification,
+                ),
+              )),
+            ),
+            _AccountEntry(
               icon: Icons.bookmarks_outlined, label: 'My study library',
               onTap: widget.onOpenBookmarks,
               entryKey: const Key('account-open-bookmarks'),
@@ -318,6 +394,13 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
               onTap: widget.onOpenNotifications,
               entryKey: const Key('account-open-notifications'),
             ),
+            if (widget.onOpenNotificationPreferences != null)
+              _AccountEntry(
+                icon: Icons.tune_outlined,
+                label: 'Notification preferences',
+                onTap: widget.onOpenNotificationPreferences,
+                entryKey: const Key('account-notification-preferences'),
+              ),
             if (_profile!.verificationStatus == 'verified' &&
                 widget.onCreateDiscussion != null)
               _AccountEntry(
@@ -360,10 +443,10 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                 ),
             ]),
           ),
+          const SizedBox(height: 16),
           if (_profile != null &&
               widget.onLoadUpdatePreference != null &&
               widget.onSaveUpdatePreference != null) ...[
-            const SizedBox(height: 12),
             _AccountEntry(
               icon: Icons.campaign_outlined,
               label: 'University notification preferences',
@@ -375,19 +458,23 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                     save: widget.onSaveUpdatePreference!,
                   ))),
             ),
+            const SizedBox(height: 12),
           ],
-          const SizedBox(height: 16),
           Text('Explore & help', style: TextStyle(
             color: colors.onSurface, fontWeight: FontWeight.w800, fontSize: 19)),
           const SizedBox(height: 10),
           _AccountEntry(icon: Icons.favorite_outline, label: 'Support SMIUNotes',
             entryKey: const Key('account-support'),
-            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
-              builder: (_) => const NativeInformationPage(kind: 'support')))),
+            onTap: _profile != null && widget.onOpenNativeSupport != null
+              ? widget.onOpenNativeSupport
+              : () => Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (_) => const NativeInformationPage(kind: 'support')))),
           _AccountEntry(icon: Icons.mail_outline, label: 'Contact Us',
             entryKey: const Key('account-contact'),
-            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
-              builder: (_) => const NativeInformationPage(kind: 'contact')))),
+            onTap: _profile != null && widget.onOpenNativeContact != null
+              ? widget.onOpenNativeContact
+              : () => Navigator.of(context).push(MaterialPageRoute<void>(
+                  builder: (_) => const NativeInformationPage(kind: 'contact')))),
           _AccountEntry(icon: Icons.info_outline_rounded, label: 'About SMIUNotes',
             entryKey: const Key('account-about'),
             onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
@@ -411,7 +498,9 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
             const SizedBox(height: 8),
             OutlinedButton.icon(
               key: const Key('account-signout-all'),
-              onPressed: _busy || widget.signOutAll == null ? null : _confirmLogoutAll,
+              onPressed: _busy || widget.signOutAll == null ? null : () {
+                _confirmLogoutAll();
+              },
               icon: const Icon(Icons.phonelink_erase_rounded),
               label: const Text('Sign out all devices'),
             ),

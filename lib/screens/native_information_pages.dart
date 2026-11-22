@@ -1,5 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import '../services/external_link_opener.dart';
+import 'secure_website_form_page.dart';
+import 'native_student_forms.dart';
+import '../services/native_student_forms_api.dart';
 
 const _brand = Color(0xFF183C68);
 
@@ -69,21 +72,36 @@ class NativeInformationPage extends StatelessWidget {
           const SizedBox(height: 14),
           FilledButton.icon(
             key: Key(support ? 'native-support-action' : 'native-contact-action'),
-            onPressed: () async {
-              try {
-                await opener.openHttps(support
-                  ? 'https://smiunotes.com/support'
-                  : 'https://smiunotes.com/contact');
-              } catch (_) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Unable to open the secure form. Try again.'),
-                ));
-              }
+            onPressed: () {
+              const base = String.fromEnvironment(
+                'SMIUNOTES_API_BASE', defaultValue: '');
+              final valid = Uri.tryParse(base);
+              final native = valid != null && valid.scheme == 'https' &&
+                  valid.host.isNotEmpty && valid.userInfo.isEmpty &&
+                  !valid.hasQuery && !valid.hasFragment;
+              Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) => native
+                  ? support
+                    ? NativeSupportFormPage(
+                        api: NativeStudentFormsApi(baseUrl: base,
+                          tokenProvider: null),
+                        signedIn: false,
+                      )
+                    : NativeContactFormPage(
+                        api: NativeStudentFormsApi(baseUrl: base,
+                          tokenProvider: null),
+                        baseUrl: base,
+                      )
+                  : SecureWebsiteFormPage(
+                      path: support ? '/support' : '/contact',
+                      title: support ? 'Secure support form' : 'Secure contact form',
+                      opener: opener,
+                    ),
+              ));
             },
             icon: Icon(support ? Icons.favorite_outline : Icons.send_outlined),
-            label: Text(support ? 'Continue to secure support form'
-                : 'Continue to secure contact form'),
+            label: Text(support ? 'Continue to support form'
+                : 'Continue to contact form'),
             style: FilledButton.styleFrom(
               backgroundColor: _brand, foregroundColor: Colors.white,
               minimumSize: const Size.fromHeight(52),

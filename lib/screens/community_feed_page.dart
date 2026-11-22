@@ -65,8 +65,9 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
     key: const Key('community-feed'),
     padding: const EdgeInsets.fromLTRB(20, 18, 20, 110),
     children: [
-      const Text('The study room', style: TextStyle(
-        fontSize: 28, fontWeight: FontWeight.w900, color: Color(0xFF102B4B),
+      Text('The study room', style: TextStyle(
+        fontSize: 28, fontWeight: FontWeight.w900,
+        color: Theme.of(context).colorScheme.onSurface,
       )),
       const SizedBox(height: 10),
       const Text('Read public student discussions. Posting requires a verified account.'),
@@ -110,7 +111,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
         for (final raw in threads)
           if (raw is Map<String, dynamic>)
             Card(
-              color: Colors.white.withValues(alpha: 0.85),
+              color: Theme.of(context).colorScheme.surface.withValues(alpha: .92),
               child: ListTile(
                 contentPadding: const EdgeInsets.all(16),
                 title: Text(raw['title']?.toString() ?? 'Discussion',

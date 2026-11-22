@@ -1,11 +1,14 @@
 import 'screens/notification_inbox_page.dart';
+import 'screens/native_catalogue_page.dart';
 import 'screens/staging_student_account_page.dart';
 import 'screens/student_profile_page.dart';
 import 'screens/community_feed_page.dart';
 import 'screens/public_feed_page.dart';
 import 'screens/native_information_pages.dart';
-import 'screens/contributors_directory_page.dart';
 import 'screens/native_public_content_page.dart';
+import 'screens/native_student_forms.dart';
+import 'services/native_student_forms_api.dart';
+import 'screens/contributors_directory_page.dart';
 import 'models/student_profile.dart';
 import 'widgets/profile_avatar.dart';
 import 'dart:ui';
@@ -66,8 +69,21 @@ class _SmiuNotesAppState extends State<SmiuNotesApp> {
       darkTheme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: archiveBlue, brightness: Brightness.dark),
-        scaffoldBackgroundColor: const Color(0xFF0C1726),
+          seedColor: const Color(0xFF87B9F8),
+          brightness: Brightness.dark,
+          surface: const Color(0xFF101E32),
+        ).copyWith(
+          primary: const Color(0xFF8EC5FF),
+          onPrimary: const Color(0xFF09213C),
+          primaryContainer: const Color(0xFF18395B),
+          onPrimaryContainer: const Color(0xFFD9EAFD),
+          secondary: const Color(0xFFACD7F7),
+          surface: const Color(0xFF101E32),
+          onSurface: const Color(0xFFEAF3FF),
+          onSurfaceVariant: const Color(0xFFB7C9DE),
+          outlineVariant: const Color(0xFF324862),
+        ),
+        scaffoldBackgroundColor: const Color(0xFF081321),
         fontFamily: 'Roboto',
       ),
       themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
@@ -105,12 +121,36 @@ class _AppShellState extends State<AppShell> {
   StudentProfile? _activeProfile;
 
   Future<void> _openInformation(BuildContext context, String kind) async {
+    if ((kind == 'support' || kind == 'contact') &&
+        stagingApiBase.isNotEmpty) {
+      final account = _studentAccountKey.currentState;
+      if (accountAuthEnabled &&
+          account?.runtime.coordinator.authenticated == true) {
+        if (kind == 'support') {
+          account!.openNativeSupport();
+        } else {
+          account!.openNativeContact();
+        }
+        return;
+      }
+      final api = NativeStudentFormsApi(
+        baseUrl: stagingApiBase, tokenProvider: null,
+      );
+      await Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => kind == 'support'
+          ? NativeSupportFormPage(api: api, signedIn: false)
+          : NativeContactFormPage(api: api, baseUrl: stagingApiBase),
+      ));
+      return;
+    }
     await Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => kind == 'contributors'
         ? const ContributorsDirectoryPage()
-        : const ['about', 'privacy', 'disclaimer'].contains(kind)
-          ? NativePublicContentPage(kind: kind)
-          : NativeInformationPage(kind: kind)));
+        : kind == 'catalogue'
+          ? const NativeCataloguePage()
+          : const ['about', 'privacy', 'disclaimer'].contains(kind)
+            ? NativePublicContentPage(kind: kind)
+            : NativeInformationPage(kind: kind)));
   }
   static const labels = ['Home', 'Notes', 'Updates', 'Community', 'Profile'];
   static const icons = [
@@ -139,7 +179,7 @@ class _AppShellState extends State<AppShell> {
                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                       child: Row(
                         children: [
-                          const Icon(Icons.auto_stories_rounded, color: archiveBlue, size: 28),
+                          Icon(Icons.auto_stories_rounded, color: Theme.of(context).colorScheme.primary, size: 28),
                           const SizedBox(width: 9),
                           Text('SMIUNotes', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
                           const Spacer(),
@@ -157,7 +197,7 @@ class _AppShellState extends State<AppShell> {
                                 builder: (_) => const NotificationInboxPage(),
                               ));
                             },
-                            icon: const Icon(Icons.notifications_none_rounded, color: archiveBlue),
+                            icon: Icon(Icons.notifications_none_rounded, color: Theme.of(context).colorScheme.primary),
                           ),
                         ],
                       ),
@@ -170,6 +210,8 @@ class _AppShellState extends State<AppShell> {
                             onOpenInformation: (kind) => _openInformation(context, kind),
                             onNavigate: (index) => setState(() => selectedIndex = index),
                             apiConfigured: stagingApiBase.isNotEmpty,
+                            studentProfile: _activeProfile,
+                            onOpenVerification: () => _studentAccountKey.currentState?.openVerificationStatus(),
                           ),
                           PublicFeedPage(
                             type: 'notes',
@@ -195,19 +237,21 @@ class _AppShellState extends State<AppShell> {
                           CommunityFeedPage(
                             onReply: (threadId) async {
                               if (!accountAuthEnabled || stagingApiBase.isEmpty) {
-                                if (mounted) setState(() => selectedIndex = 4);
                                 return false;
                               }
                               final state = _studentAccountKey.currentState;
-                              if (state == null) {
-                                if (mounted) setState(() => selectedIndex = 4);
+                              if (state == null) return false;
+                              final authenticated = await state.promptStudentSignIn();
+                              if (!authenticated || !context.mounted) return false;
+                              if (state.runtime.coordinator.profile
+                                  ?.verificationStatus != 'verified') {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text(
+                                    'Verify your Student Card before posting in Community.')),
+                                );
                                 return false;
                               }
-                              final posted = await state.openCommunityReply(threadId);
-                              if (!posted && mounted && !state.runtime.coordinator.authenticated) {
-                                setState(() => selectedIndex = 4);
-                              }
-                              return posted;
+                              return state.openCommunityReply(threadId);
                             },
                           ),
                           if (accountAuthEnabled && stagingApiBase.isNotEmpty)
@@ -257,6 +301,8 @@ class _AppShellState extends State<AppShell> {
                             if (index == 4)
                               ProfileAvatar(
                                 name: _activeProfile?.studentName,
+                                cacheKey: _activeProfile == null ? 'anonymous' :
+                                  '${_activeProfile!.studentId}:${_activeProfile!.avatarVersion}',
                                 size: 28,
                                 imageLoader: _activeProfile?.avatarVersion == null
                                   ? null : () async => await _studentAccountKey.currentState
@@ -297,14 +343,18 @@ class _Backdrop extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: Theme.of(context).brightness == Brightness.dark
-              ? [const Color(0xFF0A1729), const Color(0xFF16283E), const Color(0xFF0B182B)]
+              ? [const Color(0xFF07111F), const Color(0xFF102744), const Color(0xFF091728)]
               : [const Color(0xFFE8F3FF), const Color(0xFFF7F9FD), const Color(0xFFE6EFFB)],
           ),
         ),
         child: Stack(
           children: [
-            Positioned(top: -135, right: -100, child: _Glow(color: const Color(0xFF9CCCF8), size: 340)),
-            Positioned(bottom: 40, left: -110, child: _Glow(color: const Color(0xFFB7C9F2), size: 310)),
+            Positioned(top: -135, right: -100, child: _Glow(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1A5A9D) : const Color(0xFF9CCCF8), size: 340)),
+            Positioned(bottom: 40, left: -110, child: _Glow(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF25457C) : const Color(0xFFB7C9F2), size: 310)),
           ],
         ),
       ),
@@ -320,7 +370,7 @@ class _Glow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ImageFiltered(
     imageFilter: ImageFilter.blur(sigmaX: 75, sigmaY: 75),
-    child: Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.65))),
+    child: Container(width: size, height: size, decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.45))),
   );
 }
 
@@ -338,7 +388,8 @@ class _Glass extends StatelessWidget {
       child: Container(
         padding: padding,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.74),
+          color: Theme.of(context).colorScheme.surface.withValues(
+            alpha: Theme.of(context).brightness == Brightness.dark ? 0.82 : 0.74),
           borderRadius: BorderRadius.circular(radius),
           border: Border.all(color: Theme.of(context).colorScheme.outlineVariant, width: 1.2),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 28, offset: const Offset(0, 10))],
@@ -354,7 +405,11 @@ class _HomePage extends StatelessWidget {
     required this.onOpenInformation,
     required this.onNavigate,
     required this.apiConfigured,
+    this.studentProfile,
+    this.onOpenVerification,
   });
+  final StudentProfile? studentProfile;
+  final VoidCallback? onOpenVerification;
   final ValueChanged<int> onNavigate;
   final ValueChanged<String> onOpenInformation;
   final bool apiConfigured;
@@ -365,7 +420,7 @@ class _HomePage extends StatelessWidget {
       key: const Key('home-page'),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 112),
       children: [
-        Text('YOUR STUDENT COMPANION', style: TextStyle(fontSize: 11, letterSpacing: 2, fontWeight: FontWeight.w800, color: archiveBlue)),
+        Text('YOUR STUDENT COMPANION', style: TextStyle(fontSize: 11, letterSpacing: 2, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary)),
         const SizedBox(height: 10),
         Text('Everything SMIU,\nin one place.', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, height: 1.15, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 10),
@@ -378,13 +433,60 @@ class _HomePage extends StatelessWidget {
           key: const Key('testing-build-status'),
           style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 11),
         ),
+        if (studentProfile != null &&
+            (studentProfile!.verificationStatus == 'pending' ||
+             studentProfile!.verificationStatus == 'submitted')) ...[
+          const SizedBox(height: 14),
+          Card(
+            key: const Key('home-verification-banner'),
+            color: Theme.of(context).colorScheme.primaryContainer,
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Icon(Icons.verified_user_outlined,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text('Student identity not verified',
+                    style: TextStyle(fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer))),
+                ]),
+                const SizedBox(height: 9),
+                Text(studentProfile!.verificationStatus == 'submitted'
+                  ? 'Your Student Card is awaiting review. Provisional access '
+                    'lasts until the deadline set by SMIUNotes.'
+                  : 'Your email is registered, but Student Card verification '
+                    'is still pending. Complete it to retain access.',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimaryContainer)),
+                if (studentProfile!.verificationExpiresAt != null) ...[
+                  const SizedBox(height: 8),
+                  Text('Provisional access ends: '
+                    '${studentProfile!.verificationExpiresAt!.day}/'
+                    '${studentProfile!.verificationExpiresAt!.month}/'
+                    '${studentProfile!.verificationExpiresAt!.year}',
+                    key: const Key('home-verification-deadline'),
+                    style: TextStyle(fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer)),
+                ],
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  key: const Key('home-open-verification'),
+                  onPressed: onOpenVerification,
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text('View verification status'),
+                ),
+              ]),
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         _Glass(
           padding: const EdgeInsets.all(22),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.auto_stories_rounded, color: archiveBlue, size: 32),
+              Icon(Icons.auto_stories_rounded, color: Theme.of(context).colorScheme.primary, size: 32),
               const SizedBox(height: 12),
               Text('Ready to learn?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 22, fontWeight: FontWeight.w800)),
               const SizedBox(height: 7),
@@ -393,7 +495,8 @@ class _HomePage extends StatelessWidget {
               FilledButton.icon(
                 key: const Key('explore-notes'),
                 onPressed: () => onNavigate(1),
-                style: FilledButton.styleFrom(backgroundColor: archiveBlue, foregroundColor: Colors.white),
+                style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary,
+                     foregroundColor: Theme.of(context).colorScheme.onPrimary),
                 icon: const Icon(Icons.arrow_forward_rounded),
                 label: const Text('Explore notes'),
               ),
@@ -408,6 +511,9 @@ class _HomePage extends StatelessWidget {
             final wide = constraints.maxWidth > 600;
             final items = [
               _QuickLink(icon: Icons.menu_book_outlined, title: 'Notes', caption: 'Study smarter', onTap: () => onNavigate(1)),
+              _QuickLink(icon: Icons.view_list_outlined, title: 'Browse catalogue',
+                caption: 'By department & semester',
+                onTap: () => onOpenInformation('catalogue')),
               _QuickLink(icon: Icons.campaign_outlined, title: 'Updates', caption: 'Stay informed', onTap: () => onNavigate(2)),
               _QuickLink(icon: Icons.forum_outlined, title: 'Community', caption: 'Connect & discuss', onTap: () => onNavigate(3)),
               _QuickLink(icon: Icons.person_outline, title: 'Profile',
@@ -421,9 +527,6 @@ class _HomePage extends StatelessWidget {
               _QuickLink(icon: Icons.diversity_3_outlined, title: 'Contributors',
                 caption: 'Meet note creators',
                 onTap: () => onOpenInformation('contributors')),
-              _QuickLink(icon: Icons.info_outline_rounded, title: 'About',
-                caption: 'Our student project',
-                onTap: () => onOpenInformation('about')),
             ];
             return GridView.count(
               crossAxisCount: wide ? 4 : 2,
@@ -451,22 +554,63 @@ class _QuickLink extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => _Glass(
-    padding: const EdgeInsets.all(12),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: archiveBlue, size: 27),
-          const SizedBox(height: 9),
-          Text(title, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 4),
-          Text(caption, textAlign: TextAlign.center, maxLines: 2, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(21),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft, end: Alignment.bottomRight,
+          colors: [
+            scheme.primaryContainer.withValues(alpha: dark ? .58 : .64),
+            scheme.surface.withValues(alpha: dark ? .93 : .86),
+          ],
+        ),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: .85)),
+        boxShadow: [
+          BoxShadow(color: scheme.shadow.withValues(alpha: dark ? .14 : .07),
+            blurRadius: 19, offset: const Offset(0, 7)),
         ],
       ),
-    ),
-  );
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(21),
+          child: Padding(
+            padding: const EdgeInsets.all(13),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: scheme.primary.withValues(alpha: .12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(icon, color: scheme.primary, size: 23),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.arrow_outward_rounded, size: 16,
+                    color: scheme.primary.withValues(alpha: .70)),
+                ]),
+                const SizedBox(height: 10),
+                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13.5,
+                    color: scheme.onSurface, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 3),
+                Text(caption, maxLines: 2, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 10.5, height: 1.15,
+                    color: scheme.onSurfaceVariant)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
-

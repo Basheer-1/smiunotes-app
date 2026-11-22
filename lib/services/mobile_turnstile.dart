@@ -11,6 +11,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 Future<String?> requestMobileTurnstile(
   BuildContext context, {
   required String httpsOrigin,
+  String purpose = 'mobile_login',
 }) async {
   if (!(Platform.isAndroid || Platform.isIOS)) {
     throw UnsupportedError('Turnstile requires Android or iOS WebView.');
@@ -25,7 +26,12 @@ Future<String?> requestMobileTurnstile(
       base.path != '' && base.path != '/') {
     throw const FormatException('Configure an approved HTTPS challenge host.');
   }
-  final challenge = base.resolve('/api/mobile/v1/challenge');
+  if (purpose != 'mobile_login' && purpose != 'contact') {
+    throw const FormatException('Invalid challenge purpose.');
+  }
+  final challenge = base.resolve('/api/mobile/v1/challenge').replace(
+    queryParameters: purpose == 'contact' ? {'purpose': 'contact'} : null,
+  );
   return showDialog<String>(
     context: context,
     barrierDismissible: false,

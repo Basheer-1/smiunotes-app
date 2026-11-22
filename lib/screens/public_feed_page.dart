@@ -4,10 +4,13 @@ import 'package:material_ui/material_ui.dart';
 import '../services/public_feed_api.dart';
 
 class PublicFeedPage extends StatefulWidget {
-  const PublicFeedPage({super.key, required this.type, this.api = const PublicFeedApi(), this.onSaveNote});
+  const PublicFeedPage({super.key, required this.type, this.api = const PublicFeedApi(), this.onSaveNote,
+    this.initialDepartment = '', this.initialSemester = ''});
   final String type;
   final PublicFeedApi api;
   final Future<bool> Function(String noteId)? onSaveNote;
+  final String initialDepartment;
+  final String initialSemester;
   @override
   State<PublicFeedPage> createState() => _PublicFeedPageState();
 }
@@ -29,6 +32,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   @override
   void initState() {
     super.initState();
+    department = widget.initialDepartment;
+    semester = widget.initialSemester;
     if (isNotes) { loadFilters(); }
     load();
   }
@@ -36,13 +41,15 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   @override
   void didUpdateWidget(covariant PublicFeedPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.type != widget.type || oldWidget.api != widget.api) {
+    if (oldWidget.type != widget.type || oldWidget.api != widget.api ||
+        oldWidget.initialDepartment != widget.initialDepartment ||
+        oldWidget.initialSemester != widget.initialSemester) {
       page = 1;
       search.clear();
       stream = '';
       category = '';
-      department = '';
-      semester = '';
+      department = widget.initialDepartment;
+      semester = widget.initialSemester;
       subject = '';
       departments = [];
       subjects = [];
@@ -120,8 +127,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
     padding: const EdgeInsets.fromLTRB(20, 18, 20, 110),
     children: [
       Text(isNotes ? 'Browse notes' : 'University updates',
-        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900,
-          color: Color(0xFF102B4B))),
+        style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900,
+          color: Theme.of(context).colorScheme.onSurface)),
       const SizedBox(height: 10),
       Text(isNotes ? 'Published study material by subject and semester.'
         : 'Latest campus announcements and student opportunities.'),
@@ -134,7 +141,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
         decoration: InputDecoration(
           hintText: 'Search', prefixIcon: const Icon(Icons.search),
           suffixIcon: IconButton(onPressed: filter, icon: const Icon(Icons.arrow_forward)),
-          filled: true, fillColor: Colors.white,
+          filled: true,
+          fillColor: Theme.of(context).colorScheme.surface,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16))),
       ),
       const SizedBox(height: 12),
@@ -311,8 +319,8 @@ class _FeedTile extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(24, 10, 24, 38),
             children: [
               if (data['is_pinned'] == true)
-                const Text('IMPORTANT UPDATE', style: TextStyle(
-                  color: Color(0xFF183C68), fontWeight: FontWeight.w800,
+                Text('IMPORTANT UPDATE', style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w800,
                   letterSpacing: 1.1)),
               const SizedBox(height: 8),
               Text(title, style: const TextStyle(fontSize: 26,

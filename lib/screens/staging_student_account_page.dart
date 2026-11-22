@@ -2,13 +2,17 @@ import 'package:material_ui/material_ui.dart';
 import 'dart:typed_data';
 import '../models/student_profile.dart';
 import '../services/native_avatar_api.dart';
-import '../services/student_notification_preferences_api.dart';
 
 import '../services/authenticated_reader_api.dart';
 import '../services/community_write_api.dart';
 import '../services/bookmark_api.dart';
 import '../services/mobile_auth_api.dart';
 import '../services/mobile_notification_api.dart';
+import '../services/student_notification_preferences_api.dart';
+import '../services/native_student_forms_api.dart';
+import '../services/native_profile_settings_api.dart';
+import 'native_student_forms.dart';
+import 'native_notification_preferences_page.dart';
 import '../services/push_registration_api.dart';
 import '../services/student_push_enrollment.dart';
 import 'notification_inbox_page.dart';
@@ -18,6 +22,7 @@ import 'authenticated_note_reader_page.dart';
 import 'community_composer_page.dart';
 import 'my_bookmarks_page.dart';
 import 'student_account_gateway.dart';
+import 'student_verification_status_page.dart';
 
 /// Staging-only account flow; ordinary app builds keep auth switched off.
 class StagingStudentAccountPage extends StatefulWidget {
@@ -93,6 +98,28 @@ class StagingStudentAccountPageState
     await push.disable(currentAccessToken: runtime.controller.accessToken);
   }
 
+  final GlobalKey<StudentAccountGatewayState> _gatewayKey =
+      GlobalKey<StudentAccountGatewayState>();
+
+  Future<bool> promptStudentSignIn() async {
+    if (!mounted) { return false; }
+    if (runtime.coordinator.authenticated) return true;
+    return await _gatewayKey.currentState?.promptSignIn() ?? false;
+  }
+
+  void openVerificationStatus() {
+    final profile = runtime.coordinator.profile;
+    if (!mounted || !runtime.coordinator.authenticated ||
+        profile == null) { return; }
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => StudentVerificationStatusPage(
+        profile: profile,
+        onOpenNativeCardVerification: profile.verificationStatus == 'pending'
+            ? openNativeCardVerification : null,
+      ),
+    ));
+  }
+
   late final StudentAuthRuntime runtime =
       StudentAuthRuntime.forStaging(httpsBaseUrl: widget.httpsBaseUrl);
 
@@ -164,6 +191,50 @@ class StagingStudentAccountPageState
     return true;
   }
 
+  late final NativeProfileSettingsApi settingsApi = NativeProfileSettingsApi(
+    baseUrl: widget.httpsBaseUrl,
+    tokenProvider: _currentVerifiedToken,
+  );
+
+  NativeStudentFormsApi get _forms => NativeStudentFormsApi(
+    baseUrl: widget.httpsBaseUrl,
+    tokenProvider: _currentVerifiedToken,
+  );
+
+  void openNativeCardVerification() {
+    if (!mounted || !runtime.coordinator.authenticated) return;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => NativeStudentCardFormPage(api: _forms),
+    ));
+  }
+
+  void openNativeSupport() {
+    if (!mounted || !runtime.coordinator.authenticated) return;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => NativeSupportFormPage(api: _forms),
+    ));
+  }
+
+  void openNativeContact() {
+    if (!mounted) return;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => NativeContactFormPage(
+        api: _forms, baseUrl: widget.httpsBaseUrl, signedIn: true,
+      ),
+    ));
+  }
+
+  void openNotificationPreferences() {
+    if (!mounted || !runtime.coordinator.authenticated ||
+        runtime.controller.accessToken == null) { return; }
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => NativeNotificationPreferencesPage(
+        load: loadUpdatePreference,
+        save: saveUpdatePreference,
+      ),
+    ));
+  }
+
   /// Opens the reply composer only if a verified session still exists.
   Future<bool> openCommunityReply(String threadId) async {
     if (!mounted || !runtime.coordinator.authenticated ||
@@ -228,6 +299,7 @@ class StagingStudentAccountPageState
 
   @override
   Widget build(BuildContext context) => StudentAccountGateway(
+    key: _gatewayKey,
     api: MobileAuthApi(baseUrl: widget.httpsBaseUrl),
     challengeProvider: () => requestMobileTurnstile(
       context,
@@ -239,11 +311,17 @@ class StagingStudentAccountPageState
     signOut: runtime.coordinator.signOut,
     signOutAll: signOutAllDevices,
     onLoadAvatar: loadOwnAvatar,
-    onLoadUpdatePreference: loadUpdatePreference,
-    onSaveUpdatePreference: saveUpdatePreference,
+    profileSettingsApi: settingsApi,
+    onRefreshProfile: runtime.coordinator.refreshValidatedProfile,
     onOpenVerifiedNote: openVerifiedNote,
     onCreateDiscussion: openCommunityComposer,
     onOpenNotifications: openNotifications,
+    onOpenNotificationPreferences: openNotificationPreferences,
+    onLoadUpdatePreference: loadUpdatePreference,
+    onSaveUpdatePreference: saveUpdatePreference,
+    onOpenNativeCardVerification: openNativeCardVerification,
+    onOpenNativeSupport: openNativeSupport,
+    onOpenNativeContact: openNativeContact,
     onOpenBookmarks: openSavedNotes,
     pushAvailable: pushEnabled,
     onEnablePush: pushEnabled ? enablePush : null,
