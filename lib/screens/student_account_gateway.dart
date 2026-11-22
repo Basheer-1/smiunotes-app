@@ -271,6 +271,7 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
                   children: [
                     Row(children: [
                       ProfileAvatar(name: _profile!.studentName, size: 58,
+                        cacheKey: '${_profile!.studentId}:${_profile!.avatarVersion}',
                         imageLoader: _profile!.avatarVersion == null ? null : widget.onLoadAvatar),
                       const SizedBox(width: 14),
                       Expanded(child: Column(
