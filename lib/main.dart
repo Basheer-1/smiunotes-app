@@ -21,6 +21,17 @@ const Color archiveBlue = Color(0xFF183C68);
 const Color ink = Color(0xFF102B4B);
 const Color muted = Color(0xFF5C7188);
 
+const TextTheme websiteTypography = TextTheme(
+  displayLarge: TextStyle(fontFamily: 'SMIUSpaceGrotesk'),
+  displayMedium: TextStyle(fontFamily: 'SMIUSpaceGrotesk'),
+  displaySmall: TextStyle(fontFamily: 'SMIUSpaceGrotesk'),
+  headlineLarge: TextStyle(fontFamily: 'SMIUSpaceGrotesk'),
+  headlineMedium: TextStyle(fontFamily: 'SMIUSpaceGrotesk'),
+  headlineSmall: TextStyle(fontFamily: 'SMIUSpaceGrotesk'),
+  titleLarge: TextStyle(fontFamily: 'SMIUSpaceGrotesk'),
+);
+
+
 class SmiuNotesApp extends StatefulWidget {
   const SmiuNotesApp({super.key});
   @override
@@ -64,7 +75,8 @@ class _SmiuNotesAppState extends State<SmiuNotesApp> {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: archiveBlue),
         scaffoldBackgroundColor: const Color(0xFFF0F5FA),
-        fontFamily: 'Roboto',
+        fontFamily: 'SMIUInter',
+        textTheme: websiteTypography,
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
@@ -84,7 +96,8 @@ class _SmiuNotesAppState extends State<SmiuNotesApp> {
           outlineVariant: const Color(0xFF324862),
         ),
         scaffoldBackgroundColor: const Color(0xFF081321),
-        fontFamily: 'Roboto',
+        fontFamily: 'SMIUInter',
+        textTheme: websiteTypography,
       ),
       themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
       home: AppShell(
