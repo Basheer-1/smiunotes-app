@@ -6,6 +6,7 @@ import '../services/mobile_auth_api.dart';
 import 'student_login_page.dart';
 import '../widgets/profile_avatar.dart';
 import 'native_information_pages.dart';
+import 'native_public_content_page.dart';
 
 /// Staging-only account experience; NOT constructed by the default app.
 /// A login is visible only after encrypted storage and live profile validation.
@@ -366,6 +367,18 @@ class _StudentAccountGatewayState extends State<StudentAccountGateway> {
             entryKey: const Key('account-contact'),
             onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
               builder: (_) => const NativeInformationPage(kind: 'contact')))),
+          _AccountEntry(icon: Icons.info_outline_rounded, label: 'About SMIUNotes',
+            entryKey: const Key('account-about'),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => const NativePublicContentPage(kind: 'about')))),
+          _AccountEntry(icon: Icons.privacy_tip_outlined, label: 'Privacy notice',
+            entryKey: const Key('account-privacy'),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => const NativePublicContentPage(kind: 'privacy')))),
+          _AccountEntry(icon: Icons.gavel_outlined, label: 'Disclaimer',
+            entryKey: const Key('account-disclaimer'),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => const NativePublicContentPage(kind: 'disclaimer')))),
           if (_profile != null) ...[
             const SizedBox(height: 20),
             OutlinedButton.icon(
