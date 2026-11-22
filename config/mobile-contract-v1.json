@@ -1,0 +1,45 @@
+{
+  "schema": "smiunotes.mobile-contract.v1",
+  "revision": 1,
+  "api_base": "/api/mobile/v1",
+  "minimum_android_contract": 1,
+  "features": [
+    "public_notes",
+    "public_updates",
+    "public_community",
+    "contributors_directory",
+    "student_auth",
+    "student_profile",
+    "student_verification",
+    "study_library",
+    "support",
+    "contact",
+    "notifications",
+    "notification_preferences",
+    "profile_settings",
+    "public_policies"
+  ],
+  "endpoints": [
+    "/api/mobile/v1?kind=notes",
+    "/api/mobile/v1?kind=updates",
+    "/api/mobile/v1/auth",
+    "/api/mobile/v1/me",
+    "/api/mobile/v1/community",
+    "/api/mobile/v1/contributors",
+    "/api/mobile/v1/support",
+    "/api/mobile/v1/contact",
+    "/api/mobile/v1/verification",
+    "/api/mobile/v1/bookmarks",
+    "/api/mobile/v1/notifications",
+    "/api/mobile/v1/preferences",
+    "/api/mobile/v1/settings"
+  ],
+  "policies": {
+    "public_browsing": true,
+    "account_actions_require_login": true,
+    "account_identity_server_owned": true,
+    "admin_contributor_editor_dashboards_in_app": false,
+    "notes_broadcast_push": false
+  },
+  "compatibility": "Breaking changes require a new versioned endpoint or a coordinated Android release."
+}
