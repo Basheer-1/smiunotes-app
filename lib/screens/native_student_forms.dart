@@ -179,6 +179,7 @@ class NativeSupportFormPage extends StatefulWidget {
   State<NativeSupportFormPage> createState() => _NativeSupportFormPageState();
 }
 class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
+  late final int startedAt = DateTime.now().millisecondsSinceEpoch;
   late Future<Map<String, dynamic>> details;
   final amount = TextEditingController(text: '100'),
     phone = TextEditingController(), note = TextEditingController(),
@@ -236,7 +237,7 @@ class _NativeSupportFormPageState extends State<NativeSupportFormPage> {
         phone: phone.text.trim(), note: note.text.trim(),
         name: widget.signedIn ? '' : guestName.text.trim(),
         publicName: publicName, publicAmount: publicName && publicAmount,
-        signedIn: widget.signedIn);
+        startedAt: startedAt, signedIn: widget.signedIn);
       if (mounted) { setState(() { done = true; receipt = null; }); }
     } catch (_) {
       if (mounted) { setState(() => error =
