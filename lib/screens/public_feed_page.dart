@@ -6,17 +6,21 @@ import '../services/public_feed_api.dart';
 
 class PublicFeedPage extends StatefulWidget {
   const PublicFeedPage({super.key, required this.type, this.api = const PublicFeedApi(), this.onSaveNote,
-    this.initialDepartment = '', this.initialSemester = ''});
+    this.initialDepartment = '', this.initialSemester = '',
+    this.refreshVersion = 0});
   final String type;
   final PublicFeedApi api;
   final Future<bool> Function(String noteId)? onSaveNote;
   final String initialDepartment;
   final String initialSemester;
+  /// Incremented by the shell when a feed tab is visited or selected again.
+  final int refreshVersion;
   @override
   State<PublicFeedPage> createState() => _PublicFeedPageState();
 }
 
-class _PublicFeedPageState extends State<PublicFeedPage> {
+class _PublicFeedPageState extends State<PublicFeedPage>
+    with WidgetsBindingObserver {
   final search = TextEditingController();
   List<dynamic> items = [];
   String? error;
@@ -33,10 +37,27 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     department = widget.initialDepartment;
     semester = widget.initialSemester;
     if (isNotes) { loadFilters(); }
     load();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      refresh();
+    }
+  }
+
+  Future<void> refresh() async {
+    // Refresh both the visible feed and dependent catalogue options.
+    if (isNotes) {
+      await Future.wait([loadFilters(), load()]);
+    } else {
+      await load();
+    }
   }
 
   @override
@@ -59,6 +80,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
       _filterGeneration++;
       if (isNotes) loadFilters();
       load();
+    } else if (oldWidget.refreshVersion != widget.refreshVersion) {
+      refresh();
     }
   }
 
@@ -80,7 +103,11 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
     }
   }
   @override
-  void dispose() { search.dispose(); super.dispose(); }
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    search.dispose();
+    super.dispose();
+  }
 
   Future<void> load() async {
     final generation = ++_feedGeneration;
@@ -123,16 +150,29 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
   }
 
   @override
-  Widget build(BuildContext context) => ListView(
+  Widget build(BuildContext context) => RefreshIndicator(
+    key: Key('feed-refresh-indicator-${widget.type}'),
+    onRefresh: refresh,
+    child: ListView(
     key: Key('feed-${widget.type}'),
+    physics: const AlwaysScrollableScrollPhysics(),
     padding: const EdgeInsets.fromLTRB(20, 18, 20, 110),
     children: [
       Text(isNotes ? 'Browse notes' : 'University updates',
         style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900,
           color: Theme.of(context).colorScheme.onSurface)),
       const SizedBox(height: 10),
-      Text(isNotes ? 'Published study material by subject and semester.'
-        : 'Latest campus announcements and student opportunities.'),
+      Row(children: [
+        Expanded(child: Text(isNotes
+          ? 'Published study material by subject and semester.'
+          : 'Latest campus announcements and student opportunities.')),
+        IconButton.filledTonal(
+          key: Key('feed-refresh-button-${widget.type}'),
+          tooltip: 'Refresh latest ${isNotes ? 'notes' : 'updates'}',
+          onPressed: loading ? null : refresh,
+          icon: const Icon(Icons.refresh_rounded),
+        ),
+      ]),
       const SizedBox(height: 20),
       TextField(
         key: Key('search-${widget.type}'),
@@ -265,6 +305,7 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
         ]),
       ],
     ],
+  ),
   );
 }
 
@@ -334,6 +375,11 @@ class _FeedTile extends StatelessWidget {
                 Text('Section: ${data['stream']}'),
               if ((data['category']?.toString() ?? '').isNotEmpty)
                 Text('Category: ${data['category']}'),
+              _UpdateStatusPill(
+                status: universityUpdateStatus(
+                  data['deadline_date'], data['event_date']),
+              ),
+              const SizedBox(height: 10),
               if ((data['event_date']?.toString() ?? '').isNotEmpty)
                 Text('Event: ${data['event_date']}'),
               if ((data['deadline_date']?.toString() ?? '').isNotEmpty)
@@ -415,6 +461,10 @@ class _FeedTile extends StatelessWidget {
               if (!isNote) ...[
                 _FeedPill((data['stream']?.toString() ?? 'Update') ==
                       'opportunities' ? 'Opportunities' : 'Campus'),
+                _UpdateStatusPill(
+                  status: universityUpdateStatus(
+                    data['deadline_date'], data['event_date']),
+                ),
                 if ((data['category']?.toString() ?? '').isNotEmpty)
                   _FeedPill(data['category'].toString()),
                 if (data['is_pinned'] == true)
@@ -481,6 +531,41 @@ class _FeedTile extends StatelessWidget {
             ]),
           ]),
         ),
+      ]),
+    );
+  }
+}
+
+class _UpdateStatusPill extends StatelessWidget {
+  const _UpdateStatusPill({required this.status});
+  final UniversityUpdateStatus status;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, icon, foreground, background) = switch (status) {
+      UniversityUpdateStatus.active => (
+        'Active', Icons.check_circle_outline_rounded,
+        const Color(0xFF147D50), const Color(0xFFE6F7ED)),
+      UniversityUpdateStatus.upcoming => (
+        'Upcoming', Icons.event_outlined,
+        const Color(0xFF1959A5), const Color(0xFFE6F0FF)),
+      UniversityUpdateStatus.expired => (
+        'Expired', Icons.schedule_outlined,
+        const Color(0xFFA83342), const Color(0xFFFFEBEE)),
+    };
+    return Container(
+      key: Key('update-status-${status.name}'),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: foreground.withValues(alpha: .20)),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 14, color: foreground),
+        const SizedBox(width: 5),
+        Text(label, style: TextStyle(color: foreground, fontSize: 11,
+          fontWeight: FontWeight.w800)),
       ]),
     );
   }
