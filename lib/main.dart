@@ -5,6 +5,8 @@ import 'screens/student_profile_page.dart';
 import 'screens/community_feed_page.dart';
 import 'screens/public_feed_page.dart';
 import 'screens/native_information_pages.dart';
+import 'screens/native_student_forms.dart';
+import 'services/native_student_forms_api.dart';
 import 'screens/contributors_directory_page.dart';
 import 'models/student_profile.dart';
 import 'widgets/profile_avatar.dart';
@@ -105,6 +107,28 @@ class _AppShellState extends State<AppShell> {
   StudentProfile? _activeProfile;
 
   Future<void> _openInformation(BuildContext context, String kind) async {
+    if ((kind == 'support' || kind == 'contact') &&
+        stagingApiBase.isNotEmpty) {
+      final account = _studentAccountKey.currentState;
+      if (accountAuthEnabled &&
+          account?.runtime.coordinator.authenticated == true) {
+        if (kind == 'support') {
+          account!.openNativeSupport();
+        } else {
+          account!.openNativeContact();
+        }
+        return;
+      }
+      final api = NativeStudentFormsApi(
+        baseUrl: stagingApiBase, tokenProvider: null,
+      );
+      await Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => kind == 'support'
+          ? NativeSupportFormPage(api: api, signedIn: false)
+          : NativeContactFormPage(api: api, baseUrl: stagingApiBase),
+      ));
+      return;
+    }
     await Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => kind == 'contributors'
         ? const ContributorsDirectoryPage()
