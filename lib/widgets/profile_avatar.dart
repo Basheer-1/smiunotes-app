@@ -11,7 +11,7 @@ class ProfileAvatar extends StatefulWidget {
   final double size;
 
   static String initials(String? name) {
-    final words = (name ?? '').trim().split(RegExp(r'\\s+'))
+    final words = (name ?? '').trim().split(RegExp(r'\s+'))
         .where((word) => word.isNotEmpty).take(2).toList();
     if (words.isEmpty) return '?';
     return words.map((word) => word.substring(0, 1)).join().toUpperCase();
