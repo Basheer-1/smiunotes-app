@@ -55,6 +55,10 @@ void main() {
       find.byKey(const Key('settings-theme')), 250,
       scrollable: find.byType(Scrollable).first,
     );
+    // The bottom-aligned tile needs some breathing room to become tappable.
+    await tester.drag(find.byKey(const Key('native-profile-settings')),
+      const Offset(0, -180));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('settings-theme')));
     await tester.pump();
     expect(selected, isTrue);
