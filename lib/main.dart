@@ -254,6 +254,8 @@ class _AppShellState extends State<AppShell> {
                             if (index == 4)
                               ProfileAvatar(
                                 name: _activeProfile?.studentName,
+                                cacheKey: _activeProfile == null ? 'anonymous' :
+                                  '${_activeProfile!.studentId}:${_activeProfile!.avatarVersion}',
                                 size: 28,
                                 imageLoader: _activeProfile?.avatarVersion == null
                                   ? null : () async => await _studentAccountKey.currentState
