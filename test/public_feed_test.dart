@@ -83,6 +83,29 @@ class ExpiredApplyApi extends FakeApi {
   }
 }
 
+class RefreshingApi extends FakeApi {
+  int notesCalls = 0;
+  int updatesCalls = 0;
+  @override
+  Future<Map<String, dynamic>> fetch(
+    String kind, {int page = 1, String search = '', String stream = '',
+    String department = '', String semester = '', String subject = '',
+    String category = ''}) async {
+    if (kind == 'notes') {
+      notesCalls++;
+      return {'page': 1, 'total': notesCalls, 'items': [
+        {'id': 'note-1', 'title': notesCalls == 1
+          ? 'Original note' : 'Just published test note',
+         'department_name': 'Computer Science', 'semester': 1},
+      ]};
+    }
+    if (kind == 'updates') updatesCalls++;
+    return super.fetch(kind, page: page, search: search, stream: stream,
+      department: department, semester: semester, subject: subject,
+      category: category);
+  }
+}
+
 class CapturingApi extends FakeApi {
   String lastCategory = '';
   String lastStream = '';
@@ -117,7 +140,13 @@ void main() {
     expect(api.lastCategory, 'scholarships');
 
     final campusChip = find.byKey(const Key('update-stream-campus'));
+    // Pull the filter strip well within the viewport after closing
+    // the category popup; merely ensuring visibility can align at y < 0.
+    await tester.drag(find.byKey(const Key('feed-updates')),
+      const Offset(0, 260));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(campusChip);
+    await tester.pumpAndSettle();
     await tester.tap(campusChip);
     await tester.pumpAndSettle();
     expect(api.lastStream, 'campus');
@@ -141,6 +170,48 @@ void main() {
     final detail = find.byKey(const Key('update-apply-now-detail'));
     await tester.ensureVisible(detail);
     expect(tester.widget<FilledButton>(detail).onPressed, isNull);
+  });
+
+  testWidgets('Updates card displays Upcoming status for future event',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: PublicFeedPage(type: 'updates', api: FakeApi())),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('update-status-upcoming')), findsOneWidget);
+    expect(find.text('Upcoming'), findsOneWidget);
+  });
+
+  testWidgets('Manual refresh fetches newly published notes without restart',
+      (tester) async {
+    final api = RefreshingApi();
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: PublicFeedPage(type: 'notes', api: api)),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Original note'), findsOneWidget);
+    final refresh = find.byKey(const Key('feed-refresh-button-notes'));
+    await tester.ensureVisible(refresh);
+    await tester.tap(refresh);
+    await tester.pumpAndSettle();
+    expect(find.text('Just published test note'), findsOneWidget);
+    expect(api.notesCalls, 2);
+  });
+
+  testWidgets('Returning to a feed triggers a new fetch',
+      (tester) async {
+    final api = RefreshingApi();
+    await tester.pumpWidget(MaterialApp(home: Scaffold(
+      body: PublicFeedPage(type: 'notes', api: api, refreshVersion: 0),
+    )));
+    await tester.pumpAndSettle();
+    expect(api.notesCalls, 1);
+    await tester.pumpWidget(MaterialApp(home: Scaffold(
+      body: PublicFeedPage(type: 'notes', api: api, refreshVersion: 1),
+    )));
+    await tester.pumpAndSettle();
+    expect(api.notesCalls, 2);
+    expect(find.text('Just published test note'), findsOneWidget);
   });
 
   testWidgets('Notes feed displays published metadata', (tester) async {

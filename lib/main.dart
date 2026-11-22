@@ -21,6 +21,17 @@ const Color archiveBlue = Color(0xFF183C68);
 const Color ink = Color(0xFF102B4B);
 const Color muted = Color(0xFF5C7188);
 
+const TextTheme websiteTypography = TextTheme(
+  displayLarge: TextStyle(fontFamily: 'SMIUSpaceGrotesk'),
+  displayMedium: TextStyle(fontFamily: 'SMIUSpaceGrotesk'),
+  displaySmall: TextStyle(fontFamily: 'SMIUSpaceGrotesk'),
+  headlineLarge: TextStyle(fontFamily: 'SMIUSpaceGrotesk'),
+  headlineMedium: TextStyle(fontFamily: 'SMIUSpaceGrotesk'),
+  headlineSmall: TextStyle(fontFamily: 'SMIUSpaceGrotesk'),
+  titleLarge: TextStyle(fontFamily: 'SMIUSpaceGrotesk'),
+);
+
+
 class SmiuNotesApp extends StatefulWidget {
   const SmiuNotesApp({super.key});
   @override
@@ -64,7 +75,8 @@ class _SmiuNotesAppState extends State<SmiuNotesApp> {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: archiveBlue),
         scaffoldBackgroundColor: const Color(0xFFF0F5FA),
-        fontFamily: 'Roboto',
+        fontFamily: 'SMIUInter',
+        textTheme: websiteTypography,
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
@@ -84,7 +96,8 @@ class _SmiuNotesAppState extends State<SmiuNotesApp> {
           outlineVariant: const Color(0xFF324862),
         ),
         scaffoldBackgroundColor: const Color(0xFF081321),
-        fontFamily: 'Roboto',
+        fontFamily: 'SMIUInter',
+        textTheme: websiteTypography,
       ),
       themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
       home: AppShell(
@@ -118,6 +131,17 @@ class _AppShellState extends State<AppShell> {
   final GlobalKey<StagingStudentAccountPageState> _studentAccountKey =
       GlobalKey<StagingStudentAccountPageState>();
   int selectedIndex = 0;
+  int _notesRefreshVersion = 0;
+  int _updatesRefreshVersion = 0;
+
+  void _selectTab(int index) {
+    if (!mounted) return;
+    setState(() {
+      selectedIndex = index;
+      if (index == 1) _notesRefreshVersion++;
+      if (index == 2) _updatesRefreshVersion++;
+    });
+  }
   StudentProfile? _activeProfile;
 
   Future<void> _openInformation(BuildContext context, String kind) async {
@@ -208,13 +232,14 @@ class _AppShellState extends State<AppShell> {
                         children: [
                           _HomePage(
                             onOpenInformation: (kind) => _openInformation(context, kind),
-                            onNavigate: (index) => setState(() => selectedIndex = index),
+                            onNavigate: _selectTab,
                             apiConfigured: stagingApiBase.isNotEmpty,
                             studentProfile: _activeProfile,
                             onOpenVerification: () => _studentAccountKey.currentState?.openVerificationStatus(),
                           ),
                           PublicFeedPage(
                             type: 'notes',
+                            refreshVersion: _notesRefreshVersion,
                             onSaveNote: (noteId) async {
                               if (!accountAuthEnabled || stagingApiBase.isEmpty) {
                                 if (mounted) setState(() => selectedIndex = 4);
@@ -233,7 +258,8 @@ class _AppShellState extends State<AppShell> {
                               return saved;
                             },
                           ),
-                          const PublicFeedPage(type: 'updates'),
+                          PublicFeedPage(type: 'updates',
+                            refreshVersion: _updatesRefreshVersion),
                           CommunityFeedPage(
                             onReply: (threadId) async {
                               if (!accountAuthEnabled || stagingApiBase.isEmpty) {
@@ -292,7 +318,7 @@ class _AppShellState extends State<AppShell> {
                     child: InkWell(
                       key: Key('tab-$index'),
                       borderRadius: BorderRadius.circular(18),
-                      onTap: () => setState(() => selectedIndex = index),
+                      onTap: () => _selectTab(index),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 1),
                         child: Column(
