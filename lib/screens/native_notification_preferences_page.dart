@@ -30,7 +30,7 @@ class _NativeNotificationPreferencesPageState
     setState(() { enabled = null; error = null; });
     try {
       final value = await widget.load();
-      if (mounted) setState(() => enabled = value);
+      if (mounted) { setState(() => enabled = value); }
     } catch (_) {
       if (mounted) setState(() {
         error = 'Unable to load your preferences. Check your sign-in.';
