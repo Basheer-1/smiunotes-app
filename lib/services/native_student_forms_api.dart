@@ -3,6 +3,11 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
+/// The native Support endpoint is not deployed on this API origin.
+class NativeSupportNotAvailable implements Exception {
+  const NativeSupportNotAvailable();
+}
+
 /// Native student form transport. Only configured HTTPS API origin; no secrets.
 class NativeStudentFormsApi {
   const NativeStudentFormsApi({required this.baseUrl, required this.tokenProvider});
@@ -76,6 +81,9 @@ class NativeStudentFormsApi {
       final parsed = jsonDecode(utf8.decode(bytes));
       if (parsed is! Map<String, dynamic>) {
         throw const FormatException('Invalid server response.');
+      }
+      if (path == 'support' && response.statusCode == 404) {
+        throw const NativeSupportNotAvailable();
       }
       if (response.statusCode != 200) {
         // Never show raw backend errors or tokens to the user.
