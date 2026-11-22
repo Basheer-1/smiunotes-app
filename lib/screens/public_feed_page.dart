@@ -127,8 +127,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
     padding: const EdgeInsets.fromLTRB(20, 18, 20, 110),
     children: [
       Text(isNotes ? 'Browse notes' : 'University updates',
-        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900,
-          color: Color(0xFF102B4B))),
+        style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900,
+          color: Theme.of(context).colorScheme.onSurface)),
       const SizedBox(height: 10),
       Text(isNotes ? 'Published study material by subject and semester.'
         : 'Latest campus announcements and student opportunities.'),
@@ -141,7 +141,8 @@ class _PublicFeedPageState extends State<PublicFeedPage> {
         decoration: InputDecoration(
           hintText: 'Search', prefixIcon: const Icon(Icons.search),
           suffixIcon: IconButton(onPressed: filter, icon: const Icon(Icons.arrow_forward)),
-          filled: true, fillColor: Colors.white,
+          filled: true,
+          fillColor: Theme.of(context).colorScheme.surface,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16))),
       ),
       const SizedBox(height: 12),
@@ -318,8 +319,8 @@ class _FeedTile extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(24, 10, 24, 38),
             children: [
               if (data['is_pinned'] == true)
-                const Text('IMPORTANT UPDATE', style: TextStyle(
-                  color: Color(0xFF183C68), fontWeight: FontWeight.w800,
+                Text('IMPORTANT UPDATE', style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w800,
                   letterSpacing: 1.1)),
               const SizedBox(height: 8),
               Text(title, style: const TextStyle(fontSize: 26,
