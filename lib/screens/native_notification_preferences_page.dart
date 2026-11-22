@@ -32,9 +32,11 @@ class _NativeNotificationPreferencesPageState
       final value = await widget.load();
       if (mounted) { setState(() => enabled = value); }
     } catch (_) {
-      if (mounted) setState(() {
-        error = 'Unable to load your preferences. Check your sign-in.';
-      });
+      if (mounted) {
+        setState(() {
+          error = 'Unable to load your preferences. Check your sign-in.';
+        });
+      }
     }
   }
 
@@ -43,13 +45,15 @@ class _NativeNotificationPreferencesPageState
     setState(() { saving = true; error = null; });
     try {
       await widget.save(value);
-      if (mounted) setState(() => enabled = value);
+      if (mounted) { setState(() => enabled = value); }
     } catch (_) {
-      if (mounted) setState(() {
-        error = 'Could not save. Your previous preference is unchanged.';
-      });
+      if (mounted) {
+        setState(() {
+          error = 'Could not save. Your previous preference is unchanged.';
+        });
+      }
     } finally {
-      if (mounted) setState(() => saving = false);
+      if (mounted) { setState(() => saving = false); }
     }
   }
 
