@@ -21,6 +21,7 @@ import 'authenticated_note_reader_page.dart';
 import 'community_composer_page.dart';
 import 'my_bookmarks_page.dart';
 import 'student_account_gateway.dart';
+import 'student_verification_status_page.dart';
 
 /// Staging-only account flow; ordinary app builds keep auth switched off.
 class StagingStudentAccountPage extends StatefulWidget {
@@ -80,6 +81,28 @@ class StagingStudentAccountPageState
 
   Future<void> disablePush() async {
     await push.disable(currentAccessToken: runtime.controller.accessToken);
+  }
+
+  final GlobalKey<StudentAccountGatewayState> _gatewayKey =
+      GlobalKey<StudentAccountGatewayState>();
+
+  Future<bool> promptStudentSignIn() async {
+    if (!mounted) return false;
+    if (runtime.coordinator.authenticated) return true;
+    return await _gatewayKey.currentState?.promptSignIn() ?? false;
+  }
+
+  void openVerificationStatus() {
+    final profile = runtime.coordinator.profile;
+    if (!mounted || !runtime.coordinator.authenticated ||
+        profile == null) return;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => StudentVerificationStatusPage(
+        profile: profile,
+        onOpenNativeCardVerification: profile.verificationStatus == 'pending'
+            ? openNativeCardVerification : null,
+      ),
+    ));
   }
 
   late final StudentAuthRuntime runtime =
@@ -256,6 +279,7 @@ class StagingStudentAccountPageState
 
   @override
   Widget build(BuildContext context) => StudentAccountGateway(
+    key: _gatewayKey,
     api: MobileAuthApi(baseUrl: widget.httpsBaseUrl),
     challengeProvider: () => requestMobileTurnstile(
       context,
