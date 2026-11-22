@@ -1,4 +1,7 @@
 import 'package:material_ui/material_ui.dart';
+import 'dart:typed_data';
+import '../models/student_profile.dart';
+import '../services/native_avatar_api.dart';
 
 import '../services/authenticated_reader_api.dart';
 import '../services/community_write_api.dart';
@@ -20,9 +23,15 @@ class StagingStudentAccountPage extends StatefulWidget {
   const StagingStudentAccountPage({
     super.key,
     required this.httpsBaseUrl,
+    this.onProfileChanged,
+    this.onThemeChanged,
+    this.darkMode = false,
   });
 
   final String httpsBaseUrl;
+  final ValueChanged<StudentProfile?>? onProfileChanged;
+  final ValueChanged<bool>? onThemeChanged;
+  final bool darkMode;
 
   @override
   StagingStudentAccountPageState createState() =>
@@ -41,6 +50,13 @@ class StagingStudentAccountPageState
       enabled: pushEnabled,
     ),
   );
+
+  Future<Uint8List?> loadOwnAvatar() async {
+    final profile = runtime.coordinator.profile;
+    if (profile?.avatarVersion == null) return null;
+    return NativeAvatarApi(baseUrl: widget.httpsBaseUrl)
+        .loadOwn(_currentVerifiedToken());
+  }
 
   Future<void> enablePush() async {
     await push.enable(currentAccessToken: _currentVerifiedToken());
@@ -202,5 +218,8 @@ class StagingStudentAccountPageState
     onEnablePush: pushEnabled ? enablePush : null,
     onDisablePush: pushEnabled ? disablePush : null,
     onLoadPushEnabled: pushEnabled ? () => push.isOptedIn : null,
+    onProfileChanged: widget.onProfileChanged,
+    onThemeChanged: widget.onThemeChanged,
+    darkMode: widget.darkMode,
   );
 }
