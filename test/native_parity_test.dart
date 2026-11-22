@@ -49,7 +49,7 @@ void main() {
       expect(find.byKey(Key(kind == 'contact'
         ? 'native-contact-action' : 'native-support-action')), findsOneWidget);
       expect(find.byType(Scaffold), findsOneWidget);
-      expect(find.byType(ListView), findsOneWidget);
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
     }
   });
 }
