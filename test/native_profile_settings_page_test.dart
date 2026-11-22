@@ -30,6 +30,9 @@ void main() {
     expect(find.text('Test Student'), findsOneWidget);
     expect(find.text('student@example.com'), findsOneWidget);
     expect(find.text('Computer Science'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('settings-account-recovery')), 250,
+    );
     expect(find.byKey(const Key('settings-account-recovery')), findsOneWidget);
     expect(find.byKey(const Key('settings-push')), findsNothing);
   });
@@ -47,6 +50,7 @@ void main() {
       ),
     ));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byKey(const Key('settings-theme')), 250);
     await tester.tap(find.byKey(const Key('settings-theme')));
     await tester.pump();
     expect(selected, isTrue);
