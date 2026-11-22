@@ -8,6 +8,8 @@ import '../services/community_write_api.dart';
 import '../services/bookmark_api.dart';
 import '../services/mobile_auth_api.dart';
 import '../services/mobile_notification_api.dart';
+import '../services/mobile_preferences_api.dart';
+import 'native_notification_preferences_page.dart';
 import '../services/push_registration_api.dart';
 import '../services/student_push_enrollment.dart';
 import 'notification_inbox_page.dart';
@@ -149,6 +151,17 @@ class StagingStudentAccountPageState
     return true;
   }
 
+  void openNotificationPreferences() {
+    if (!mounted || !runtime.coordinator.authenticated ||
+        runtime.controller.accessToken == null) return;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => NativeNotificationPreferencesPage(
+        api: MobilePreferencesApi(baseUrl: widget.httpsBaseUrl),
+        currentAccessToken: _currentVerifiedToken,
+      ),
+    ));
+  }
+
   /// Opens the reply composer only if a verified session still exists.
   Future<bool> openCommunityReply(String threadId) async {
     if (!mounted || !runtime.coordinator.authenticated ||
@@ -227,6 +240,7 @@ class StagingStudentAccountPageState
     onOpenVerifiedNote: openVerifiedNote,
     onCreateDiscussion: openCommunityComposer,
     onOpenNotifications: openNotifications,
+    onOpenNotificationPreferences: openNotificationPreferences,
     onOpenBookmarks: openSavedNotes,
     pushAvailable: pushEnabled,
     onEnablePush: pushEnabled ? enablePush : null,
