@@ -49,7 +49,7 @@ class StudentVerificationStatusPage extends StatelessWidget {
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => const SecureWebsiteFormPage(
-                    path: '/profile',
+                    path: '/profile/verification',
                     title: 'Account verification',
                   ),
                 ),
