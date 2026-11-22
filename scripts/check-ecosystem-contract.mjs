@@ -21,7 +21,8 @@ const requiredFields = [
 export function validateContract(raw) {
   assert.ok(raw && typeof raw === "object" && !Array.isArray(raw),
     "Invalid ecosystem contract object");
-  assert.equal(raw.schema, "smiunotes.mobile-contract.v1");
+  assert.equal(raw.schema, "smiunotes.mobile-contract.v1",
+    "Invalid ecosystem contract schema");
   assert.ok(Number.isSafeInteger(raw.revision) && raw.revision >= 1,
     "Revision must be a positive integer");
   assert.equal(raw.api_base, "/api/mobile/v1");
