@@ -3,6 +3,9 @@ import 'screens/staging_student_account_page.dart';
 import 'screens/student_profile_page.dart';
 import 'screens/community_feed_page.dart';
 import 'screens/public_feed_page.dart';
+import 'screens/native_information_pages.dart';
+import 'models/student_profile.dart';
+import 'widgets/profile_avatar.dart';
 import 'dart:ui';
 import 'package:material_ui/material_ui.dart';
 
@@ -12,8 +15,14 @@ const Color archiveBlue = Color(0xFF183C68);
 const Color ink = Color(0xFF102B4B);
 const Color muted = Color(0xFF5C7188);
 
-class SmiuNotesApp extends StatelessWidget {
+class SmiuNotesApp extends StatefulWidget {
   const SmiuNotesApp({super.key});
+  @override
+  State<SmiuNotesApp> createState() => _SmiuNotesAppState();
+}
+
+class _SmiuNotesAppState extends State<SmiuNotesApp> {
+  bool darkMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -26,13 +35,26 @@ class SmiuNotesApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF0F5FA),
         fontFamily: 'Roboto',
       ),
-      home: const AppShell(),
+      darkTheme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: archiveBlue, brightness: Brightness.dark),
+        scaffoldBackgroundColor: const Color(0xFF0C1726),
+        fontFamily: 'Roboto',
+      ),
+      themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
+      home: AppShell(
+        darkMode: darkMode,
+        onThemeChanged: (value) => setState(() => darkMode = value),
+      ),
     );
   }
 }
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, this.darkMode = false, this.onThemeChanged});
+  final bool darkMode;
+  final ValueChanged<bool>? onThemeChanged;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -52,6 +74,12 @@ class _AppShellState extends State<AppShell> {
   final GlobalKey<StagingStudentAccountPageState> _studentAccountKey =
       GlobalKey<StagingStudentAccountPageState>();
   int selectedIndex = 0;
+  StudentProfile? _activeProfile;
+
+  Future<void> _openInformation(BuildContext context, String kind) async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => NativeInformationPage(kind: kind)));
+  }
   static const labels = ['Home', 'Notes', 'Updates', 'Community', 'Profile'];
   static const icons = [
     Icons.home_outlined,
@@ -107,6 +135,7 @@ class _AppShellState extends State<AppShell> {
                         index: selectedIndex,
                         children: [
                           _HomePage(
+                            onOpenInformation: (kind) => _openInformation(context, kind),
                             onNavigate: (index) => setState(() => selectedIndex = index),
                             apiConfigured: stagingApiBase.isNotEmpty,
                           ),
@@ -153,6 +182,11 @@ class _AppShellState extends State<AppShell> {
                             StagingStudentAccountPage(
                               key: _studentAccountKey,
                               httpsBaseUrl: stagingApiBase,
+                              darkMode: widget.darkMode,
+                              onThemeChanged: widget.onThemeChanged,
+                              onProfileChanged: (profile) {
+                                if (mounted) setState(() => _activeProfile = profile);
+                              },
                             )
                           else
                             const StudentProfilePage(),
@@ -188,7 +222,17 @@ class _AppShellState extends State<AppShell> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(icons[index], size: 23, color: active ? archiveBlue : muted),
+                            if (index == 4)
+                              ProfileAvatar(
+                                name: _activeProfile?.studentName,
+                                size: 28,
+                                imageLoader: _activeProfile?.avatarVersion == null
+                                  ? null : () async => _studentAccountKey.currentState
+                                      ?.loadOwnAvatar(),
+                              )
+                            else
+                              Icon(icons[index], size: 23,
+                                color: active ? archiveBlue : muted),
                             const SizedBox(height: 4),
                             FittedBox(
                               fit: BoxFit.scaleDown,
@@ -216,11 +260,13 @@ class _Backdrop extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox.expand(
       child: DecoratedBox(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFE8F3FF), Color(0xFFF7F9FD), Color(0xFFE6EFFB)],
+            colors: Theme.of(context).brightness == Brightness.dark
+              ? [const Color(0xFF0A1729), const Color(0xFF16283E), const Color(0xFF0B182B)]
+              : [const Color(0xFFE8F3FF), const Color(0xFFF7F9FD), const Color(0xFFE6EFFB)],
           ),
         ),
         child: Stack(
@@ -260,10 +306,10 @@ class _Glass extends StatelessWidget {
       child: Container(
         padding: padding,
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.68),
+          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.74),
           borderRadius: BorderRadius.circular(radius),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.87), width: 1.2),
-          boxShadow: [BoxShadow(color: archiveBlue.withValues(alpha: 0.07), blurRadius: 28, offset: const Offset(0, 10))],
+          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant, width: 1.2),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 28, offset: const Offset(0, 10))],
         ),
         child: child,
       ),
@@ -273,10 +319,12 @@ class _Glass extends StatelessWidget {
 
 class _HomePage extends StatelessWidget {
   const _HomePage({
+    required this.onOpenInformation,
     required this.onNavigate,
     required this.apiConfigured,
   });
   final ValueChanged<int> onNavigate;
+  final ValueChanged<String> onOpenInformation;
   final bool apiConfigured;
 
   @override
@@ -293,7 +341,7 @@ class _HomePage extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           apiConfigured
-              ? 'SMIUNotes mobile • Connected API • Verified student access is required.'
+              ? 'Explore public resources freely. Sign in for your personal library.'
               : 'M4 testing build • Preview mode: live content and student login are not configured.',
           key: const Key('testing-build-status'),
           style: const TextStyle(color: muted, fontSize: 11),
@@ -330,7 +378,14 @@ class _HomePage extends StatelessWidget {
               _QuickLink(icon: Icons.menu_book_outlined, title: 'Notes', caption: 'Study smarter', onTap: () => onNavigate(1)),
               _QuickLink(icon: Icons.campaign_outlined, title: 'Updates', caption: 'Stay informed', onTap: () => onNavigate(2)),
               _QuickLink(icon: Icons.forum_outlined, title: 'Community', caption: 'Connect & discuss', onTap: () => onNavigate(3)),
-              _QuickLink(icon: Icons.person_outline, title: 'Profile', caption: 'Your student space', onTap: () => onNavigate(4)),
+              _QuickLink(icon: Icons.person_outline, title: 'Profile',
+                caption: 'Your student space', onTap: () => onNavigate(4)),
+              _QuickLink(icon: Icons.favorite_outline, title: 'Support',
+                caption: 'Keep notes free',
+                onTap: () => onOpenInformation('support')),
+              _QuickLink(icon: Icons.mail_outline, title: 'Contact Us',
+                caption: 'Talk to the team',
+                onTap: () => onOpenInformation('contact')),
             ];
             return GridView.count(
               crossAxisCount: wide ? 4 : 2,
@@ -338,7 +393,7 @@ class _HomePage extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: wide ? 1.25 : 1.45,
+              childAspectRatio: wide ? 1.25 : 1.25,
               children: items,
             );
           },
