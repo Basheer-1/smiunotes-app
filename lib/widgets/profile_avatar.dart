@@ -68,12 +68,20 @@ class _ProfileAvatarState extends State<ProfileAvatar> {
     ),
   );
 
-  Widget _fallback(BuildContext context) => Center(
-    child: Text(ProfileAvatar.initials(widget.name),
-      style: TextStyle(
-        fontSize: widget.size * .34,
-        color: Theme.of(context).colorScheme.primary,
-        fontWeight: FontWeight.w800,
-      )),
-  );
+  Widget _fallback(BuildContext context) {
+    final hasIdentity = widget.name?.trim().isNotEmpty == true;
+    return Center(
+      child: hasIdentity
+        ? Text(ProfileAvatar.initials(widget.name),
+            style: TextStyle(
+              fontSize: widget.size * .34,
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.w800,
+            ))
+        : Icon(Icons.person_outline_rounded,
+            key: const Key('guest-profile-avatar'),
+            size: widget.size * .62,
+            color: Theme.of(context).colorScheme.primary),
+    );
+  }
 }
