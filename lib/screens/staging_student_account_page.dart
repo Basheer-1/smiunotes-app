@@ -177,6 +177,11 @@ class StagingStudentAccountPageState
     return true;
   }
 
+  late final NativeProfileSettingsApi settingsApi = NativeProfileSettingsApi(
+    baseUrl: widget.httpsBaseUrl,
+    tokenProvider: _currentVerifiedToken,
+  );
+
   NativeStudentFormsApi get _forms => NativeStudentFormsApi(
     baseUrl: widget.httpsBaseUrl,
     tokenProvider: _currentVerifiedToken,
@@ -292,10 +297,7 @@ class StagingStudentAccountPageState
     signOut: runtime.coordinator.signOut,
     signOutAll: signOutAllDevices,
     onLoadAvatar: loadOwnAvatar,
-    profileSettingsApi: NativeProfileSettingsApi(
-      baseUrl: widget.httpsBaseUrl,
-      tokenProvider: _currentVerifiedToken,
-    ),
+    profileSettingsApi: settingsApi,
     onRefreshProfile: runtime.coordinator.refreshValidatedProfile,
     onOpenVerifiedNote: openVerifiedNote,
     onCreateDiscussion: openCommunityComposer,
