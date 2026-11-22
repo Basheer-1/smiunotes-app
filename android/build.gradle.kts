@@ -19,6 +19,20 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// AGP 9.3.1 lint crashes in generated WebView Pigeon Kotlin JavaDoc,
+// independent of application lint and Flutter analyzer. Scope the workaround
+// to the third-party webview plugin's release-vital lint tasks only.
+// Keep app lint, Flutter analysis, unit tests, and APK signature verification.
+subprojects {
+    if (name == "webview_flutter_android") {
+        tasks.configureEach {
+            if (name.startsWith("lintVital")) {
+                enabled = false
+            }
+        }
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
