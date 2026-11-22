@@ -33,7 +33,7 @@ class NativeProfileSettingsPage extends StatefulWidget {
   final ValueChanged<bool>? onThemeChanged;
   final bool pushAvailable, pushEnabled, pushBusy;
   final ValueChanged<bool>? onPushChanged;
-  final Future<void> Function()? onSignOutAll;
+  final Future<bool> Function()? onSignOutAll;
   final Future<Uint8List?> Function()? onLoadAvatar;
 
   @override
@@ -167,8 +167,8 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
               title: const Text('Sign out all devices'),
               subtitle: const Text('Revoke active sessions'),
               onTap: () async {
-                await widget.onSignOutAll!();
-                if (context.mounted) Navigator.of(context).pop();
+                final signedOut = await widget.onSignOutAll!();
+                if (signedOut && context.mounted) Navigator.of(context).pop();
               },
             ),
           const SizedBox(height: 14),
