@@ -77,6 +77,29 @@ class _MyBookmarksPageState extends State<MyBookmarksPage> {
     }
   }
 
+
+  Future<void> _toggleCompleted(String noteId, bool complete) async {
+    if (_removing.contains(noteId)) return;
+    setState(() { _removing.add(noteId); _actionError = null; });
+    try {
+      final response = complete
+        ? await widget.api.complete(widget.currentAccessToken(), noteId)
+        : await widget.api.uncomplete(widget.currentAccessToken(), noteId);
+      if (response['ok'] != true ||
+          response['completed'] != complete) {
+        throw const FormatException('Completion status not confirmed.');
+      }
+      if (mounted) _refresh();
+    } catch (_) {
+      if (mounted) {
+        setState(() => _actionError =
+          'Unable to update completed notes. Please retry.');
+      }
+    } finally {
+      if (mounted) setState(() => _removing.remove(noteId));
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('My study library'),
@@ -137,17 +160,36 @@ class _MyBookmarksPageState extends State<MyBookmarksPage> {
                   subtitle: Text(_completedView
                     ? 'Completed note' : (entry['completed'] == true
                       ? 'Bookmarked · Also completed' : 'Saved note')),
-                  trailing: IconButton(
-                    key: Key(_completedView
-                      ? 'uncomplete-note-${entry['note_id']}'
-                      : 'remove-bookmark-${entry['note_id']}'),
-                    tooltip: _completedView ? 'Remove completed status'
-                      : 'Remove bookmark',
-                    icon: Icon(_completedView
-                      ? Icons.remove_done_outlined
-                      : Icons.bookmark_remove_outlined),
-                    onPressed: _removing.contains(entry['note_id'])
-                        ? null : () => _remove(entry['note_id'] as String),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (!_completedView)
+                        IconButton(
+                          key: Key('toggle-completed-${entry['note_id']}'),
+                          tooltip: entry['completed'] == true
+                            ? 'Mark note not completed'
+                            : 'Mark note completed',
+                          icon: Icon(entry['completed'] == true
+                            ? Icons.task_alt_rounded
+                            : Icons.radio_button_unchecked_rounded),
+                          onPressed: _removing.contains(entry['note_id'])
+                            ? null : () => _toggleCompleted(
+                              entry['note_id'] as String,
+                              entry['completed'] != true),
+                        ),
+                      IconButton(
+                        key: Key(_completedView
+                          ? 'uncomplete-note-${entry['note_id']}'
+                          : 'remove-bookmark-${entry['note_id']}'),
+                        tooltip: _completedView ? 'Remove completed status'
+                          : 'Remove bookmark',
+                        icon: Icon(_completedView
+                          ? Icons.remove_done_outlined
+                          : Icons.bookmark_remove_outlined),
+                        onPressed: _removing.contains(entry['note_id'])
+                          ? null : () => _remove(entry['note_id'] as String),
+                      ),
+                    ],
                   ),
                 )),
           ],
