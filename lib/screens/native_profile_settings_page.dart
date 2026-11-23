@@ -5,7 +5,6 @@ import '../services/mobile_auth_api.dart';
 import '../services/native_profile_settings_api.dart';
 import '../services/native_student_forms_api.dart';
 import 'student_login_page.dart';
-import 'student_recovery_page.dart';
 import 'student_verification_status_page.dart';
 import '../widgets/profile_avatar.dart';
 
@@ -457,17 +456,6 @@ class _NativeProfileSettingsPageState extends State<NativeProfileSettingsPage> {
                     ? null : _changePassword,
                 icon: const Icon(Icons.password_outlined),
                 label: const Text('Change password'),
-              ),
-              ListTile(
-                key: const Key('settings-account-recovery'),
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.help_outline),
-                title: const Text('Account recovery'),
-                subtitle: const Text('Email inaccessible or forgotten password'),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (_) => StudentRecoveryPage(
-                    api: widget.api, challengeProvider: widget.challengeProvider))),
               ),
             ]),
           ),
