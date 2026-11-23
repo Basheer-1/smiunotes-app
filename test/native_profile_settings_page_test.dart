@@ -31,10 +31,12 @@ void main() {
     expect(find.text('student@example.com'), findsOneWidget);
     expect(find.text('Computer Science'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.byKey(const Key('settings-account-recovery')), 250,
+      find.byKey(const Key('settings-change-password')), 250,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.byKey(const Key('settings-account-recovery')), findsOneWidget);
+    expect(find.byKey(const Key('settings-change-password')), findsOneWidget);
+    // Password reset via linked-email OTP is intentionally on sign-in only.
+    expect(find.byKey(const Key('settings-account-recovery')), findsNothing);
     expect(find.byKey(const Key('settings-push')), findsNothing);
   });
 
