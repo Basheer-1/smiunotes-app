@@ -306,10 +306,11 @@ class _StudentLoginPageState extends State<StudentLoginPage> {
                       builder: (_) => StudentRecoveryPage(
                         api: widget.api,
                         challengeProvider: widget.challengeProvider!,
+                        onSession: widget.onSession!,
                       ),
                     ));
                   },
-                  child: const Text('Forgot password? Recover account'),
+                  child: const Text('Forgot password? Reset with email code'),
                 ),
               TextButton(
                 onPressed: busy ? null : () => setState(() {
