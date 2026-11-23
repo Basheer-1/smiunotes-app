@@ -57,8 +57,10 @@ class _StudentRecoveryPageState extends State<StudentRecoveryPage> {
       if (challenge == null) {
         final proof = await widget.challengeProvider();
         if (proof == null || proof.isEmpty) {
-          if (mounted) setState(() =>
-            error = 'Complete the security verification to continue.');
+          if (mounted) {
+            setState(() =>
+              error = 'Complete the security verification to continue.');
+          }
           return;
         }
         final pending = await widget.api.startOtp(
@@ -98,11 +100,15 @@ class _StudentRecoveryPageState extends State<StudentRecoveryPage> {
           : 'Verification could not be completed. Retry or request a new code.');
       }
     } on FormatException {
-      if (mounted) setState(() =>
-        error = 'Check your Student ID, verification code and new password.');
+      if (mounted) {
+        setState(() =>
+          error = 'Check your Student ID, verification code and new password.');
+      }
     } catch (_) {
-      if (mounted) setState(() =>
-        error = 'Password reset is temporarily unavailable. Please retry.');
+      if (mounted) {
+        setState(() =>
+          error = 'Password reset is temporarily unavailable. Please retry.');
+      }
     } finally {
       if (mounted) setState(() => working = false);
     }
