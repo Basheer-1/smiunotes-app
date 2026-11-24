@@ -260,7 +260,9 @@ class StagingStudentAccountPageState
   /// Unfinished bookmark owned by the current authenticated student.
   Future<Map<String, dynamic>?> latestStudyNote() async {
     if (!mounted || !runtime.coordinator.authenticated ||
-        runtime.controller.accessToken == null) return null;
+        runtime.controller.accessToken == null) {
+      return null;
+    }
     try {
       final result = await BookmarkApi(baseUrl: widget.httpsBaseUrl)
           .list(_currentVerifiedToken());
@@ -282,7 +284,9 @@ class StagingStudentAccountPageState
     if (!mounted || !runtime.coordinator.authenticated ||
         runtime.controller.accessToken == null ||
         noteId.length != 36 ||
-        !RegExp(r'[0-9a-fA-F-]{36}').hasMatch(noteId)) return;
+        !RegExp(r'[0-9a-fA-F-]{36}').hasMatch(noteId)) {
+      return;
+    }
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => AuthenticatedNoteReaderPage(
         noteId: noteId,
