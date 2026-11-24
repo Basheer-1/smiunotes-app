@@ -33,10 +33,12 @@ class _ReaderToolbarActionsState extends State<ReaderToolbarActions> {
   Future<void> _load() async {
     try {
       final info = await widget.loadState();
-      if (mounted) setState(() {
-        bookmarked = info['bookmarked'] == true;
-        completed = info['completed'] == true;
-      });
+      if (mounted) {
+        setState(() {
+          bookmarked = info['bookmarked'] == true;
+          completed = info['completed'] == true;
+        });
+      }
     } catch (_) {
       if (mounted) { setState(() => stateError = 'Unable to load study status.'); }
     }
