@@ -7,7 +7,7 @@ import '../services/public_feed_api.dart';
 class PublicFeedPage extends StatefulWidget {
   const PublicFeedPage({super.key, required this.type, this.api = const PublicFeedApi(), this.onSaveNote,
     this.initialDepartment = '', this.initialSemester = '',
-    this.refreshVersion = 0});
+    this.refreshVersion = 0, this.loadContinue, this.onResume});
   final String type;
   final PublicFeedApi api;
   final Future<bool> Function(String noteId)? onSaveNote;
@@ -15,6 +15,8 @@ class PublicFeedPage extends StatefulWidget {
   final String initialSemester;
   /// Incremented by the shell when a feed tab is visited or selected again.
   final int refreshVersion;
+  final Future<Map<String, dynamic>?> Function()? loadContinue;
+  final ValueChanged<String>? onResume;
   @override
   State<PublicFeedPage> createState() => _PublicFeedPageState();
 }
@@ -26,6 +28,7 @@ class _PublicFeedPageState extends State<PublicFeedPage>
   String? error;
   bool loading = false;
   bool showFilters = false;
+  Future<Map<String, dynamic>?>? _continueFuture;
   int notesView = 0;
   int _feedGeneration = 0;
   int _filterGeneration = 0;
@@ -49,7 +52,7 @@ class _PublicFeedPageState extends State<PublicFeedPage>
     WidgetsBinding.instance.addObserver(this);
     department = widget.initialDepartment;
     semester = widget.initialSemester;
-    if (isNotes) { loadFilters(); }
+    if (isNotes) { loadFilters(); _continueFuture = widget.loadContinue?.call(); }
     load();
   }
 
@@ -63,6 +66,7 @@ class _PublicFeedPageState extends State<PublicFeedPage>
   Future<void> refresh() async {
     // Refresh both the visible feed and dependent catalogue options.
     if (isNotes) {
+      setState(() => _continueFuture = widget.loadContinue?.call());
       await Future.wait([loadFilters(), load()]);
     } else {
       await load();
@@ -89,7 +93,8 @@ class _PublicFeedPageState extends State<PublicFeedPage>
       _filterGeneration++;
       if (isNotes) loadFilters();
       load();
-    } else if (oldWidget.refreshVersion != widget.refreshVersion) {
+    } else if (oldWidget.refreshVersion != widget.refreshVersion ||
+        oldWidget.loadContinue != widget.loadContinue) {
       refresh();
     }
   }
@@ -196,6 +201,39 @@ class _PublicFeedPageState extends State<PublicFeedPage>
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16))),
       ),
       const SizedBox(height: 10),
+      if (isNotes && _continueFuture != null) FutureBuilder<Map<String, dynamic>?>(
+        future: _continueFuture,
+        builder: (context, snapshot) {
+          final note = snapshot.data;
+          if (note == null || note['note_id'] is! String) return const SizedBox.shrink();
+          return Padding(padding: const EdgeInsets.only(bottom: 17),
+            child: InkWell(
+              key: const Key('continue-study-note'),
+              onTap: () => widget.onResume?.call(note['note_id'] as String),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(
+                color: const Color(0xFF192A3C),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF2B4255))),
+                child: Row(children: [
+                  const Icon(Icons.menu_book_rounded, color: Color(0xFF80BDD9)),
+                  const SizedBox(width: 11),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Continue studying', style: TextStyle(
+                        color: Color(0xFF9DCBE4), fontSize: 10)),
+                      const SizedBox(height: 4),
+                      Text(note['title']?.toString() ?? 'Saved note',
+                        maxLines: 2, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
+                    ])),
+                  const SizedBox(width: 10),
+                  const Text('Resume ›', style: TextStyle(fontSize: 11,
+                    color: Color(0xFFC4E9FF))),
+                ])),
+            ));
+        },
+      ),
       if (isNotes && availableSubjects.isNotEmpty) ...[
         Row(children: [
           const Text('Courses', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
