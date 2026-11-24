@@ -58,7 +58,7 @@ class _OfflineNoteViewerState extends State<OfflineNoteViewer> {
                 ]),
             );
             final item = pages[index - 1];
-            if (item is! Map) return const SizedBox.shrink();
+            if (item is! Map) { return const SizedBox.shrink(); }
             final number = item['number'] as int? ?? index;
             final width = (item['width'] as num?)?.toDouble() ?? 800;
             final height = (item['height'] as num?)?.toDouble() ?? 1100;
@@ -74,10 +74,10 @@ class _OfflineNoteViewerState extends State<OfflineNoteViewer> {
                     future: widget.store.page(widget.owner,
                       widget.noteId, number),
                     builder: (context, page) {
-                      if (page.hasError) return const Center(
-                        child: Text('Protected page unavailable'));
-                      if (!page.hasData) return const Center(
-                        child: CircularProgressIndicator());
+                      if (page.hasError) { return const Center(
+                        child: Text('Protected page unavailable')); }
+                      if (!page.hasData) { return const Center(
+                        child: CircularProgressIndicator()); }
                       return Image.memory(page.data!, fit: BoxFit.contain,
                         gaplessPlayback: false);
                     },
@@ -127,11 +127,11 @@ class _OfflineLibraryPageState extends State<OfflineLibraryPage> {
             ? const Center(child: Text('Unable to open offline library.'))
             : const Center(child: CircularProgressIndicator());
         }
-        if (snapshot.data!.isEmpty) return const Center(
+        if (snapshot.data!.isEmpty) { return const Center(
           child: Padding(padding: EdgeInsets.all(24),
             child: Text('No offline notes yet. Open a note while online and '
               'use the download button in its reader titlebar.')),
-        );
+        ); }
         return ListView(
           key: const Key('offline-library'),
           padding: const EdgeInsets.all(14),
