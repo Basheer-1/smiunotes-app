@@ -556,6 +556,96 @@ class _FeedTile extends StatelessWidget {
       ? origin.resolve(imagePath).toString() : null;
     final applyUrl = ExternalLinkOpener.trustedHttps(data['application_url']);
     final applyExpired = isUpdateApplicationExpired(data['deadline_date']);
+    if (compactUpdate) {
+      return Container(
+        key: Key('deadline-card-${data['id']}'),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF18293B),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFF283F55)),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          if (image != null)
+            ClipRRect(borderRadius: BorderRadius.circular(9),
+              child: Image.network(image, width: double.infinity, height: 75,
+                fit: BoxFit.cover, errorBuilder: (_, _, _) =>
+                  const SizedBox(height: 75, child: Center(
+                    child: Icon(Icons.campaign_outlined, size: 35)))))
+          else
+            const SizedBox(height: 65,
+              child: Center(child: Icon(Icons.campaign_outlined, size: 35))),
+          const SizedBox(height: 8),
+          Row(children: [
+            _UpdateStatusPill(status: universityUpdateStatus(
+              data['deadline_date'], data['event_date'])),
+            const Spacer(),
+            Flexible(child: Text(data['deadline_date']?.toString() ?? '',
+              textAlign: TextAlign.end, style: const TextStyle(
+                fontSize: 10, color: Color(0xFFACC9DF)))),
+          ]),
+          const SizedBox(height: 7),
+          Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+          const Spacer(),
+          Row(children: [
+            TextButton(onPressed: () => _openDetail(context),
+              child: const Text('Details', style: TextStyle(fontSize: 11))),
+            const Spacer(),
+            if (applyUrl != null)
+              FilledButton(
+                key: Key('update-apply-${data['id']}'),
+                onPressed: applyExpired ? null :
+                  () => _openExternal(context, applyUrl.toString()),
+                child: Text(applyExpired ? 'Closed' : 'Apply Now',
+                  style: const TextStyle(fontSize: 11)),
+              ),
+          ]),
+        ]),
+      );
+    }
+    if (!isNote) {
+      return Card(
+        margin: const EdgeInsets.only(bottom: 7),
+        color: const Color(0xFF18293B), elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11),
+          side: const BorderSide(color: Color(0xFF294056))),
+        child: InkWell(onTap: () => _openDetail(context),
+          borderRadius: BorderRadius.circular(11),
+          child: Padding(padding: const EdgeInsets.all(9),
+            child: Row(children: [
+              ClipRRect(borderRadius: BorderRadius.circular(7),
+                child: SizedBox(width: 49, height: 49,
+                  child: image == null
+                    ? const Icon(Icons.campaign_rounded)
+                    : Image.network(image, fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) =>
+                          const Icon(Icons.campaign_rounded)))),
+              const SizedBox(width: 9),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    _UpdateStatusPill(status: universityUpdateStatus(
+                      data['deadline_date'], data['event_date'])),
+                    const SizedBox(width: 6),
+                    Expanded(child: Text(
+                      data['published_at']?.toString().split('T').first ?? '',
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 10,
+                        color: Color(0xFFA3B9CD)))),
+                  ]),
+                  const SizedBox(height: 3),
+                  Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12,
+                      fontWeight: FontWeight.w800)),
+                  Text(summary, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 10,
+                      color: Color(0xFFA7BACD))),
+                ])),
+              const Icon(Icons.chevron_right_rounded, size: 18),
+            ]))),
+      );
+    }
     if (isNote) return Card(
       margin: const EdgeInsets.only(bottom: 0),
       color: const Color(0xFF172738), elevation: 0,
