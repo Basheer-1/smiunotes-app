@@ -25,6 +25,7 @@ class _PublicFeedPageState extends State<PublicFeedPage>
   List<dynamic> items = [];
   String? error;
   bool loading = false;
+  bool showFilters = false;
   int _feedGeneration = 0;
   int _filterGeneration = 0;
   int total = 0, page = 1;
@@ -156,10 +157,10 @@ class _PublicFeedPageState extends State<PublicFeedPage>
     child: ListView(
     key: Key('feed-${widget.type}'),
     physics: const AlwaysScrollableScrollPhysics(),
-    padding: const EdgeInsets.fromLTRB(20, 18, 20, 110),
+    padding: const EdgeInsets.fromLTRB(12, 10, 12, 95),
     children: [
-      Text(isNotes ? 'Browse notes' : 'University updates',
-        style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900,
+      Text(isNotes ? 'Home & Browse Notes' : 'Campus Updates',
+        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800,
           color: Theme.of(context).colorScheme.onSurface)),
       const SizedBox(height: 10),
       Row(children: [
@@ -173,20 +174,57 @@ class _PublicFeedPageState extends State<PublicFeedPage>
           icon: const Icon(Icons.refresh_rounded),
         ),
       ]),
-      const SizedBox(height: 20),
+      const SizedBox(height: 12),
       TextField(
         key: Key('search-${widget.type}'),
         maxLength: 100,
         controller: search,
         onSubmitted: (_) => filter(),
         decoration: InputDecoration(
-          hintText: 'Search', prefixIcon: const Icon(Icons.search),
+          hintText: isNotes ? 'Search courses, codes, lecturers...' : 'Search campus updates...', prefixIcon: const Icon(Icons.search, size: 18),
           suffixIcon: IconButton(onPressed: filter, icon: const Icon(Icons.arrow_forward)),
           filled: true,
           fillColor: Theme.of(context).colorScheme.surface,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16))),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: 10),
+      if (isNotes && availableSubjects.isNotEmpty) ...[
+        Row(children: [
+          const Text('Courses', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+          const Spacer(),
+          Text(semester.isEmpty ? 'All semesters' : 'Sem $semester',
+            style: const TextStyle(fontSize: 10)),
+        ]),
+        const SizedBox(height: 7),
+        SizedBox(height: 77, child: ListView(scrollDirection: Axis.horizontal, children: [
+          for (final course in availableSubjects.take(12))
+            Padding(padding: const EdgeInsets.only(right: 7), child: InkWell(
+              key: Key('course-${course['id']}'),
+              borderRadius: BorderRadius.circular(11),
+              onTap: () { subject = course['id']?.toString() ?? ''; filter(); },
+              child: Container(width: 124, padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(color: const Color(0xFF192B3E),
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(color: const Color(0xFF2C4359))),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(course['code']?.toString() ?? 'Course',
+                    style: const TextStyle(fontSize: 10, color: Color(0xFFADD3EA))),
+                  const SizedBox(height: 5),
+                  Text(course['name']?.toString() ?? '', maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                ])),
+            )),
+        ])),
+      ],
+      if (isNotes) Align(alignment: Alignment.centerRight,
+        child: TextButton.icon(
+          key: const Key('notes-advanced-filters'),
+          onPressed: () => setState(() => showFilters = !showFilters),
+          icon: Icon(showFilters ? Icons.expand_less : Icons.tune, size: 16),
+          label: Text(showFilters ? 'Hide filters' : 'All notes & filters'),
+        )),
+      if (showFilters) ...[
       if (isNotes && departments.isNotEmpty)
         Padding(
           key: const Key('department-filter'),
@@ -248,6 +286,7 @@ class _PublicFeedPageState extends State<PublicFeedPage>
             onChanged: (value) { subject = value ?? ''; filter(); },
           ),
         ),
+      ],
       if (!isNotes) ...[
         Wrap(spacing: 8, children: [
           for (final value in const ['', 'campus', 'opportunities'])
@@ -288,7 +327,8 @@ class _PublicFeedPageState extends State<PublicFeedPage>
       ] else if (items.isEmpty) const Padding(
         padding: EdgeInsets.all(22), child: Text('No published content found.'),
       ) else ...[
-        Text('$total published results'),
+        Text(isNotes ? 'Latest notes · $total items' : 'Recent announcements · $total posts',
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
         const SizedBox(height: 12),
         for (final raw in items)
           if (raw is Map<String, dynamic>)
@@ -426,17 +466,53 @@ class _FeedTile extends StatelessWidget {
       ? origin.resolve(imagePath).toString() : null;
     final applyUrl = ExternalLinkOpener.trustedHttps(data['application_url']);
     final applyExpired = isUpdateApplicationExpired(data['deadline_date']);
+    if (isNote) return Card(
+      margin: const EdgeInsets.only(bottom: 0),
+      color: const Color(0xFF172738), elevation: 0,
+      shape: const RoundedRectangleBorder(
+        side: BorderSide(color: Color(0xFF263D52))),
+      child: ListTile(
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('${data['subject_code'] ?? ''} · Semester ${data['semester'] ?? '?'}',
+            style: const TextStyle(fontSize: 10, color: Color(0xFF9DCBE4))),
+          const SizedBox(height: 3),
+          Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+        ]),
+        subtitle: Text(data['lecturer_name']?.toString() ?? summary,
+          maxLines: 1, overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 10, color: Color(0xFFA5B6C7))),
+        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (onSaveNote != null) IconButton(
+            key: Key('save-note-${data['id']}'),
+            tooltip: 'Save note to bookmarks',
+            icon: const Icon(Icons.bookmark_add_outlined, size: 19),
+            onPressed: () async {
+              final saved = await onSaveNote!(data['id']?.toString() ?? '');
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(saved ? 'Note saved.' : 'Sign in or retry to save.'),
+              ));
+            },
+          ),
+          const Icon(Icons.chevron_right_rounded, size: 17),
+        ]),
+        onTap: () => _openDetail(context),
+      ),
+    );
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 10),
       elevation: 0,
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: scheme.outlineVariant)),
       color: scheme.surface.withValues(alpha: .96),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         if (image != null)
           SizedBox(
-            height: 176,
+            height: 108,
             width: double.infinity,
             child: Image.network(image, fit: BoxFit.cover,
               errorBuilder: (context, error, stack) => Container(
@@ -455,7 +531,7 @@ class _FeedTile extends StatelessWidget {
               color: Colors.white),
           ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 15),
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Wrap(spacing: 7, runSpacing: 6, children: [
               if (!isNote) ...[
@@ -480,7 +556,7 @@ class _FeedTile extends StatelessWidget {
             InkWell(
               onTap: () => _openDetail(context),
               child: Text(title,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800,
                   height: 1.23, color: scheme.onSurface)),
             ),
             const SizedBox(height: 9),
@@ -492,7 +568,7 @@ class _FeedTile extends StatelessWidget {
                 style: TextStyle(color: scheme.onSurfaceVariant,
                   fontSize: 12)),
             ],
-            const SizedBox(height: 14),
+            const SizedBox(height: 8),
             Row(children: [
               Expanded(child: OutlinedButton.icon(
                 onPressed: () => _openDetail(context),
