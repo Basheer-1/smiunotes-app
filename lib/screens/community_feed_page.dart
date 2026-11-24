@@ -132,8 +132,8 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
             Card(
               margin: const EdgeInsets.only(bottom: 9),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: Color(0xFF263C53))),
-              color: const Color(0xFF172738),
+                side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+              color: Theme.of(context).colorScheme.surface,
               child: ListTile(
                 contentPadding: const EdgeInsets.all(12),
                 title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -147,7 +147,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
                       maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700))),
                     Text(raw['category']?.toString() ?? '',
-                      style: const TextStyle(fontSize: 10, color: Color(0xFFA7CAE3))),
+                      style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ]),
                   const SizedBox(height: 8),
                   Text(raw['title']?.toString() ?? 'Discussion',
