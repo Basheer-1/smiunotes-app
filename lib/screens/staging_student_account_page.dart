@@ -335,6 +335,10 @@ class StagingStudentAccountPageState
     return ReaderToolbarActions(
       key: Key('study-toolbar-$noteId'),
       loadState: () async {
+        if (!runtime.coordinator.authenticated ||
+            runtime.controller.accessToken == null) {
+          return {'bookmarked': false, 'completed': false};
+        }
         final token = _currentVerifiedToken();
         final results = await Future.wait([
           api.list(token), api.listCompleted(token),
@@ -348,12 +352,14 @@ class StagingStudentAccountPageState
           'completed': present(results[1])};
       },
       toggleBookmark: (current) async {
+        if (!await promptStudentSignIn()) { return false; }
         final result = current
           ? await api.remove(_currentVerifiedToken(), noteId)
           : await api.save(_currentVerifiedToken(), noteId);
         return result['ok'] == true;
       },
       toggleCompleted: (current) async {
+        if (!await promptStudentSignIn()) { return false; }
         final result = current
           ? await api.uncomplete(_currentVerifiedToken(), noteId)
           : await api.complete(_currentVerifiedToken(), noteId);
@@ -375,8 +381,6 @@ class StagingStudentAccountPageState
 
   void openPublicNote(String noteId, {bool restricted = false}) {
     if (!mounted || !OfflineNotesStore.validId(noteId)) return;
-    final signedIn = runtime.coordinator.authenticated &&
-      runtime.controller.accessToken != null;
     if (restricted && !canDownloadOffline) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text(
@@ -389,12 +393,12 @@ class StagingStudentAccountPageState
             noteId: noteId,
             accessToken: _currentVerifiedToken(),
             api: AuthenticatedReaderApi(baseUrl: widget.httpsBaseUrl),
-            toolbarActions: signedIn ? _studyActions(noteId) : null,
+            toolbarActions: _studyActions(noteId),
           )
         : NoteReaderPage(
             noteId: noteId,
             api: const PublicFeedApi(),
-            toolbarActions: signedIn ? _studyActions(noteId) : null,
+            toolbarActions: _studyActions(noteId),
           ),
     ));
   }
