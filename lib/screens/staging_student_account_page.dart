@@ -365,15 +365,21 @@ class StagingStudentAccountPageState
           : await api.complete(_currentVerifiedToken(), noteId);
         return result['ok'] == true;
       },
-      onDownloadUnavailable: canDownloadOffline ? null : () {
-        if (!mounted) { return; }
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Offline downloads require an active, '
-            'Student Card-verified SMIUNotes account.'),
-        ));
+      loadDownloaded: () async {
+        if (!canDownloadOffline) { return false; }
+        return offlineNotes.has(runtime.coordinator.profile!.profileId!, noteId);
       },
-      download: canDownloadOffline ? (progress) async {
+      download: (progress) async {
+        // Guests see the exact same native sign-in flow as Bookmark/Completed.
+        if (!await promptStudentSignIn()) {
+          throw StateError('Sign in to download offline notes.');
+        }
         if (!canDownloadOffline) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Verify your Student Card before saving offline notes.'),
+            ));
+          }
           throw StateError('Verified Student Card required.');
         }
         await offlineNotes.save(
@@ -382,7 +388,7 @@ class StagingStudentAccountPageState
           accessToken: _currentVerifiedToken(),
           onProgress: progress,
         );
-      } : null,
+      },
     );
   }
 
