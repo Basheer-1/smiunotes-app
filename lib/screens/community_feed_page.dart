@@ -63,22 +63,20 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
   @override
   Widget build(BuildContext context) => ListView(
     key: const Key('community-feed'),
-    padding: const EdgeInsets.fromLTRB(20, 18, 20, 110),
+    padding: const EdgeInsets.fromLTRB(12, 10, 12, 95),
     children: [
-      Text('The study room', style: TextStyle(
-        fontSize: 28, fontWeight: FontWeight.w900,
+      Text('Study Room', style: TextStyle(
+        fontSize: 17, fontWeight: FontWeight.w800,
         color: Theme.of(context).colorScheme.onSurface,
       )),
-      const SizedBox(height: 10),
-      const Text('Read public student discussions. Posting requires a verified account.'),
-      const SizedBox(height: 18),
+      const SizedBox(height: 8),
       TextField(
         key: const Key('community-search'),
         maxLength: 100,
         controller: query,
         onSubmitted: (_) => apply(),
         decoration: InputDecoration(
-          hintText: 'Search discussions',
+          hintText: 'Search study questions...',
           prefixIcon: const Icon(Icons.search),
           suffixIcon: IconButton(
             tooltip: 'Search discussions', onPressed: apply,
@@ -98,7 +96,20 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
             onSelected: (_) { category = entry.$1; apply(); },
           ),
       ]),
-      const SizedBox(height: 18),
+      const SizedBox(height: 10),
+      Row(children: [
+        Expanded(child: Text('Study Room · ${threads.length} threads',
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800))),
+        const SizedBox(width: 8),
+        TextButton.icon(onPressed: widget.onReply == null ? null : () async {
+          final approved = await widget.onReply!('');
+          if (!context.mounted) return;
+          if (!approved) ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Sign in and verify your account to post.')));
+        }, icon: const Icon(Icons.edit_outlined, size: 16),
+          label: const Text('Ask')),
+      ]),
+      const SizedBox(height: 8),
       if (loading) const Center(child: CircularProgressIndicator())
       else if (error.isNotEmpty) ...[
         Text(error, key: const Key('community-error')),
@@ -111,20 +122,25 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
         for (final raw in threads)
           if (raw is Map<String, dynamic>)
             Card(
-              color: Theme.of(context).colorScheme.surface.withValues(alpha: .92),
+              margin: const EdgeInsets.only(bottom: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12),
+                side: const BorderSide(color: Color(0xFF263C53))),
+              color: const Color(0xFF172738),
               child: ListTile(
-                contentPadding: const EdgeInsets.all(16),
+                contentPadding: const EdgeInsets.all(12),
                 title: Text(raw['title']?.toString() ?? 'Discussion',
-                  style: const TextStyle(fontWeight: FontWeight.w800)),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 8),
-                    Text(raw['preview']?.toString() ?? ''),
+                    const SizedBox(height: 5),
+                    Text(raw['preview']?.toString() ?? '', maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFFA7BBD0))),
                     const SizedBox(height: 8),
                     Text(
                       "${raw['author_name'] ?? 'Student'} · ${raw['replies'] ?? 0} replies",
-                      style: const TextStyle(fontSize: 12)),
+                      style: const TextStyle(fontSize: 10, color: Color(0xFF9DC8E1))),
                   ],
                 ),
                 onTap: () {
