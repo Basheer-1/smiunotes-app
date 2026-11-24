@@ -257,6 +257,116 @@ class StagingStudentAccountPageState
     return posted == true;
   }
 
+  /// Most recently saved, unfinished published note; no fabricated reading
+  /// progress or local account data. Uses the current validated access token.
+  Future<Map<String, dynamic>?> latestStudyNote() async {
+    if (!mounted || !runtime.coordinator.authenticated ||
+        runtime.controller.accessToken == null) return null;
+    try {
+      final result = await BookmarkApi(baseUrl: widget.httpsBaseUrl)
+          .list(_currentVerifiedToken());
+      final entries = result['items'];
+      if (entries is! List) return null;
+      for (final value in entries) {
+        if (value is Map<String, dynamic> &&
+            value['note_id'] is String && value['completed'] != true) {
+          return value;
+        }
+      }
+    } catch (_) {
+      // A network or token error simply hides the continue card.
+    }
+    return null;
+  }
+
+  void resumeStudyNote(String noteId) {
+    if (!mounted || !runtime.coordinator.authenticated ||
+        runtime.controller.accessToken == null ||
+        !RegExp(r'^[0-9a-fA-F-]{36}
+    if (!mounted || !runtime.coordinator.authenticated ||
+        runtime.controller.accessToken == null) {
+      return;
+    }
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => MyBookmarksPage(
+        api: BookmarkApi(baseUrl: widget.httpsBaseUrl),
+        currentAccessToken: _currentVerifiedToken,
+      ),
+    ));
+  }
+
+  Future<bool> saveNote(String noteId) async {
+    if (!mounted || !runtime.coordinator.authenticated ||
+        runtime.controller.accessToken == null) {
+      return false;
+    }
+    try {
+      final response = await BookmarkApi(baseUrl: widget.httpsBaseUrl)
+          .save(_currentVerifiedToken(), noteId);
+      return response['ok'] == true && response['bookmarked'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void openCommunityComposer() {
+    if (!runtime.coordinator.authenticated ||
+        runtime.controller.accessToken == null) {
+      return;
+    }
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => CommunityComposerPage(
+        api: CommunityWriteApi(baseUrl: widget.httpsBaseUrl),
+        tokenProvider: _currentVerifiedToken,
+      ),
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) => StudentAccountGateway(
+    key: _gatewayKey,
+    api: MobileAuthApi(baseUrl: widget.httpsBaseUrl),
+    challengeProvider: () => requestMobileTurnstile(
+      context,
+      httpsOrigin: widget.httpsBaseUrl,
+    ),
+    acceptAndVerify: runtime.coordinator.acceptAndVerify,
+    restoreAndVerify: runtime.coordinator.restoreAndVerify,
+    loadValidatedProfile: () => runtime.coordinator.profile,
+    signOut: runtime.coordinator.signOut,
+    signOutAll: signOutAllDevices,
+    onLoadAvatar: loadOwnAvatar,
+    profileSettingsApi: settingsApi,
+    onRefreshProfile: runtime.coordinator.refreshValidatedProfile,
+    onOpenVerifiedNote: openVerifiedNote,
+    onCreateDiscussion: openCommunityComposer,
+    onOpenNotifications: openNotifications,
+    onOpenNotificationPreferences: openNotificationPreferences,
+    onLoadUpdatePreference: loadUpdatePreference,
+    onSaveUpdatePreference: saveUpdatePreference,
+    onOpenNativeCardVerification: openNativeCardVerification,
+    onOpenNativeSupport: openNativeSupport,
+    onOpenNativeContact: openNativeContact,
+    onOpenBookmarks: openSavedNotes,
+    pushAvailable: pushEnabled,
+    onEnablePush: pushEnabled ? enablePush : null,
+    onDisablePush: pushEnabled ? disablePush : null,
+    onLoadPushEnabled: pushEnabled ? () => push.isOptedIn : null,
+    onProfileChanged: widget.onProfileChanged,
+    onThemeChanged: widget.onThemeChanged,
+    darkMode: widget.darkMode,
+  );
+}
+).hasMatch(noteId)) return;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => AuthenticatedNoteReaderPage(
+        noteId: noteId,
+        accessToken: _currentVerifiedToken(),
+        api: AuthenticatedReaderApi(baseUrl: widget.httpsBaseUrl),
+      ),
+    ));
+  }
+
   void openSavedNotes() {
     if (!mounted || !runtime.coordinator.authenticated ||
         runtime.controller.accessToken == null) {
