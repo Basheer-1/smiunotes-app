@@ -653,7 +653,8 @@ class _FeedTile extends StatelessWidget {
             ]))),
       );
     }
-    if (isNote) return Card(
+    if (isNote) {
+      return Card(
       margin: const EdgeInsets.only(bottom: 0),
       color: const Color(0xFF172738), elevation: 0,
       shape: const RoundedRectangleBorder(
@@ -689,6 +690,7 @@ class _FeedTile extends StatelessWidget {
         onTap: () => _openDetail(context),
       ),
     );
+    }
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       elevation: 0,
