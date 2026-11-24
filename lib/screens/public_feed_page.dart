@@ -784,22 +784,6 @@ class _FeedTile extends StatelessWidget {
                   : Icons.article_outlined),
                 label: Text(isNote ? 'Read notes' : 'Read update'),
               )),
-              if (isNote && onSaveNote != null) ...[
-                const SizedBox(width: 8),
-                IconButton(
-                  key: Key('save-note-${data['id']}'),
-                  tooltip: 'Save note to bookmarks',
-                  icon: const Icon(Icons.bookmark_add_outlined),
-                  onPressed: () async {
-                    final saved = await onSaveNote!(data['id']?.toString() ?? '');
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(saved ? 'Note saved to your account.'
-                        : 'Sign in or retry to save this note.'),
-                    ));
-                  },
-                ),
-              ],
               if (!isNote && applyUrl != null) ...[
                 const SizedBox(width: 8),
                 Expanded(child: FilledButton.icon(
