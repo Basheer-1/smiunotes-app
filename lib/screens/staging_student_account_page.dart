@@ -69,7 +69,46 @@ class StagingStudentAccountPageState
         .loadOwn(_currentVerifiedToken());
   }
 
+  bool _autoPushAttempted = false;
+
+  /// On sign-in, try native push enrolment once for a verified student.
+  /// Android's permission dialog has already been offered by the shell.
+  /// A denied OS permission or unavailable backend never blocks login.
+  void _onStudentProfileChanged(StudentProfile? profile) {
+    widget.onProfileChanged?.call(profile);
+    if (profile == null) {
+      _autoPushAttempted = false;
+      return;
+    }
+    if (_autoPushAttempted || !pushEnabled ||
+        profile.verificationStatus != 'verified' ||
+        profile.accountStatus != 'active' ||
+        runtime.controller.accessToken == null) {
+      return;
+    }
+    _autoPushAttempted = true;
+    _enrolAfterVerification();
+  }
+
+  Future<void> _enrolAfterVerification() async {
+    try {
+      if (!await push.isOptedIn && runtime.controller.accessToken != null) {
+        await push.enable(currentAccessToken: _currentVerifiedToken());
+      }
+    } catch (_) {
+      // OS permission may be denied or the remote dispatcher unavailable.
+      // Sign-in still succeeds; user can retry from Profile settings.
+    }
+  }
+
   Future<void> signOutAndClearOfflineLease() async {
+    if (pushEnabled) {
+      try {
+        await push.disable(currentAccessToken: runtime.controller.accessToken);
+      } catch (_) {
+        // A session must still be wiped if push revocation fails.
+      }
+    }
     await OfflineNotesStore.clearActiveLease();
     await runtime.coordinator.signOut();
   }
@@ -486,7 +525,7 @@ class StagingStudentAccountPageState
     onEnablePush: pushEnabled ? enablePush : null,
     onDisablePush: pushEnabled ? disablePush : null,
     onLoadPushEnabled: pushEnabled ? () => push.isOptedIn : null,
-    onProfileChanged: widget.onProfileChanged,
+    onProfileChanged: _onStudentProfileChanged,
     onThemeChanged: widget.onThemeChanged,
     darkMode: widget.darkMode,
   );
