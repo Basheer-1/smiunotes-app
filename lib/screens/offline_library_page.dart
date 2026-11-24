@@ -31,8 +31,8 @@ class _OfflineNoteViewerState extends State<OfflineNoteViewer> {
         if (snapshot.hasError) {
           return const Center(child: Padding(
             padding: EdgeInsets.all(24),
-            child: Text('Offline access expired or files unavailable. '
-              'Reconnect to verify and download the note again.')));
+            child: Text('Offline note unavailable or damaged. '
+              'Remove it and download again while online.')));
         }
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
@@ -107,10 +107,13 @@ class _OfflineLibraryPageState extends State<OfflineLibraryPage> {
   @override
   void initState() {
     super.initState();
-    refresh();
+    notes = widget.store.list(widget.owner);
   }
-  void refresh() => setState(() =>
-    notes = widget.store.list(widget.owner));
+  void refresh() {
+    setState(() {
+      notes = widget.store.list(widget.owner);
+    });
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -137,22 +140,38 @@ class _OfflineLibraryPageState extends State<OfflineLibraryPage> {
           padding: const EdgeInsets.all(14),
           children: [
             const Padding(padding: EdgeInsets.only(bottom: 14),
-              child: Text('Encrypted, app-only downloads · '
-                'Re-verification required after 48 hours',
+              child: Text('Encrypted app-only notes · Saved until you remove them',
                 style: TextStyle(fontSize: 12))),
             for (final note in snapshot.data!)
               Card(child: ListTile(
                 leading: const Icon(Icons.offline_pin_outlined),
                 title: Text(note['title']?.toString() ?? 'Saved note'),
-                subtitle: Text('Valid until ${note['expires_at']?.toString().replaceFirst('T', ' ').split('.').first ?? ''} UTC',
-                  style: const TextStyle(fontSize: 11)),
+                subtitle: const Text('Available offline on this device',
+                  style: TextStyle(fontSize: 11)),
                 trailing: IconButton(
                   tooltip: 'Delete offline note',
                   icon: const Icon(Icons.delete_outline),
                   onPressed: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        title: const Text('Remove offline note?'),
+                        content: const Text('Delete this offline copy from your device? '
+                          'You can download it again while online.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(dialogContext, false),
+                            child: const Text('Cancel')),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(dialogContext, true),
+                            child: const Text('Remove')),
+                        ],
+                      ),
+                    );
+                    if (confirmed != true) { return; }
                     await widget.store.remove(widget.owner,
                       note['note_id'] as String);
-                    if (mounted) refresh();
+                    if (mounted) { refresh(); }
                   }),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(builder: (_) => OfflineNoteViewer(
