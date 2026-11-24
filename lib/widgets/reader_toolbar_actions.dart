@@ -22,6 +22,7 @@ class _ReaderToolbarActionsState extends State<ReaderToolbarActions> {
   bool bookmarked = false, completed = false, busy = false;
   bool downloading = false;
   String? stateError;
+  int currentPage = 0, totalPages = 0;
 
   @override
   void initState() {
@@ -42,24 +43,24 @@ class _ReaderToolbarActionsState extends State<ReaderToolbarActions> {
   }
 
   void _message(String text) {
-    if (!mounted) return;
+    if (!mounted) { return; }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(text), duration: const Duration(seconds: 3)));
   }
 
   Future<void> _toggle({required bool isBookmark}) async {
-    if (busy || downloading) return;
+    if (busy || downloading) { return; }
     setState(() => busy = true);
     try {
       final current = isBookmark ? bookmarked : completed;
       final success = isBookmark
         ? await widget.toggleBookmark(current)
         : await widget.toggleCompleted(current);
-      if (!mounted) return;
+      if (!mounted) { return; }
       if (success) {
         setState(() {
-          if (isBookmark) bookmarked = !current;
-          else completed = !current;
+          if (isBookmark) { bookmarked = !current; }
+          else { completed = !current; }
         });
         _message(isBookmark
           ? (!current ? 'Saved to My Library' : 'Removed from bookmarks')
@@ -75,13 +76,12 @@ class _ReaderToolbarActionsState extends State<ReaderToolbarActions> {
   }
 
   Future<void> _download() async {
-    if (widget.download == null || busy || downloading) return;
+    if (widget.download == null || busy || downloading) { return; }
     setState(() => downloading = true);
-    var current = 0, total = 0;
     try {
       await widget.download!((done, count) {
-        current = done;
-        total = count;
+        currentPage = done;
+        totalPages = count;
         if (mounted) setState(() {});
       });
       _message('Available in Offline Library for 48 hours.');
@@ -116,7 +116,7 @@ class _ReaderToolbarActionsState extends State<ReaderToolbarActions> {
         IconButton(
           key: const Key('reader-offline-download'),
           tooltip: downloading
-            ? 'Saving page $current of $total'
+            ? 'Saving page $currentPage of $totalPages'
             : 'Save encrypted offline note',
           onPressed: busy || downloading ? null : _download,
           icon: downloading
