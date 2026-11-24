@@ -270,7 +270,12 @@ class _PublicFeedPageState extends State<PublicFeedPage>
               key: Key('notes-quick-${entry.$1}'),
               label: Text(entry.$2, style: const TextStyle(fontSize: 11)),
               selected: notesView == entry.$1,
-              onSelected: (_) => setState(() => notesView = entry.$1),
+              onSelected: (_) {
+                setState(() => notesView = entry.$1);
+                search.text = entry.$1 == 1 ? 'midterm' :
+                  entry.$1 == 2 ? 'lecture' : '';
+                filter();
+              },
             )),
         ])),
       if (isNotes) Align(alignment: Alignment.centerRight,
@@ -387,12 +392,14 @@ class _PublicFeedPageState extends State<PublicFeedPage>
           Text('Latest notes · $total items',
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
-          for (final raw in items.whereType<Map<String, dynamic>>().where((entry) {
+          for (final raw in (items.whereType<Map<String, dynamic>>().where((entry) {
             final haystack = '${entry['title'] ?? ''} ${entry['description'] ?? ''} ${entry['contributor_name'] ?? ''}'.toLowerCase();
             if (notesView == 1) return haystack.contains('mid') || haystack.contains('exam') || haystack.contains('prep');
             if (notesView == 2) return haystack.contains('lecture') || haystack.contains('lec');
             return true;
-          }))
+          }).toList()..sort((a, b) => notesView == 3
+            ? (a['contributor_name']?.toString() ?? '').compareTo(
+                b['contributor_name']?.toString() ?? '') : 0)))
             _FeedTile(data: raw, isNote: true, api: widget.api,
               onSaveNote: widget.onSaveNote),
           if (notesView != 0) const Padding(padding: EdgeInsets.symmetric(vertical: 8),
@@ -569,7 +576,7 @@ class _FeedTile extends StatelessWidget {
           if (image != null)
             ClipRRect(borderRadius: BorderRadius.circular(9),
               child: Image.network(image, width: double.infinity, height: 75,
-                fit: BoxFit.cover, errorBuilder: (_, _, _) =>
+                fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) =>
                   const SizedBox(height: 75, child: Center(
                     child: Icon(Icons.campaign_outlined, size: 35)))))
           else
@@ -619,7 +626,7 @@ class _FeedTile extends StatelessWidget {
                   child: image == null
                     ? const Icon(Icons.campaign_rounded)
                     : Image.network(image, fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) =>
+                        errorBuilder: (context, error, stackTrace) =>
                           const Icon(Icons.campaign_rounded)))),
               const SizedBox(width: 9),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
