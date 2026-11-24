@@ -8,7 +8,8 @@ class PublicFeedPage extends StatefulWidget {
   const PublicFeedPage({super.key, required this.type, this.api = const PublicFeedApi(), this.onSaveNote,
     this.initialDepartment = '', this.initialSemester = '',
     this.refreshVersion = 0, this.loadContinue, this.onResume,
-    this.onOpenNote, this.onOpenOffline, this.canOpenRestricted = false});
+    this.onOpenNote, this.onOpenOffline, this.onQuickNavigate,
+    this.onQuickInformation, this.canOpenRestricted = false});
   final String type;
   final PublicFeedApi api;
   final Future<bool> Function(String noteId)? onSaveNote;
@@ -20,6 +21,8 @@ class PublicFeedPage extends StatefulWidget {
   final ValueChanged<String>? onResume;
   final void Function(String noteId, bool restricted)? onOpenNote;
   final VoidCallback? onOpenOffline;
+  final ValueChanged<int>? onQuickNavigate;
+  final ValueChanged<String>? onQuickInformation;
   final bool canOpenRestricted;
   @override
   State<PublicFeedPage> createState() => _PublicFeedPageState();
@@ -33,7 +36,6 @@ class _PublicFeedPageState extends State<PublicFeedPage>
   bool loading = false;
   bool showFilters = false;
   Future<Map<String, dynamic>?>? _continueFuture;
-  int notesView = 0;
   int _feedGeneration = 0;
   int _filterGeneration = 0;
   int total = 0, page = 1;
@@ -258,39 +260,39 @@ class _PublicFeedPageState extends State<PublicFeedPage>
             spacing: 9, runSpacing: 9,
             children: [
               for (final entry in const [
-                (0, 'All notes', Icons.auto_stories_outlined),
-                (1, 'Midterm Prep', Icons.fact_check_outlined),
-                (2, 'Lectures', Icons.menu_book_outlined),
-                (3, 'By Contributor', Icons.people_outline),
+                ('Browse Notes', Icons.auto_stories_outlined, 'notes'),
+                ('Campus Updates', Icons.campaign_outlined, 'updates'),
+                ('Contributors', Icons.groups_outlined, 'contributors'),
+                ('Support', Icons.favorite_border_rounded, 'support'),
               ])
-                SizedBox(
-                  width: width,
-                  child: OutlinedButton.icon(
-                    key: Key('notes-quick-${entry.$1}'),
-                    onPressed: () {
-                      setState(() => notesView = entry.$1);
-                      search.text = entry.$1 == 1 ? 'midterm' :
-                        entry.$1 == 2 ? 'lecture' : '';
-                      filter();
-                    },
-                    icon: Icon(entry.$3, size: 17),
-                    label: Text(entry.$2, maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12)),
-                    style: OutlinedButton.styleFrom(
-                      alignment: Alignment.centerLeft,
-                      minimumSize: const Size(0, 48),
-                      foregroundColor: notesView == entry.$1
-                        ? Theme.of(context).colorScheme.onPrimaryContainer
-                        : Theme.of(context).colorScheme.onSurface,
-                      backgroundColor: notesView == entry.$1
-                        ? Theme.of(context).colorScheme.primaryContainer
-                        : Theme.of(context).colorScheme.surface.withValues(alpha: .6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    ),
+                SizedBox(width: width, child: OutlinedButton.icon(
+                  key: Key('quick-${entry.$3}'),
+                  onPressed: () {
+                    switch (entry.$3) {
+                      case 'notes':
+                        search.clear();
+                        subject = '';
+                        filter();
+                      case 'updates':
+                        widget.onQuickNavigate?.call(2);
+                      case 'contributors':
+                      case 'support':
+                        widget.onQuickInformation?.call(entry.$3);
+                    }
+                  },
+                  icon: Icon(entry.$2, size: 18),
+                  label: Text(entry.$1, maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12)),
+                  style: OutlinedButton.styleFrom(
+                    alignment: Alignment.centerLeft,
+                    minimumSize: const Size(0, 48),
+                    backgroundColor: Theme.of(context).colorScheme.surface
+                      .withValues(alpha: .65),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   ),
-                ),
+                )),
             ],
           );
         }),
@@ -410,20 +412,10 @@ class _PublicFeedPageState extends State<PublicFeedPage>
           Text('Browse notes · $total available',
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
-          for (final raw in (items.whereType<Map<String, dynamic>>().where((entry) {
-            final haystack = '${entry['title'] ?? ''} ${entry['description'] ?? ''} ${entry['contributor_name'] ?? ''}'.toLowerCase();
-            if (notesView == 1) return haystack.contains('mid') || haystack.contains('exam') || haystack.contains('prep');
-            if (notesView == 2) return haystack.contains('lecture') || haystack.contains('lec');
-            return true;
-          }).toList()..sort((a, b) => notesView == 3
-            ? (a['contributor_name']?.toString() ?? '').compareTo(
-                b['contributor_name']?.toString() ?? '') : 0)))
+          for (final raw in items.whereType<Map<String, dynamic>>())
             _FeedTile(data: raw, isNote: true, api: widget.api,
               onOpenNote: widget.onOpenNote,
               canOpenRestricted: widget.canOpenRestricted),
-          if (notesView != 0) const Padding(padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text('Quick filters apply to this page. Use search for all published notes.',
-              style: TextStyle(fontSize: 10))),
         ] else ...[
           if (deadlineRows.isNotEmpty) ...[
             Row(children: [
