@@ -171,6 +171,7 @@ class StagingStudentAccountPageState
         noteId: selected,
         accessToken: token,
         api: AuthenticatedReaderApi(baseUrl: widget.httpsBaseUrl),
+        toolbarActions: _studyActions(selected),
       ),
     ));
   }
@@ -303,6 +304,7 @@ class StagingStudentAccountPageState
         noteId: noteId,
         accessToken: _currentVerifiedToken(),
         api: AuthenticatedReaderApi(baseUrl: widget.httpsBaseUrl),
+        toolbarActions: _studyActions(noteId),
       ),
     ));
   }
