@@ -18,12 +18,14 @@ class AuthenticatedNoteReaderPage extends StatefulWidget {
     required this.accessToken,
     this.api,
     this.request,
+    this.toolbarActions,
   });
 
   final String noteId;
   final String accessToken;
   final AuthenticatedReaderApi? api;
   final AuthorizedNoteRequest? request;
+  final Widget? toolbarActions;
 
   @override
   State<AuthenticatedNoteReaderPage> createState() =>
@@ -69,7 +71,10 @@ class _AuthenticatedNoteReaderPageState extends State<AuthenticatedNoteReaderPag
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Verified Notes Reader')),
+    appBar: AppBar(
+      title: const Text('Verified Reader', style: TextStyle(fontSize: 17)),
+      actions: [if (widget.toolbarActions != null) widget.toolbarActions!],
+    ),
     body: FutureBuilder<Map<String, dynamic>>(
       future: manifest,
       builder: (context, snapshot) {
