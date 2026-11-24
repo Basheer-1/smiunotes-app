@@ -284,7 +284,7 @@ class _AppShellState extends State<AppShell> {
                               }
                               final state = _studentAccountKey.currentState;
                               if (state == null) { _selectTab(5); return; }
-                              if (!await state.promptStudentSignIn() || !mounted) return;
+                              if (!await state.promptStudentSignIn() || !context.mounted) return;
                               if (state.runtime.coordinator.profile
                                   ?.verificationStatus != 'verified') {
                                 ScaffoldMessenger.of(context).showSnackBar(
