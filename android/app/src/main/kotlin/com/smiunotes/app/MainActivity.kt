@@ -19,6 +19,8 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterActivity() {
     private val channelName = "smiunotes/push"
     private val notificationPermissionRequest = 5127
+    private val permissionOnlyRequest = 5128
+    private var permissionOnlyResult: MethodChannel.Result? = null
     private var pendingTokenResult: MethodChannel.Result? = null
     private val imagePickerRequest = 6134
     private var pendingImageResult: MethodChannel.Result? = null
@@ -71,6 +73,25 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
+                    // Platform permission only: no FCM device registration and
+                    // no token is obtained until the student signs in and
+                    // separately enables push.
+                    "requestPermissionOnly" -> {
+                        if (Build.VERSION.SDK_INT < 33 ||
+                            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+                            PackageManager.PERMISSION_GRANTED) {
+                            result.success(true)
+                        } else if (permissionOnlyResult != null ||
+                            pendingTokenResult != null) {
+                            result.error("BUSY", "Notification permission request already open.", null)
+                        } else {
+                            permissionOnlyResult = result
+                            requestPermissions(
+                                arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                                permissionOnlyRequest
+                            )
+                        }
+                    }
                     "requestToken" -> {
                         if (call.argument<Boolean>("consent") != true) {
                             result.error("CONSENT_REQUIRED", "User opt-in required.", null)
@@ -157,6 +178,13 @@ class MainActivity : FlutterActivity() {
         requestCode: Int, permissions: Array<out String>, grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == permissionOnlyRequest) {
+            val callback = permissionOnlyResult ?: return
+            permissionOnlyResult = null
+            callback.success(grantResults.isNotEmpty() &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED)
+            return
+        }
         if (requestCode != notificationPermissionRequest) return
         val result = pendingTokenResult ?: return
         pendingTokenResult = null
