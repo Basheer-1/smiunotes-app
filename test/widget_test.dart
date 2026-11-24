@@ -12,7 +12,7 @@ void main() {
     expect(find.byKey(const Key('home-page')), findsOneWidget);
     expect(find.textContaining('Preview mode:'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('explore-notes')));
+    await tester.tap(find.byKey(const Key('tab-1')));
     await tester.pumpAndSettle();
     expect(find.text('Home & Browse Notes'), findsOneWidget);
 
