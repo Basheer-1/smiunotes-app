@@ -71,7 +71,7 @@ class StagingStudentAccountPageState
 
   bool _autoPushAttempted = false;
 
-  /// On sign-in, try native push enrolment once for a verified student.
+  /// On sign-in, try native push enrolment once for an active account.
   /// Android's permission dialog has already been offered by the shell.
   /// A denied OS permission or unavailable backend never blocks login.
   void _onStudentProfileChanged(StudentProfile? profile) {
@@ -81,7 +81,6 @@ class StagingStudentAccountPageState
       return;
     }
     if (_autoPushAttempted || !pushEnabled ||
-        profile.verificationStatus != 'verified' ||
         profile.accountStatus != 'active' ||
         runtime.controller.accessToken == null) {
       return;
