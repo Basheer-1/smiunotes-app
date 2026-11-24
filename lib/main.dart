@@ -290,6 +290,9 @@ class _AppShellState extends State<AppShell> {
                               ? (id, restricted) => _studentAccountKey.currentState
                                   ?.openPublicNote(id, restricted: restricted)
                               : null,
+                            onQuickNavigate: _selectTab,
+                            onQuickInformation: (kind) =>
+                              _openInformation(context, kind),
                             onOpenOffline: _activeProfile?.verificationStatus == 'verified' ||
                                 (_activeProfile == null && _cachedOfflineOwner != null)
                               ? _openOfflineFromShell : null,
