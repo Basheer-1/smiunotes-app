@@ -273,6 +273,23 @@ class _AppShellState extends State<AppShell> {
                           PublicFeedPage(type: 'updates',
                             refreshVersion: _updatesRefreshVersion),
                           CommunityFeedPage(
+                            onAsk: () async {
+                              if (!accountAuthEnabled || stagingApiBase.isEmpty) {
+                                _selectTab(5);
+                                return;
+                              }
+                              final state = _studentAccountKey.currentState;
+                              if (state == null) { _selectTab(5); return; }
+                              if (!await state.promptStudentSignIn() || !mounted) return;
+                              if (state.runtime.coordinator.profile
+                                  ?.verificationStatus != 'verified') {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text(
+                                    'Verify your Student Card before posting in Community.')));
+                                return;
+                              }
+                              state.openCommunityComposer();
+                            },
                             onReply: (threadId) async {
                               if (!accountAuthEnabled || stagingApiBase.isEmpty) {
                                 return false;
