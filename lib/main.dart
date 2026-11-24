@@ -215,7 +215,7 @@ class _AppShellState extends State<AppShell> {
                                 if (_studentAccountKey.currentState?.openNotifications() == true) {
                                   return;
                                 }
-                                setState(() => selectedIndex = 4);
+                                setState(() => selectedIndex = 5);
                                 return;
                               }
                               Navigator.of(context).push(MaterialPageRoute<void>(
@@ -227,7 +227,7 @@ class _AppShellState extends State<AppShell> {
                           IconButton(
                             tooltip: 'Your profile',
                             key: const Key('header-profile'),
-                            onPressed: () => _selectTab(4),
+                            onPressed: () => _selectTab(5),
                             icon: ProfileAvatar(
                               name: _activeProfile?.studentName,
                               cacheKey: _activeProfile == null ? 'anonymous' : '${_activeProfile!.studentId}:${_activeProfile!.avatarVersion}',
@@ -254,18 +254,18 @@ class _AppShellState extends State<AppShell> {
                             refreshVersion: _notesRefreshVersion,
                             onSaveNote: (noteId) async {
                               if (!accountAuthEnabled || stagingApiBase.isEmpty) {
-                                if (mounted) setState(() => selectedIndex = 4);
+                                if (mounted) setState(() => selectedIndex = 5);
                                 return false;
                               }
                               final account = _studentAccountKey.currentState;
                               if (account == null) {
-                                if (mounted) setState(() => selectedIndex = 4);
+                                if (mounted) setState(() => selectedIndex = 5);
                                 return false;
                               }
                               final saved = await account.saveNote(noteId);
                               if (!saved && mounted &&
                                   !account.runtime.coordinator.authenticated) {
-                                setState(() => selectedIndex = 4);
+                                setState(() => selectedIndex = 5);
                               }
                               return saved;
                             },
@@ -326,7 +326,7 @@ class _AppShellState extends State<AppShell> {
               padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 3),
               child: Row(
                 children: List.generate(labels.length, (index) {
-                  final tabIndex = index + 1;
+                  final tabIndex = index == 3 ? 4 : index + 1;
                   final active = selectedIndex == tabIndex;
                   return Expanded(
                     child: InkWell(
@@ -557,7 +557,7 @@ class _HomePage extends StatelessWidget {
               _QuickLink(icon: Icons.campaign_outlined, title: 'Updates', caption: 'Stay informed', onTap: () => onNavigate(2)),
               _QuickLink(icon: Icons.forum_outlined, title: 'Community', caption: 'Connect & discuss', onTap: () => onNavigate(3)),
               _QuickLink(icon: Icons.person_outline, title: 'Profile',
-                caption: 'Your student space', onTap: () => onNavigate(4)),
+                caption: 'Your student space', onTap: () => onNavigate(5)),
               _QuickLink(icon: Icons.favorite_outline, title: 'Support',
                 caption: 'Keep notes free',
                 onTap: () => onOpenInformation('support')),
