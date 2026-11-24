@@ -7,16 +7,18 @@ void main() {
     await tester.pumpWidget(const SmiuNotesApp());
 
     expect(find.text('Everything SMIU,\nin one place.'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('open-classic-home')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('home-page')), findsOneWidget);
     expect(find.textContaining('Preview mode:'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('explore-notes')));
     await tester.pumpAndSettle();
-    expect(find.text('Browse notes'), findsOneWidget);
+    expect(find.text('Home & Browse Notes'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('tab-2')));
     await tester.pumpAndSettle();
-    expect(find.text('University updates'), findsOneWidget);
+    expect(find.text('Campus Updates'), findsOneWidget);
   });
   testWidgets('Guest bell opens restricted notifications preview', (tester) async {
     await tester.pumpWidget(const SmiuNotesApp());
