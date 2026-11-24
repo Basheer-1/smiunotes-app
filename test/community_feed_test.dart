@@ -117,7 +117,7 @@ void main() {
       home: Scaffold(body: CommunityFeedPage(api: api)),
     ));
     await tester.pump();
-    await tester.tap(find.text('Study'));
+    await tester.tap(find.text('Study Tips'));
     await tester.pump();
     api.requests['study']!.complete({
       'has_more': false,
