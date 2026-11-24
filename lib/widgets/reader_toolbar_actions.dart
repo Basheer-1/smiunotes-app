@@ -8,13 +8,14 @@ class ReaderToolbarActions extends StatefulWidget {
     super.key, required this.loadState,
     required this.toggleBookmark,
     required this.toggleCompleted,
-    this.download, this.onDownloadUnavailable,
+    this.download, this.onDownloadUnavailable, this.loadDownloaded,
   });
   final Future<Map<String, bool>> Function() loadState;
   final Future<bool> Function(bool current) toggleBookmark;
   final Future<bool> Function(bool current) toggleCompleted;
   final Future<void> Function(void Function(int, int) progress)? download;
   final VoidCallback? onDownloadUnavailable;
+  final Future<bool> Function()? loadDownloaded;
 
   @override
   State<ReaderToolbarActions> createState() => _ReaderToolbarActionsState();
@@ -23,6 +24,7 @@ class ReaderToolbarActions extends StatefulWidget {
 class _ReaderToolbarActionsState extends State<ReaderToolbarActions> {
   bool bookmarked = false, completed = false, busy = false;
   bool downloading = false;
+  bool downloaded = false;
   String? stateError;
   int currentPage = 0, totalPages = 0;
 
@@ -35,10 +37,13 @@ class _ReaderToolbarActionsState extends State<ReaderToolbarActions> {
   Future<void> _load() async {
     try {
       final info = await widget.loadState();
+      final savedOffline = await widget.loadDownloaded?.call() ?? false;
       if (mounted) {
         setState(() {
           bookmarked = info['bookmarked'] == true;
           completed = info['completed'] == true;
+          downloaded = savedOffline;
+          stateError = null;
         });
       }
     } catch (_) {
@@ -88,7 +93,8 @@ class _ReaderToolbarActionsState extends State<ReaderToolbarActions> {
         totalPages = count;
         if (mounted) setState(() {});
       });
-      _message('Available in Offline Library for 48 hours.');
+      if (mounted) { setState(() => downloaded = true); }
+      _message('Downloaded. Open Offline Notes to read without internet.');
     } catch (_) {
       _message('Unable to save offline. Verify your Student Card and internet connection.');
     } finally {
@@ -121,13 +127,17 @@ class _ReaderToolbarActionsState extends State<ReaderToolbarActions> {
           key: const Key('reader-offline-download'),
           tooltip: downloading
             ? 'Saving page $currentPage of $totalPages'
-            : 'Save encrypted offline note',
-          onPressed: busy || downloading ? null :
+            : downloaded ? 'Already downloaded · Manage in Offline Notes'
+              : 'Save encrypted offline note',
+          onPressed: busy || downloading || downloaded ? null :
             widget.download != null ? _download : widget.onDownloadUnavailable,
           icon: downloading
             ? const SizedBox(width: 19, height: 19,
                 child: CircularProgressIndicator(strokeWidth: 2))
-            : const Icon(Icons.download_for_offline_outlined, size: 21),
+            : Icon(downloaded ? Icons.download_done_rounded
+                : Icons.download_for_offline_outlined,
+                color: downloaded ? Theme.of(context).colorScheme.primary : null,
+                size: 21),
         ),
     ],
   );
