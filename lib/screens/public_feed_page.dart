@@ -458,7 +458,7 @@ class _FeedTile extends StatelessWidget {
 
   String get title => data['title']?.toString() ?? 'Untitled';
   String get summary => isNote
-    ? '${data['lecturer_names'] is List ? (data['lecturer_names'] as List).join(', ') : ''} · ${data['contributor_name'] ?? ''}'
+    ? '${data['department_name'] ?? ''} · ${data['lecturer_names'] is List ? (data['lecturer_names'] as List).join(', ') : ''} · ${data['contributor_name'] ?? ''}'
     : data['summary']?.toString() ?? '';
   bool get restricted => isNote && data['is_sensitive'] == true;
 
