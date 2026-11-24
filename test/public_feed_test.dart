@@ -288,6 +288,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Introduction to Programming'), findsOneWidget);
     expect(find.text('Exam timetable'), findsNothing);
+    await tester.tap(find.byKey(const Key('notes-advanced-filters')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('department-filter')), findsOneWidget);
   });
 
@@ -296,6 +298,8 @@ void main() {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(body: PublicFeedPage(type: 'notes', api: FakeApi())),
     ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('notes-advanced-filters')));
     await tester.pumpAndSettle();
 
     final semesterBefore = find.byKey(const ValueKey('semester-'));
