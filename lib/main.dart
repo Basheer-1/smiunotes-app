@@ -252,6 +252,10 @@ class _AppShellState extends State<AppShell> {
                           PublicFeedPage(
                             type: 'notes',
                             refreshVersion: _notesRefreshVersion,
+                            loadContinue: _activeProfile == null ? null : () async =>
+                              await _studentAccountKey.currentState?.latestStudyNote(),
+                            onResume: (noteId) =>
+                              _studentAccountKey.currentState?.resumeStudyNote(noteId),
                             onSaveNote: (noteId) async {
                               if (!accountAuthEnabled || stagingApiBase.isEmpty) {
                                 if (mounted) setState(() => selectedIndex = 5);
