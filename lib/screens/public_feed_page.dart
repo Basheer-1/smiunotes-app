@@ -602,7 +602,7 @@ class _FeedTile extends StatelessWidget {
               data['deadline_date'], data['event_date'])),
             const Spacer(),
             Flexible(child: Text(data['deadline_date']?.toString() ?? '',
-              textAlign: TextAlign.end, style: const TextStyle(
+              textAlign: TextAlign.end, style: TextStyle(
                 fontSize: 10, color: scheme.onSurfaceVariant))),
           ]),
           const SizedBox(height: 7),
