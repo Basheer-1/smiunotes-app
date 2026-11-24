@@ -170,15 +170,15 @@ class _PublicFeedPageState extends State<PublicFeedPage>
     child: ListView(
     key: Key('feed-${widget.type}'),
     physics: const AlwaysScrollableScrollPhysics(),
-    padding: const EdgeInsets.fromLTRB(12, 10, 12, 95),
+    padding: const EdgeInsets.fromLTRB(16, 14, 16, 92),
     children: [
-      Text(isNotes ? 'Home & Browse Notes' : 'Campus Updates',
+      Text(isNotes ? 'Study Notes' : 'Campus Updates',
         style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800,
           color: Theme.of(context).colorScheme.onSurface)),
       const SizedBox(height: 10),
       Row(children: [
         Expanded(child: Text(isNotes
-          ? 'Published study material by subject and semester.'
+          ? 'Find your course, then choose what to study.'
           : 'Latest campus announcements and student opportunities.')),
         IconButton.filledTonal(
           key: Key('feed-refresh-button-${widget.type}'),
@@ -187,10 +187,11 @@ class _PublicFeedPageState extends State<PublicFeedPage>
           icon: const Icon(Icons.refresh_rounded),
         ),
       ]),
-      const SizedBox(height: 12),
+      const SizedBox(height: 14),
       TextField(
         key: Key('search-${widget.type}'),
         maxLength: 100,
+        buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
         controller: search,
         onSubmitted: (_) => filter(),
         decoration: InputDecoration(
@@ -241,28 +242,34 @@ class _PublicFeedPageState extends State<PublicFeedPage>
           Text(semester.isEmpty ? 'All semesters' : 'Sem $semester',
             style: const TextStyle(fontSize: 10)),
         ]),
-        const SizedBox(height: 7),
-        SizedBox(height: 77, child: ListView(scrollDirection: Axis.horizontal, children: [
-          for (final course in availableSubjects.take(12))
-            Padding(padding: const EdgeInsets.only(right: 7), child: InkWell(
-              key: Key('course-${course['id']}'),
-              borderRadius: BorderRadius.circular(11),
-              onTap: () { subject = course['id']?.toString() ?? ''; filter(); },
-              child: Container(width: 124, padding: const EdgeInsets.all(9),
-                decoration: BoxDecoration(color: const Color(0xFF192B3E),
-                  borderRadius: BorderRadius.circular(11),
-                  border: Border.all(color: const Color(0xFF2C4359))),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(course['code']?.toString() ?? 'Course',
-                    style: const TextStyle(fontSize: 10, color: Color(0xFFADD3EA))),
-                  const SizedBox(height: 5),
-                  Text(course['name']?.toString() ?? '', maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
-                ])),
-            )),
-        ])),
+        const SizedBox(height: 8),
+        SizedBox(height: 52, child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: [
+            for (final course in availableSubjects.take(12))
+              Padding(padding: const EdgeInsets.only(right: 7),
+                child: ActionChip(
+                  key: Key('course-${course['id']}'),
+                  avatar: Icon(subject == course['id'] ? Icons.check_circle :
+                    Icons.book_outlined, size: 16),
+                  backgroundColor: subject == course['id']
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : Theme.of(context).colorScheme.surfaceContainerHigh,
+                  label: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 160),
+                    child: Text('${course['code'] ?? ''} · ${course['name'] ?? ''}',
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11))),
+                  onPressed: () {
+                    subject = subject == course['id'] ? '' :
+                      course['id']?.toString() ?? '';
+                    filter();
+                  },
+                )),
+          ],
+        )),
       ],
+      if (isNotes) const SizedBox(height: 5),
       if (isNotes) SingleChildScrollView(scrollDirection: Axis.horizontal,
         child: Row(children: [
           for (final entry in const [(0, 'All notes'), (1, 'Midterm Prep'), (2, 'Lectures'), (3, 'By Contributor')])
@@ -283,7 +290,7 @@ class _PublicFeedPageState extends State<PublicFeedPage>
           key: const Key('notes-advanced-filters'),
           onPressed: () => setState(() => showFilters = !showFilters),
           icon: Icon(showFilters ? Icons.expand_less : Icons.tune, size: 16),
-          label: Text(showFilters ? 'Hide filters' : 'All notes & filters'),
+          label: Text(showFilters ? 'Hide advanced filters' : 'Advanced filters'),
         )),
       if (showFilters) ...[
       if (isNotes && departments.isNotEmpty)
@@ -389,7 +396,7 @@ class _PublicFeedPageState extends State<PublicFeedPage>
         padding: EdgeInsets.all(22), child: Text('No published content found.'),
       ) else ...[
         if (isNotes) ...[
-          Text('Latest notes · $total items',
+          Text('Browse notes · $total available',
             style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
           for (final raw in (items.whereType<Map<String, dynamic>>().where((entry) {
