@@ -5,9 +5,11 @@ import '../services/public_feed_api.dart';
 class NoteReaderPage extends StatefulWidget {
   const NoteReaderPage({
     super.key, required this.noteId, this.api = const PublicFeedApi(),
+    this.toolbarActions,
   });
   final String noteId;
   final PublicFeedApi api;
+  final Widget? toolbarActions;
   @override
   State<NoteReaderPage> createState() => _NoteReaderPageState();
 }
@@ -33,7 +35,10 @@ class _NoteReaderPageState extends State<NoteReaderPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('SMIUNotes Reader')),
+    appBar: AppBar(
+      title: const Text('SMIUNotes Reader', style: TextStyle(fontSize: 17)),
+      actions: [if (widget.toolbarActions != null) widget.toolbarActions!],
+    ),
     body: FutureBuilder<Map<String, dynamic>>(
       future: manifest,
       builder: (context, snapshot) {
