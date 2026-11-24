@@ -19,6 +19,11 @@ import 'notification_inbox_page.dart';
 import '../services/mobile_turnstile.dart';
 import '../services/student_auth_runtime.dart';
 import 'authenticated_note_reader_page.dart';
+import 'note_reader_page.dart';
+import 'offline_library_page.dart';
+import '../services/offline_notes_store.dart';
+import '../services/public_feed_api.dart';
+import '../widgets/reader_toolbar_actions.dart';
 import 'community_composer_page.dart';
 import 'my_bookmarks_page.dart';
 import 'student_account_gateway.dart';
@@ -293,6 +298,96 @@ class StagingStudentAccountPageState
         accessToken: _currentVerifiedToken(),
         api: AuthenticatedReaderApi(baseUrl: widget.httpsBaseUrl),
       ),
+    ));
+  }
+
+  OfflineNotesStore get offlineNotes =>
+    OfflineNotesStore(baseUrl: widget.httpsBaseUrl);
+
+  bool get canDownloadOffline {
+    final profile = runtime.coordinator.profile;
+    return runtime.coordinator.authenticated &&
+      runtime.controller.accessToken != null &&
+      profile?.verificationStatus == 'verified' &&
+      profile?.accountStatus == 'active' &&
+      profile?.profileId != null;
+  }
+
+  void openOfflineLibrary() {
+    if (!mounted || !canDownloadOffline) return;
+    final owner = runtime.coordinator.profile!.profileId!;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => OfflineLibraryPage(
+        store: offlineNotes, owner: owner),
+    ));
+  }
+
+  ReaderToolbarActions _studyActions(String noteId) {
+    final api = BookmarkApi(baseUrl: widget.httpsBaseUrl);
+    return ReaderToolbarActions(
+      key: Key('study-toolbar-$noteId'),
+      loadState: () async {
+        final token = _currentVerifiedToken();
+        final results = await Future.wait([
+          api.list(token), api.listCompleted(token),
+        ]);
+        bool present(Map<String, dynamic> result) {
+          final rows = result['items'];
+          return rows is List && rows.any((item) =>
+            item is Map && item['note_id'] == noteId);
+        }
+        return {'bookmarked': present(results[0]),
+          'completed': present(results[1])};
+      },
+      toggleBookmark: (current) async {
+        final result = current
+          ? await api.remove(_currentVerifiedToken(), noteId)
+          : await api.save(_currentVerifiedToken(), noteId);
+        return result['ok'] == true;
+      },
+      toggleCompleted: (current) async {
+        final result = current
+          ? await api.uncomplete(_currentVerifiedToken(), noteId)
+          : await api.complete(_currentVerifiedToken(), noteId);
+        return result['ok'] == true;
+      },
+      download: canDownloadOffline ? (progress) async {
+        if (!canDownloadOffline) {
+          throw StateError('Verified Student Card required.');
+        }
+        await offlineNotes.save(
+          owner: runtime.coordinator.profile!.profileId!,
+          noteId: noteId,
+          accessToken: _currentVerifiedToken(),
+          onProgress: progress,
+        );
+      } : null,
+    );
+  }
+
+  void openPublicNote(String noteId, {bool restricted = false}) {
+    if (!mounted || !OfflineNotesStore.validId(noteId)) return;
+    final signedIn = runtime.coordinator.authenticated &&
+      runtime.controller.accessToken != null;
+    if (restricted && !canDownloadOffline) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(
+          'Verify your Student Card to open this note.')));
+      return;
+    }
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => restricted
+        ? AuthenticatedNoteReaderPage(
+            noteId: noteId,
+            accessToken: _currentVerifiedToken(),
+            api: AuthenticatedReaderApi(baseUrl: widget.httpsBaseUrl),
+            toolbarActions: signedIn ? _studyActions(noteId) : null,
+          )
+        : NoteReaderPage(
+            noteId: noteId,
+            api: const PublicFeedApi(),
+            toolbarActions: signedIn ? _studyActions(noteId) : null,
+          ),
     ));
   }
 
