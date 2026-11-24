@@ -25,6 +25,27 @@ class OfflineNotesStore {
   static const FlutterSecureStorage _keys = FlutterSecureStorage();
   final AesGcm _aes = AesGcm.with256bits();
 
+  static const String _activeLeaseKey = 'offline_active_verified_lease_v1';
+
+  /// A device-local, short-lived lease lets the encrypted library open after
+  /// a cold start without network. Re-login/online verification is required
+  /// when the lease expires. Explicit sign-out clears this entitlement.
+  static Future<String?> activeVerifiedOwner() async {
+    final value = await _keys.read(key: _activeLeaseKey);
+    if (value == null) return null;
+    final parts = value.split('|');
+    if (parts.length != 2 || !validId(parts[0])) return null;
+    final epoch = int.tryParse(parts[1]);
+    if (epoch == null || DateTime.now().millisecondsSinceEpoch >= epoch) {
+      await _keys.delete(key: _activeLeaseKey);
+      return null;
+    }
+    return parts[0];
+  }
+
+  static Future<void> clearActiveLease() =>
+    _keys.delete(key: _activeLeaseKey);
+
   static bool validId(String value) =>
     RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
       .hasMatch(value);
@@ -216,6 +237,8 @@ class OfflineNotesStore {
         utf8.encode(jsonEncode(metadata)), key);
       if (await folder.exists()) await folder.delete(recursive: true);
       await staging.rename(folder.path);
+      await _keys.write(key: _activeLeaseKey,
+        value: '$owner|${DateTime.now().add(lease).millisecondsSinceEpoch}');
     } finally {
       client.close(force: true);
       if (await staging.exists()) await staging.delete(recursive: true);
