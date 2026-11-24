@@ -9,6 +9,7 @@ import 'screens/native_public_content_page.dart';
 import 'screens/native_student_forms.dart';
 import 'services/native_student_forms_api.dart';
 import 'screens/contributors_directory_page.dart';
+import 'screens/support_dashboard_page.dart';
 import 'models/student_profile.dart';
 import 'widgets/profile_avatar.dart';
 import 'dart:ui';
@@ -41,7 +42,7 @@ class SmiuNotesApp extends StatefulWidget {
 class _SmiuNotesAppState extends State<SmiuNotesApp> {
   static const _themeKey = 'smiunotes.theme.v1';
   static const _settings = FlutterSecureStorage();
-  bool darkMode = false;
+  bool darkMode = true;
 
   @override
   void initState() {
@@ -83,7 +84,7 @@ class _SmiuNotesAppState extends State<SmiuNotesApp> {
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF87B9F8),
           brightness: Brightness.dark,
-          surface: const Color(0xFF101E32),
+          surface: const Color(0xFF101B2A),
         ).copyWith(
           primary: const Color(0xFF8EC5FF),
           onPrimary: const Color(0xFF09213C),
@@ -95,7 +96,7 @@ class _SmiuNotesAppState extends State<SmiuNotesApp> {
           onSurfaceVariant: const Color(0xFFB7C9DE),
           outlineVariant: const Color(0xFF324862),
         ),
-        scaffoldBackgroundColor: const Color(0xFF081321),
+        scaffoldBackgroundColor: const Color(0xFF0B1420),
         fontFamily: 'SMIUInter',
         textTheme: websiteTypography,
       ),
@@ -130,7 +131,7 @@ class _AppShellState extends State<AppShell> {
   );
   final GlobalKey<StagingStudentAccountPageState> _studentAccountKey =
       GlobalKey<StagingStudentAccountPageState>();
-  int selectedIndex = 0;
+  int selectedIndex = 1;
   int _notesRefreshVersion = 0;
   int _updatesRefreshVersion = 0;
 
@@ -176,13 +177,12 @@ class _AppShellState extends State<AppShell> {
             ? NativePublicContentPage(kind: kind)
             : NativeInformationPage(kind: kind)));
   }
-  static const labels = ['Home', 'Notes', 'Updates', 'Community', 'Profile'];
+  static const labels = ['Notes', 'Updates', 'Study Room', 'Support'];
   static const icons = [
-    Icons.home_outlined,
     Icons.menu_book_outlined,
     Icons.campaign_outlined,
     Icons.forum_outlined,
-    Icons.person_outline,
+    Icons.volunteer_activism_outlined,
   ];
 
   @override
@@ -196,16 +196,17 @@ class _AppShellState extends State<AppShell> {
             bottom: false,
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 940),
+                constraints: const BoxConstraints(maxWidth: 550),
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
                       child: Row(
                         children: [
                           Icon(Icons.auto_stories_rounded, color: Theme.of(context).colorScheme.primary, size: 28),
                           const SizedBox(width: 9),
-                          Text('SMIUNotes', style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+                          Text('SMIUNotes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
+                          if (_activeProfile != null) Padding(padding: const EdgeInsets.only(left: 7), child: Text('· ${_activeProfile!.departmentName ?? 'Student'}', maxLines: 1, style: const TextStyle(fontSize: 10))),
                           const Spacer(),
                           IconButton(
                             tooltip: 'Notifications',
@@ -222,6 +223,17 @@ class _AppShellState extends State<AppShell> {
                               ));
                             },
                             icon: Icon(Icons.notifications_none_rounded, color: Theme.of(context).colorScheme.primary),
+                          ),
+                          IconButton(
+                            tooltip: 'Your profile',
+                            key: const Key('header-profile'),
+                            onPressed: () => _selectTab(4),
+                            icon: ProfileAvatar(
+                              name: _activeProfile?.studentName,
+                              cacheKey: _activeProfile == null ? 'anonymous' : '${_activeProfile!.studentId}:${_activeProfile!.avatarVersion}',
+                              size: 31,
+                              imageLoader: _activeProfile?.avatarVersion == null ? null : () async => await _studentAccountKey.currentState?.loadOwnAvatar(),
+                            ),
                           ),
                         ],
                       ),
@@ -280,6 +292,7 @@ class _AppShellState extends State<AppShell> {
                               return state.openCommunityReply(threadId);
                             },
                           ),
+                          SupportDashboardPage(onOpenContributors: () => _openInformation(context, 'contributors'), onOpenSupport: () => _openInformation(context, 'support')),
                           if (accountAuthEnabled && stagingApiBase.isNotEmpty)
                             StagingStudentAccountPage(
                               key: _studentAccountKey,
@@ -303,28 +316,29 @@ class _AppShellState extends State<AppShell> {
         ],
       ),
       bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        minimum: const EdgeInsets.fromLTRB(6, 0, 6, 4),
         child: Center(
           heightFactor: 1,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 550),
             child: _Glass(
-              radius: 26,
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              radius: 12,
+              padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 3),
               child: Row(
                 children: List.generate(labels.length, (index) {
-                  final active = selectedIndex == index;
+                  final tabIndex = index + 1;
+                  final active = selectedIndex == tabIndex;
                   return Expanded(
                     child: InkWell(
-                      key: Key('tab-$index'),
-                      borderRadius: BorderRadius.circular(18),
-                      onTap: () => _selectTab(index),
+                      key: Key('tab-$tabIndex'),
+                      borderRadius: BorderRadius.circular(9),
+                      onTap: () => _selectTab(tabIndex),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 1),
+                        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 1),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (index == 4)
+                            if (false)
                               ProfileAvatar(
                                 name: _activeProfile?.studentName,
                                 cacheKey: _activeProfile == null ? 'anonymous' :
@@ -335,12 +349,12 @@ class _AppShellState extends State<AppShell> {
                                       ?.loadOwnAvatar(),
                               )
                             else
-                              Icon(icons[index], size: 23,
+                              Icon(icons[index], size: 18,
                                 color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant),
                             const SizedBox(height: 4),
                             FittedBox(
                               fit: BoxFit.scaleDown,
-                              child: Text(labels[index], style: TextStyle(fontSize: 11, color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: active ? FontWeight.w800 : FontWeight.w500)),
+                              child: Text(labels[index], style: TextStyle(fontSize: 10, color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: active ? FontWeight.w800 : FontWeight.w500)),
                             ),
                           ],
                         ),
