@@ -252,6 +252,15 @@ class _AppShellState extends State<AppShell> {
                           PublicFeedPage(
                             type: 'notes',
                             refreshVersion: _notesRefreshVersion,
+                            canOpenRestricted: _activeProfile?.verificationStatus == 'verified',
+                            onOpenNote: accountAuthEnabled && stagingApiBase.isNotEmpty
+                              ? (id, restricted) => _studentAccountKey.currentState
+                                  ?.openPublicNote(id, restricted: restricted)
+                              : null,
+                            onOpenOffline: _activeProfile?.verificationStatus == 'verified'
+                              ? () => _studentAccountKey.currentState
+                                  ?.openOfflineLibrary()
+                              : null,
                             loadContinue: _activeProfile == null ? null : () async =>
                               await _studentAccountKey.currentState?.latestStudyNote(),
                             onResume: (noteId) =>
