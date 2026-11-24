@@ -206,7 +206,7 @@ class _AppShellState extends State<AppShell> {
                           Icon(Icons.auto_stories_rounded, color: Theme.of(context).colorScheme.primary, size: 28),
                           const SizedBox(width: 9),
                           Text('SMIUNotes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
-                          if (_activeProfile != null) Padding(padding: const EdgeInsets.only(left: 7), child: Text('· ${_activeProfile!.departmentName ?? 'Student'}', maxLines: 1, style: const TextStyle(fontSize: 10))),
+                          if (_activeProfile != null) Padding(padding: const EdgeInsets.only(left: 7), child: Text('· ${_activeProfile!.department ?? 'Student'}', maxLines: 1, style: const TextStyle(fontSize: 10))),
                           const Spacer(),
                           IconButton(
                             tooltip: 'Notifications',
