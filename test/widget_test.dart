@@ -6,7 +6,7 @@ void main() {
   testWidgets('M1 loads home and navigates to Notes and Updates', (tester) async {
     await tester.pumpWidget(const SmiuNotesApp());
 
-    expect(find.text('Everything SMIU,\nin one place.'), findsOneWidget);
+    expect(find.text('Home & Browse Notes'), findsOneWidget);
     await tester.tap(find.byKey(const Key('open-classic-home')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('home-page')), findsOneWidget);
