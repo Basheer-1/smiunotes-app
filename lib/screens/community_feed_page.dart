@@ -4,9 +4,10 @@ import '../services/public_feed_api.dart';
 
 /// Public discussions only. Posting requires a verified student session.
 class CommunityFeedPage extends StatefulWidget {
-  const CommunityFeedPage({super.key, this.api = const PublicFeedApi(), this.onReply});
+  const CommunityFeedPage({super.key, this.api = const PublicFeedApi(), this.onReply, this.onAsk});
   final PublicFeedApi api;
   final Future<bool> Function(String threadId)? onReply;
+  final Future<void> Function()? onAsk;
   @override
   State<CommunityFeedPage> createState() => _CommunityFeedPageState();
 }
@@ -101,13 +102,11 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
         Expanded(child: Text('Study Room · ${threads.length} threads',
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800))),
         const SizedBox(width: 8),
-        TextButton.icon(onPressed: widget.onReply == null ? null : () async {
-          final approved = await widget.onReply!('');
-          if (!context.mounted) return;
-          if (!approved) ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Sign in and verify your account to post.')));
-        }, icon: const Icon(Icons.edit_outlined, size: 16),
-          label: const Text('Ask')),
+        TextButton.icon(
+          onPressed: widget.onAsk,
+          icon: const Icon(Icons.edit_outlined, size: 16),
+          label: const Text('Ask'),
+        ),
       ]),
       const SizedBox(height: 8),
       if (loading) const Center(child: CircularProgressIndicator())
