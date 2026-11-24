@@ -66,7 +66,7 @@ class OfflineNotesStore {
         Uint8List.fromList(List<int>.generate(32, (_) => random.nextInt(256))));
       await _keys.write(key: keyName, value: encoded);
     }
-    if (encoded == null) throw const StateError('Offline key unavailable.');
+    if (encoded == null) throw StateError('Offline key unavailable.');
     final bytes = base64Decode(encoded);
     if (bytes.length != 32) throw const FormatException('Invalid local key.');
     return SecretKey(bytes);
@@ -101,7 +101,7 @@ class OfflineNotesStore {
     }
     final expires = DateTime.tryParse(result['expires_at']?.toString() ?? '');
     if (expires == null || !DateTime.now().isBefore(expires)) {
-      throw const StateError('Offline access expired. Reconnect to verify.');
+      throw StateError('Offline access expired. Reconnect to verify.');
     }
     return result;
   }
@@ -112,7 +112,7 @@ class OfflineNotesStore {
     final result = <Map<String, dynamic>>[];
     await for (final node in root.list(followLinks: false)) {
       if (node is! Directory || !validId(node.uri.pathSegments
-          .where((s) => s.isNotEmpty).last)) continue;
+          .where((s) => s.isNotEmpty).last)) { continue; }
       final id = node.uri.pathSegments.where((s) => s.isNotEmpty).last;
       try {
         result.add(await _metadata(owner, id));
@@ -161,7 +161,7 @@ class OfflineNotesStore {
         .fetchOwnProfile(accessToken);
     if (profile.profileId != owner || profile.accountStatus != 'active' ||
         profile.verificationStatus != 'verified') {
-      throw const StateError('Student Card verification required.');
+      throw StateError('Student Card verification required.');
     }
     final reader = AuthenticatedReaderApi(baseUrl: baseUrl);
     final manifest = await reader.request(
