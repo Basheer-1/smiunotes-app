@@ -19,6 +19,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
   bool loading = false, hasMore = false;
   int _requestGeneration = 0;
   String category = '', error = '';
+  String topic = '';
   @override
   void initState() { super.initState(); load(); }
   @override
@@ -39,7 +40,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
     setState(() { loading = true; error = ''; });
     try {
       final data = await widget.api.fetch(
-        'community', search: query.text, page: page, category: category,
+        'community', search: [query.text.trim(), if (topic.isNotEmpty) topic].where((value) => value.isNotEmpty).join(' '), page: page, category: category,
       );
       if (!mounted || generation != _requestGeneration) return;
       setState(() {
@@ -61,8 +62,16 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
 
   void apply() { page = 1; load(); }
 
+  String friendlyTime(Object? value) {
+    final dt = DateTime.tryParse(value?.toString() ?? '')?.toLocal();
+    if (dt == null) return '';
+    return '${dt.day}/${dt.month} · ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
   @override
-  Widget build(BuildContext context) => ListView(
+  Widget build(BuildContext context) => RefreshIndicator(
+    onRefresh: load,
+    child: ListView(
     key: const Key('community-feed'),
     padding: const EdgeInsets.fromLTRB(12, 10, 12, 95),
     children: [
@@ -89,12 +98,12 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
       Wrap(spacing: 8, children: [
         for (final entry in const [
           ('', 'All'), ('questions', 'Questions'),
-          ('study', 'Study'), ('announcements', 'Announcements'),
+          ('', 'Past Papers'), ('study', 'Study Tips'),
         ])
           ChoiceChip(
             label: Text(entry.$2),
-            selected: category == entry.$1,
-            onSelected: (_) { category = entry.$1; apply(); },
+            selected: category == entry.$1 && topic == (entry.$2 == 'Past Papers' ? 'past papers' : entry.$2 == 'Study Tips' ? 'tips' : ''),
+            onSelected: (_) { category = entry.$1; topic = entry.$2 == 'Past Papers' ? 'past papers' : entry.$2 == 'Study Tips' ? 'tips' : ''; apply(); },
           ),
       ]),
       const SizedBox(height: 10),
@@ -127,8 +136,23 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
               color: const Color(0xFF172738),
               child: ListTile(
                 contentPadding: const EdgeInsets.all(12),
-                title: Text(raw['title']?.toString() ?? 'Discussion',
+                title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    CircleAvatar(radius: 12, backgroundColor: const Color(0xFF315D76),
+                      child: Text((raw['author_name']?.toString().isNotEmpty == true)
+                        ? raw['author_name'].toString()[0].toUpperCase() : '?',
+                        style: const TextStyle(fontSize: 11))),
+                    const SizedBox(width: 7),
+                    Expanded(child: Text(raw['author_name']?.toString() ?? 'Student',
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700))),
+                    Text(raw['category']?.toString() ?? '',
+                      style: const TextStyle(fontSize: 10, color: Color(0xFFA7CAE3))),
+                  ]),
+                  const SizedBox(height: 8),
+                  Text(raw['title']?.toString() ?? 'Discussion',
                   style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                ]),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -138,7 +162,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
                       style: const TextStyle(fontSize: 11, color: Color(0xFFA7BBD0))),
                     const SizedBox(height: 8),
                     Text(
-                      "${raw['author_name'] ?? 'Student'} · ${raw['replies'] ?? 0} replies",
+                      "${friendlyTime(raw['created_at'])} · ${raw['replies'] ?? 0} replies",
                       style: const TextStyle(fontSize: 10, color: Color(0xFF9DC8E1))),
                   ],
                 ),
@@ -164,5 +188,6 @@ class _CommunityFeedPageState extends State<CommunityFeedPage> {
         ]),
       ],
     ],
+  ),
   );
 }
