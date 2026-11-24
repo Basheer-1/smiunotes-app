@@ -13,34 +13,27 @@ import 'student_profile_api.dart';
 /// App-private, AES-256-GCM encrypted WebP cache, scoped to a verified
 /// Student Card identity. No files are placed in Downloads or shared storage.
 ///
-/// An offline lease lasts 48 hours from successful live re-verification.
-/// Revocation cannot be detected while a device has no internet: the short
-/// lease bounds that window; on the next online save we re-check the server.
+/// Saving requires live verified identity. Encrypted local copies persist until
+/// the student deletes them, signs out of the active session, or uninstalls the
+/// app. Server revocations cannot be detected without an internet connection.
 class OfflineNotesStore {
   OfflineNotesStore({required this.baseUrl});
   final String baseUrl;
   static const int maxPages = 60;
   static const int maxPageBytes = 5 * 1024 * 1024;
-  static const Duration lease = Duration(hours: 48);
   static const FlutterSecureStorage _keys = FlutterSecureStorage();
   final AesGcm _aes = AesGcm.with256bits();
 
   static const String _activeLeaseKey = 'offline_active_verified_lease_v1';
 
-  /// A device-local, short-lived lease lets the encrypted library open after
-  /// a cold start without network. Re-login/online verification is required
-  /// when the lease expires. Explicit sign-out clears this entitlement.
+  /// Retain the last verified local identity for offline cold starts.
+  /// Previous expiring owner records remain readable after an app update.
+  /// Explicit sign-out revokes this local entitlement.
   static Future<String?> activeVerifiedOwner() async {
     final value = await _keys.read(key: _activeLeaseKey);
-    if (value == null) return null;
-    final parts = value.split('|');
-    if (parts.length != 2 || !validId(parts[0])) return null;
-    final epoch = int.tryParse(parts[1]);
-    if (epoch == null || DateTime.now().millisecondsSinceEpoch >= epoch) {
-      await _keys.delete(key: _activeLeaseKey);
-      return null;
-    }
-    return parts[0];
+    if (value == null) { return null; }
+    final owner = value.split('|').first;
+    return validId(owner) ? owner : null;
   }
 
   static Future<void> clearActiveLease() =>
@@ -99,10 +92,6 @@ class OfflineNotesStore {
         result['owner'] != owner) {
       throw const FormatException('Invalid offline note metadata.');
     }
-    final expires = DateTime.tryParse(result['expires_at']?.toString() ?? '');
-    if (expires == null || !DateTime.now().isBefore(expires)) {
-      throw StateError('Offline access expired. Reconnect to verify.');
-    }
     return result;
   }
 
@@ -117,7 +106,7 @@ class OfflineNotesStore {
       try {
         result.add(await _metadata(owner, id));
       } catch (_) {
-        // Expired/corrupt entries never become readable.
+        // Corrupt or unreadable entries are omitted.
       }
     }
     result.sort((a, b) => (b['saved_at']?.toString() ?? '').compareTo(
@@ -140,6 +129,15 @@ class OfflineNotesStore {
       await _key(owner));
   }
 
+  Future<bool> has(String owner, String noteId) async {
+    try {
+      await _metadata(owner, noteId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> remove(String owner, String noteId) async {
     if (!validId(noteId)) return;
     final base = await _root(owner);
@@ -156,7 +154,7 @@ class OfflineNotesStore {
     if (!validId(owner) || !validId(noteId)) {
       throw const FormatException('Invalid offline download.');
     }
-    // Always refresh live Student Card status before generating an offline lease.
+    // Always check live Student Card status before downloading encrypted pages.
     final profile = await StudentProfileApi(baseUrl: baseUrl)
         .fetchOwnProfile(accessToken);
     if (profile.profileId != owner || profile.accountStatus != 'active' ||
@@ -230,15 +228,13 @@ class OfflineNotesStore {
         'note_id': noteId,
         'title': manifest['title']?.toString() ?? 'Offline note',
         'saved_at': now.toIso8601String(),
-        'expires_at': now.add(lease).toIso8601String(),
         'pages': pages,
       };
       await _write(File('${staging.path}/meta.bin'),
         utf8.encode(jsonEncode(metadata)), key);
       if (await folder.exists()) await folder.delete(recursive: true);
       await staging.rename(folder.path);
-      await _keys.write(key: _activeLeaseKey,
-        value: '$owner|${DateTime.now().add(lease).millisecondsSinceEpoch}');
+      await _keys.write(key: _activeLeaseKey, value: owner);
     } finally {
       client.close(force: true);
       if (await staging.exists()) await staging.delete(recursive: true);
