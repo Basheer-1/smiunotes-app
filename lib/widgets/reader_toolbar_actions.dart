@@ -38,7 +38,7 @@ class _ReaderToolbarActionsState extends State<ReaderToolbarActions> {
         completed = info['completed'] == true;
       });
     } catch (_) {
-      if (mounted) setState(() => stateError = 'Unable to load study status.');
+      if (mounted) { setState(() => stateError = 'Unable to load study status.'); }
     }
   }
 
