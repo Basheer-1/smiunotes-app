@@ -26,6 +26,7 @@ class _PublicFeedPageState extends State<PublicFeedPage>
   String? error;
   bool loading = false;
   bool showFilters = false;
+  int notesView = 0;
   int _feedGeneration = 0;
   int _filterGeneration = 0;
   int total = 0, page = 1;
@@ -34,6 +35,13 @@ class _PublicFeedPageState extends State<PublicFeedPage>
   List<Map<String, dynamic>> subjects = [];
   List<int> semesters = [];
   bool get isNotes => widget.type == 'notes';
+
+  List<Map<String, dynamic>> get updateRows => items.whereType<Map<String, dynamic>>().toList();
+  List<Map<String, dynamic>> get deadlineRows => updateRows.where((entry) =>
+    (entry['deadline_date']?.toString() ?? '').isNotEmpty &&
+    universityUpdateStatus(entry['deadline_date'], entry['event_date']) == UniversityUpdateStatus.active).toList();
+  List<Map<String, dynamic>> get announcementRows => updateRows.where((entry) =>
+    !deadlineRows.any((deadline) => deadline['id'] == entry['id'])).toList();
 
   @override
   void initState() {
@@ -217,6 +225,16 @@ class _PublicFeedPageState extends State<PublicFeedPage>
             )),
         ])),
       ],
+      if (isNotes) SingleChildScrollView(scrollDirection: Axis.horizontal,
+        child: Row(children: [
+          for (final entry in const [(0, 'All notes'), (1, 'Midterm Prep'), (2, 'Lectures'), (3, 'By Contributor')])
+            Padding(padding: const EdgeInsets.only(right: 6), child: ChoiceChip(
+              key: Key('notes-quick-${entry.$1}'),
+              label: Text(entry.$2, style: const TextStyle(fontSize: 11)),
+              selected: notesView == entry.$1,
+              onSelected: (_) => setState(() => notesView = entry.$1),
+            )),
+        ])),
       if (isNotes) Align(alignment: Alignment.centerRight,
         child: TextButton.icon(
           key: const Key('notes-advanced-filters'),
@@ -327,13 +345,46 @@ class _PublicFeedPageState extends State<PublicFeedPage>
       ] else if (items.isEmpty) const Padding(
         padding: EdgeInsets.all(22), child: Text('No published content found.'),
       ) else ...[
-        Text(isNotes ? 'Latest notes · $total items' : 'Recent announcements · $total posts',
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 12),
-        for (final raw in items)
-          if (raw is Map<String, dynamic>)
-            _FeedTile(data: raw, isNote: isNotes, api: widget.api,
+        if (isNotes) ...[
+          Text('Latest notes · $total items',
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          for (final raw in items.whereType<Map<String, dynamic>>().where((entry) {
+            final haystack = '${entry['title'] ?? ''} ${entry['description'] ?? ''} ${entry['contributor_name'] ?? ''}'.toLowerCase();
+            if (notesView == 1) return haystack.contains('mid') || haystack.contains('exam') || haystack.contains('prep');
+            if (notesView == 2) return haystack.contains('lecture') || haystack.contains('lec');
+            return true;
+          }))
+            _FeedTile(data: raw, isNote: true, api: widget.api,
               onSaveNote: widget.onSaveNote),
+          if (notesView != 0) const Padding(padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text('Quick filters apply to this page. Use search for all published notes.',
+              style: TextStyle(fontSize: 10))),
+        ] else ...[
+          if (deadlineRows.isNotEmpty) ...[
+            Row(children: [
+              const Expanded(child: Text('Active Deadlines', style: TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w800))),
+              Text('${deadlineRows.length} on this page', style: const TextStyle(
+                fontSize: 10, color: Color(0xFF65C8A4))),
+            ]),
+            const SizedBox(height: 8),
+            SizedBox(height: 245, child: ListView(scrollDirection: Axis.horizontal,
+              children: [for (final entry in deadlineRows)
+                SizedBox(width: 255, child: Padding(
+                  padding: const EdgeInsets.only(right: 9),
+                  child: _FeedTile(data: entry, isNote: false,
+                    api: widget.api, compactUpdate: true),
+                )),
+              ])),
+            const SizedBox(height: 14),
+          ],
+          Text('Recent Announcements · $total posts', style: const TextStyle(
+            fontSize: 13, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          for (final entry in announcementRows)
+            _FeedTile(data: entry, isNote: false, api: widget.api),
+        ],
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           OutlinedButton(
             onPressed: page > 1 ? () { page--; load(); } : null,
@@ -352,16 +403,17 @@ class _PublicFeedPageState extends State<PublicFeedPage>
 class _FeedTile extends StatelessWidget {
   const _FeedTile({
     required this.data, required this.isNote, required this.api,
-    this.onSaveNote,
+    this.onSaveNote, this.compactUpdate = false,
   });
   final Map<String, dynamic> data;
   final bool isNote;
   final PublicFeedApi api;
   final Future<bool> Function(String noteId)? onSaveNote;
+  final bool compactUpdate;
 
   String get title => data['title']?.toString() ?? 'Untitled';
   String get summary => isNote
-    ? '${data['department_name'] ?? ''} · ${data['subject_code'] ?? ''} · Semester ${data['semester'] ?? '?'}'
+    ? '${data['lecturer_names'] is List ? (data['lecturer_names'] as List).join(', ') : ''} · ${data['contributor_name'] ?? ''}'
     : data['summary']?.toString() ?? '';
   bool get restricted => isNote && data['is_sensitive'] == true;
 
@@ -481,7 +533,7 @@ class _FeedTile extends StatelessWidget {
           Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
         ]),
-        subtitle: Text(data['lecturer_name']?.toString() ?? summary,
+        subtitle: Text(summary,
           maxLines: 1, overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontSize: 10, color: Color(0xFFA5B6C7))),
         trailing: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -512,7 +564,7 @@ class _FeedTile extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         if (image != null)
           SizedBox(
-            height: 108,
+            height: compactUpdate ? 92 : 70,
             width: double.infinity,
             child: Image.network(image, fit: BoxFit.cover,
               errorBuilder: (context, error, stack) => Container(
@@ -523,7 +575,7 @@ class _FeedTile extends StatelessWidget {
           )
         else if (!isNote)
           Container(
-            height: 95,
+            height: compactUpdate ? 92 : 65,
             width: double.infinity,
             decoration: BoxDecoration(gradient: LinearGradient(
               colors: [scheme.primary, scheme.tertiary])),
@@ -560,7 +612,7 @@ class _FeedTile extends StatelessWidget {
                   height: 1.23, color: scheme.onSurface)),
             ),
             const SizedBox(height: 9),
-            Text(summary, maxLines: 3, overflow: TextOverflow.ellipsis,
+            Text(summary, maxLines: compactUpdate ? 2 : 1, overflow: TextOverflow.ellipsis,
               style: TextStyle(color: scheme.onSurfaceVariant, height: 1.5)),
             if (!isNote && data['published_at'] != null) ...[
               const SizedBox(height: 11),
