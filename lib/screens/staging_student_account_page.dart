@@ -365,6 +365,13 @@ class StagingStudentAccountPageState
           : await api.complete(_currentVerifiedToken(), noteId);
         return result['ok'] == true;
       },
+      onDownloadUnavailable: canDownloadOffline ? null : () {
+        if (!mounted) { return; }
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Offline downloads require an active, '
+            'Student Card-verified SMIUNotes account.'),
+        ));
+      },
       download: canDownloadOffline ? (progress) async {
         if (!canDownloadOffline) {
           throw StateError('Verified Student Card required.');
