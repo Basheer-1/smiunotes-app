@@ -7,7 +7,8 @@ import '../services/public_feed_api.dart';
 class PublicFeedPage extends StatefulWidget {
   const PublicFeedPage({super.key, required this.type, this.api = const PublicFeedApi(), this.onSaveNote,
     this.initialDepartment = '', this.initialSemester = '',
-    this.refreshVersion = 0, this.loadContinue, this.onResume});
+    this.refreshVersion = 0, this.loadContinue, this.onResume,
+    this.onOpenNote, this.onOpenOffline, this.canOpenRestricted = false});
   final String type;
   final PublicFeedApi api;
   final Future<bool> Function(String noteId)? onSaveNote;
@@ -17,6 +18,9 @@ class PublicFeedPage extends StatefulWidget {
   final int refreshVersion;
   final Future<Map<String, dynamic>?> Function()? loadContinue;
   final ValueChanged<String>? onResume;
+  final ValueChanged<String>? onOpenNote;
+  final VoidCallback? onOpenOffline;
+  final bool canOpenRestricted;
   @override
   State<PublicFeedPage> createState() => _PublicFeedPageState();
 }
@@ -269,6 +273,14 @@ class _PublicFeedPageState extends State<PublicFeedPage>
           ],
         )),
       ],
+      if (isNotes && widget.onOpenOffline != null)
+        Align(alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: const Key('open-offline-library'),
+            onPressed: widget.onOpenOffline,
+            icon: const Icon(Icons.offline_pin_outlined, size: 19),
+            label: const Text('Offline Library'),
+          )),
       if (isNotes) const SizedBox(height: 5),
       if (isNotes) SingleChildScrollView(scrollDirection: Axis.horizontal,
         child: Row(children: [
@@ -408,7 +420,8 @@ class _PublicFeedPageState extends State<PublicFeedPage>
             ? (a['contributor_name']?.toString() ?? '').compareTo(
                 b['contributor_name']?.toString() ?? '') : 0)))
             _FeedTile(data: raw, isNote: true, api: widget.api,
-              onSaveNote: widget.onSaveNote),
+              onOpenNote: widget.onOpenNote,
+              canOpenRestricted: widget.canOpenRestricted),
           if (notesView != 0) const Padding(padding: EdgeInsets.symmetric(vertical: 8),
             child: Text('Quick filters apply to this page. Use search for all published notes.',
               style: TextStyle(fontSize: 10))),
@@ -455,12 +468,14 @@ class _PublicFeedPageState extends State<PublicFeedPage>
 class _FeedTile extends StatelessWidget {
   const _FeedTile({
     required this.data, required this.isNote, required this.api,
-    this.onSaveNote, this.compactUpdate = false,
+    this.onOpenNote, this.canOpenRestricted = false,
+    this.compactUpdate = false,
   });
   final Map<String, dynamic> data;
   final bool isNote;
   final PublicFeedApi api;
-  final Future<bool> Function(String noteId)? onSaveNote;
+  final ValueChanged<String>? onOpenNote;
+  final bool canOpenRestricted;
   final bool compactUpdate;
 
   String get title => data['title']?.toString() ?? 'Untitled';
@@ -482,15 +497,16 @@ class _FeedTile extends StatelessWidget {
 
   void _openDetail(BuildContext context) {
     if (isNote) {
-      if (restricted) {
+      if (restricted && !canOpenRestricted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Verified Student Card access is required.'),
         ));
         return;
       }
+      final id = data['id']?.toString() ?? '';
+      if (onOpenNote != null) { onOpenNote!(id); return; }
       Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (_) => NoteReaderPage(
-          noteId: data['id']?.toString() ?? '', api: api),
+        builder: (_) => NoteReaderPage(noteId: id, api: api),
       ));
       return;
     }
@@ -689,21 +705,7 @@ class _FeedTile extends StatelessWidget {
         subtitle: Text(summary,
           maxLines: 1, overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontSize: 10, color: Color(0xFFA5B6C7))),
-        trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-          if (onSaveNote != null) IconButton(
-            key: Key('save-note-${data['id']}'),
-            tooltip: 'Save note to bookmarks',
-            icon: const Icon(Icons.bookmark_add_outlined, size: 19),
-            onPressed: () async {
-              final saved = await onSaveNote!(data['id']?.toString() ?? '');
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(saved ? 'Note saved.' : 'Sign in or retry to save.'),
-              ));
-            },
-          ),
-          const Icon(Icons.chevron_right_rounded, size: 17),
-        ]),
+        trailing: const Icon(Icons.chevron_right_rounded, size: 18),
         onTap: () => _openDetail(context),
       ),
     );
