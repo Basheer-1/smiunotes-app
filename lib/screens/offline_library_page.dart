@@ -45,7 +45,7 @@ class _OfflineNoteViewerState extends State<OfflineNoteViewer> {
           padding: const EdgeInsets.all(14),
           itemCount: pages.length + 1,
           itemBuilder: (context, index) {
-            if (index == 0) return Padding(
+            if (index == 0) { return Padding(
               padding: const EdgeInsets.all(12),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -56,7 +56,7 @@ class _OfflineNoteViewerState extends State<OfflineNoteViewer> {
                   Text('${pages.length} protected pages · Available in this app only',
                     style: const TextStyle(fontSize: 12)),
                 ]),
-            );
+            ); }
             final item = pages[index - 1];
             if (item is! Map) { return const SizedBox.shrink(); }
             final number = item['number'] as int? ?? index;
