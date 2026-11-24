@@ -18,7 +18,7 @@ class PublicFeedPage extends StatefulWidget {
   final int refreshVersion;
   final Future<Map<String, dynamic>?> Function()? loadContinue;
   final ValueChanged<String>? onResume;
-  final ValueChanged<String>? onOpenNote;
+  final void Function(String noteId, bool restricted)? onOpenNote;
   final VoidCallback? onOpenOffline;
   final bool canOpenRestricted;
   @override
@@ -474,7 +474,7 @@ class _FeedTile extends StatelessWidget {
   final Map<String, dynamic> data;
   final bool isNote;
   final PublicFeedApi api;
-  final ValueChanged<String>? onOpenNote;
+  final void Function(String noteId, bool restricted)? onOpenNote;
   final bool canOpenRestricted;
   final bool compactUpdate;
 
@@ -504,7 +504,7 @@ class _FeedTile extends StatelessWidget {
         return;
       }
       final id = data['id']?.toString() ?? '';
-      if (onOpenNote != null) { onOpenNote!(id); return; }
+      if (onOpenNote != null) { onOpenNote!(id, restricted); return; }
       Navigator.of(context).push(MaterialPageRoute<void>(
         builder: (_) => NoteReaderPage(noteId: id, api: api),
       ));
