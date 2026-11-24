@@ -364,7 +364,7 @@ class _AppShellState extends State<AppShell> {
                               onProfileChanged: (profile) {
                                 if (mounted) setState(() {
                                   _activeProfile = profile;
-                                  if (profile == null) _cachedOfflineOwner = null;
+                                  if (profile == null) { _cachedOfflineOwner = null; }
                                 });
                                 _restoreOfflineLease();
                               },
