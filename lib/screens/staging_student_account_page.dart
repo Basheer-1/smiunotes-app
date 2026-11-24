@@ -69,6 +69,11 @@ class StagingStudentAccountPageState
         .loadOwn(_currentVerifiedToken());
   }
 
+  Future<void> signOutAndClearOfflineLease() async {
+    await OfflineNotesStore.clearActiveLease();
+    await runtime.coordinator.signOut();
+  }
+
   Future<void> signOutAllDevices() async {
     if (pushEnabled) {
       try {
@@ -78,6 +83,7 @@ class StagingStudentAccountPageState
         // must still continue.
       }
     }
+    await OfflineNotesStore.clearActiveLease();
     await runtime.controller.signOutAll(runtime.sessionApi.revokeAll);
   }
 
@@ -442,7 +448,7 @@ class StagingStudentAccountPageState
     acceptAndVerify: runtime.coordinator.acceptAndVerify,
     restoreAndVerify: runtime.coordinator.restoreAndVerify,
     loadValidatedProfile: () => runtime.coordinator.profile,
-    signOut: runtime.coordinator.signOut,
+    signOut: signOutAndClearOfflineLease,
     signOutAll: signOutAllDevices,
     onLoadAvatar: loadOwnAvatar,
     profileSettingsApi: settingsApi,
