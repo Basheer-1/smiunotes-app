@@ -11,6 +11,8 @@ import 'services/native_student_forms_api.dart';
 import 'screens/contributors_directory_page.dart';
 import 'screens/support_dashboard_page.dart';
 import 'models/student_profile.dart';
+import 'services/offline_notes_store.dart';
+import 'screens/offline_library_page.dart';
 import 'widgets/profile_avatar.dart';
 import 'dart:ui';
 import 'package:material_ui/material_ui.dart';
@@ -144,6 +146,37 @@ class _AppShellState extends State<AppShell> {
     });
   }
   StudentProfile? _activeProfile;
+  String? _cachedOfflineOwner;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreOfflineLease();
+  }
+
+  Future<void> _restoreOfflineLease() async {
+    try {
+      final owner = await OfflineNotesStore.activeVerifiedOwner();
+      if (mounted) setState(() => _cachedOfflineOwner = owner);
+    } catch (_) {
+      // No offline shortcut when device secure storage is unavailable.
+    }
+  }
+
+  void _openOfflineFromShell() {
+    final signedInOwner = _activeProfile?.verificationStatus == 'verified'
+      ? _activeProfile?.profileId : null;
+    // Never open another student's encrypted library while a different
+    // authenticated profile is in the foreground.
+    final owner = signedInOwner ??
+      (_activeProfile == null ? _cachedOfflineOwner : null);
+    if (owner == null || stagingApiBase.isEmpty) return;
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => OfflineLibraryPage(
+        store: OfflineNotesStore(baseUrl: stagingApiBase),
+        owner: owner),
+    ));
+  }
 
   Future<void> _openInformation(BuildContext context, String kind) async {
     if ((kind == 'support' || kind == 'contact') &&
@@ -257,10 +290,9 @@ class _AppShellState extends State<AppShell> {
                               ? (id, restricted) => _studentAccountKey.currentState
                                   ?.openPublicNote(id, restricted: restricted)
                               : null,
-                            onOpenOffline: _activeProfile?.verificationStatus == 'verified'
-                              ? () => _studentAccountKey.currentState
-                                  ?.openOfflineLibrary()
-                              : null,
+                            onOpenOffline: _activeProfile?.verificationStatus == 'verified' ||
+                                (_activeProfile == null && _cachedOfflineOwner != null)
+                              ? _openOfflineFromShell : null,
                             loadContinue: _activeProfile == null ? null : () async =>
                               await _studentAccountKey.currentState?.latestStudyNote(),
                             onResume: (noteId) =>
@@ -330,7 +362,11 @@ class _AppShellState extends State<AppShell> {
                               darkMode: widget.darkMode,
                               onThemeChanged: widget.onThemeChanged,
                               onProfileChanged: (profile) {
-                                if (mounted) setState(() => _activeProfile = profile);
+                                if (mounted) setState(() {
+                                  _activeProfile = profile;
+                                  if (profile == null) _cachedOfflineOwner = null;
+                                });
+                                _restoreOfflineLease();
                               },
                             )
                           else
