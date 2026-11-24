@@ -239,64 +239,63 @@ class _PublicFeedPageState extends State<PublicFeedPage>
             ));
         },
       ),
-      if (isNotes && availableSubjects.isNotEmpty) ...[
+      if (isNotes) ...[
         Row(children: [
-          const Text('Courses', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-          const Spacer(),
-          Text(semester.isEmpty ? 'All semesters' : 'Sem $semester',
-            style: const TextStyle(fontSize: 10)),
+          const Expanded(child: Text('Quick access',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800))),
+          if (widget.onOpenOffline != null)
+            TextButton.icon(
+              key: const Key('open-offline-library'),
+              onPressed: widget.onOpenOffline,
+              icon: const Icon(Icons.offline_pin_outlined, size: 17),
+              label: const Text('Offline notes'),
+            ),
         ]),
         const SizedBox(height: 8),
-        SizedBox(height: 52, child: ListView(
-          scrollDirection: Axis.horizontal,
-          children: [
-            for (final course in availableSubjects.take(12))
-              Padding(padding: const EdgeInsets.only(right: 7),
-                child: ActionChip(
-                  key: Key('course-${course['id']}'),
-                  avatar: Icon(subject == course['id'] ? Icons.check_circle :
-                    Icons.book_outlined, size: 16),
-                  backgroundColor: subject == course['id']
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : Theme.of(context).colorScheme.surfaceContainerHigh,
-                  label: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 160),
-                    child: Text('${course['code'] ?? ''} · ${course['name'] ?? ''}',
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11))),
-                  onPressed: () {
-                    subject = subject == course['id'] ? '' :
-                      course['id']?.toString() ?? '';
-                    filter();
-                  },
-                )),
-          ],
-        )),
+        LayoutBuilder(builder: (context, constraints) {
+          final width = (constraints.maxWidth - 9) / 2;
+          return Wrap(
+            spacing: 9, runSpacing: 9,
+            children: [
+              for (final entry in const [
+                (0, 'All notes', Icons.auto_stories_outlined),
+                (1, 'Midterm Prep', Icons.fact_check_outlined),
+                (2, 'Lectures', Icons.menu_book_outlined),
+                (3, 'By Contributor', Icons.people_outline),
+              ])
+                SizedBox(
+                  width: width,
+                  child: OutlinedButton.icon(
+                    key: Key('notes-quick-${entry.$1}'),
+                    onPressed: () {
+                      setState(() => notesView = entry.$1);
+                      search.text = entry.$1 == 1 ? 'midterm' :
+                        entry.$1 == 2 ? 'lecture' : '';
+                      filter();
+                    },
+                    icon: Icon(entry.$3, size: 17),
+                    label: Text(entry.$2, maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12)),
+                    style: OutlinedButton.styleFrom(
+                      alignment: Alignment.centerLeft,
+                      minimumSize: const Size(0, 48),
+                      foregroundColor: notesView == entry.$1
+                        ? Theme.of(context).colorScheme.onPrimaryContainer
+                        : Theme.of(context).colorScheme.onSurface,
+                      backgroundColor: notesView == entry.$1
+                        ? Theme.of(context).colorScheme.primaryContainer
+                        : Theme.of(context).colorScheme.surface.withValues(alpha: .6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        }),
+        const SizedBox(height: 6),
       ],
-      if (isNotes && widget.onOpenOffline != null)
-        Align(alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            key: const Key('open-offline-library'),
-            onPressed: widget.onOpenOffline,
-            icon: const Icon(Icons.offline_pin_outlined, size: 19),
-            label: const Text('Offline Library'),
-          )),
-      if (isNotes) const SizedBox(height: 5),
-      if (isNotes) SingleChildScrollView(scrollDirection: Axis.horizontal,
-        child: Row(children: [
-          for (final entry in const [(0, 'All notes'), (1, 'Midterm Prep'), (2, 'Lectures'), (3, 'By Contributor')])
-            Padding(padding: const EdgeInsets.only(right: 6), child: ChoiceChip(
-              key: Key('notes-quick-${entry.$1}'),
-              label: Text(entry.$2, style: const TextStyle(fontSize: 11)),
-              selected: notesView == entry.$1,
-              onSelected: (_) {
-                setState(() => notesView = entry.$1);
-                search.text = entry.$1 == 1 ? 'midterm' :
-                  entry.$1 == 2 ? 'lecture' : '';
-                filter();
-              },
-            )),
-        ])),
       if (isNotes) Align(alignment: Alignment.centerRight,
         child: TextButton.icon(
           key: const Key('notes-advanced-filters'),
@@ -688,10 +687,12 @@ class _FeedTile extends StatelessWidget {
     }
     if (isNote) {
       return Card(
-      margin: const EdgeInsets.only(bottom: 0),
+      margin: const EdgeInsets.only(bottom: 10),
       color: const Color(0xFF172738), elevation: 0,
-      shape: const RoundedRectangleBorder(
-        side: BorderSide(color: Color(0xFF263D52))),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Color(0xFF263D52))),
       child: ListTile(
         dense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
