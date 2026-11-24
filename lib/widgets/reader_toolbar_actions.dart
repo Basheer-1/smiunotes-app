@@ -1,18 +1,20 @@
 import 'package:material_ui/material_ui.dart';
 
-/// Reader actions are supplied by the authenticated Student App shell.
-/// Unauthenticated readers receive no account buttons.
+/// Visible reader actions for both guests and authenticated students.
+/// Guests are prompted to sign in when interacting; offline saving is
+/// authorized separately for verified students.
 class ReaderToolbarActions extends StatefulWidget {
   const ReaderToolbarActions({
     super.key, required this.loadState,
     required this.toggleBookmark,
     required this.toggleCompleted,
-    this.download,
+    this.download, this.onDownloadUnavailable,
   });
   final Future<Map<String, bool>> Function() loadState;
   final Future<bool> Function(bool current) toggleBookmark;
   final Future<bool> Function(bool current) toggleCompleted;
   final Future<void> Function(void Function(int, int) progress)? download;
+  final VoidCallback? onDownloadUnavailable;
 
   @override
   State<ReaderToolbarActions> createState() => _ReaderToolbarActionsState();
@@ -114,13 +116,14 @@ class _ReaderToolbarActionsState extends State<ReaderToolbarActions> {
         icon: Icon(completed ? Icons.task_alt_rounded
           : Icons.check_circle_outline_rounded, size: 21),
       ),
-      if (widget.download != null)
+      if (widget.download != null || widget.onDownloadUnavailable != null)
         IconButton(
           key: const Key('reader-offline-download'),
           tooltip: downloading
             ? 'Saving page $currentPage of $totalPages'
             : 'Save encrypted offline note',
-          onPressed: busy || downloading ? null : _download,
+          onPressed: busy || downloading ? null :
+            widget.download != null ? _download : widget.onDownloadUnavailable,
           icon: downloading
             ? const SizedBox(width: 19, height: 19,
                 child: CircularProgressIndicator(strokeWidth: 2))
