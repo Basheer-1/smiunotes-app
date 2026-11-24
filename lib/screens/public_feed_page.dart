@@ -219,9 +219,9 @@ class _PublicFeedPageState extends State<PublicFeedPage>
               onTap: () => widget.onResume?.call(note['note_id'] as String),
               borderRadius: BorderRadius.circular(12),
               child: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(
-                color: const Color(0xFF192A3C),
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF2B4255))),
+                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)),
                 child: Row(children: [
                   const Icon(Icons.menu_book_rounded, color: Color(0xFF80BDD9)),
                   const SizedBox(width: 11),
@@ -582,9 +582,9 @@ class _FeedTile extends StatelessWidget {
         key: Key('deadline-card-${data['id']}'),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: const Color(0xFF18293B),
+          color: scheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF283F55)),
+          border: Border.all(color: scheme.outlineVariant),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           if (image != null)
@@ -603,7 +603,7 @@ class _FeedTile extends StatelessWidget {
             const Spacer(),
             Flexible(child: Text(data['deadline_date']?.toString() ?? '',
               textAlign: TextAlign.end, style: const TextStyle(
-                fontSize: 10, color: Color(0xFFACC9DF)))),
+                fontSize: 10, color: scheme.onSurfaceVariant))),
           ]),
           const SizedBox(height: 7),
           Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
@@ -628,9 +628,9 @@ class _FeedTile extends StatelessWidget {
     if (!isNote) {
       return Card(
         margin: const EdgeInsets.only(bottom: 7),
-        color: const Color(0xFF18293B), elevation: 0,
+        color: scheme.surface, elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11),
-          side: const BorderSide(color: Color(0xFF294056))),
+          side: BorderSide(color: scheme.outlineVariant)),
         child: InkWell(onTap: () => _openDetail(context),
           borderRadius: BorderRadius.circular(11),
           child: Padding(padding: const EdgeInsets.all(9),
@@ -652,16 +652,16 @@ class _FeedTile extends StatelessWidget {
                     Expanded(child: Text(
                       data['published_at']?.toString().split('T').first ?? '',
                       maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 10,
-                        color: Color(0xFFA3B9CD)))),
+                      style: TextStyle(fontSize: 10,
+                        color: scheme.onSurfaceVariant))),
                   ]),
                   const SizedBox(height: 3),
                   Text(title, maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 12,
                       fontWeight: FontWeight.w800)),
                   Text(summary, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 10,
-                      color: Color(0xFFA7BACD))),
+                    style: TextStyle(fontSize: 10,
+                      color: scheme.onSurfaceVariant)),
                 ])),
               if (applyUrl != null) ...[
                 const SizedBox(width: 5),
@@ -680,24 +680,24 @@ class _FeedTile extends StatelessWidget {
     if (isNote) {
       return Card(
       margin: const EdgeInsets.only(bottom: 10),
-      color: const Color(0xFF172738), elevation: 0,
+      color: scheme.surface, elevation: 0,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: Color(0xFF263D52))),
+        side: BorderSide(color: scheme.outlineVariant)),
       child: ListTile(
         dense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('${data['subject_code'] ?? ''} · Semester ${data['semester'] ?? '?'}',
-            style: const TextStyle(fontSize: 10, color: Color(0xFF9DCBE4))),
+            style: TextStyle(fontSize: 10, color: scheme.onSurfaceVariant)),
           const SizedBox(height: 3),
           Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
         ]),
         subtitle: Text(summary,
           maxLines: 1, overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 10, color: Color(0xFFA5B6C7))),
+          style: TextStyle(fontSize: 10, color: scheme.onSurfaceVariant)),
         trailing: const Icon(Icons.chevron_right_rounded, size: 18),
         onTap: () => _openDetail(context),
       ),
