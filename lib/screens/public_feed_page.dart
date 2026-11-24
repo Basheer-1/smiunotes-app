@@ -649,7 +649,17 @@ class _FeedTile extends StatelessWidget {
                     style: const TextStyle(fontSize: 10,
                       color: Color(0xFFA7BACD))),
                 ])),
-              const Icon(Icons.chevron_right_rounded, size: 18),
+              if (applyUrl != null) ...[
+                const SizedBox(width: 5),
+                TextButton(
+                  key: Key('update-apply-${data['id']}'),
+                  onPressed: applyExpired ? null :
+                    () => _openExternal(context, applyUrl.toString()),
+                  child: Text(applyExpired ? 'Applications Closed' : 'Apply Now',
+                    style: const TextStyle(fontSize: 10)),
+                ),
+              ] else
+                const Icon(Icons.chevron_right_rounded, size: 18),
             ]))),
       );
     }
