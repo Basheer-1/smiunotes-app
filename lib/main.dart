@@ -362,10 +362,10 @@ class _AppShellState extends State<AppShell> {
                               darkMode: widget.darkMode,
                               onThemeChanged: widget.onThemeChanged,
                               onProfileChanged: (profile) {
-                                if (mounted) setState(() {
+                                if (mounted) { setState(() {
                                   _activeProfile = profile;
                                   if (profile == null) { _cachedOfflineOwner = null; }
-                                });
+                                }); }
                                 _restoreOfflineLease();
                               },
                             )
