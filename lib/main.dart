@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'screens/notification_inbox_page.dart';
 import 'screens/native_catalogue_page.dart';
 import 'screens/staging_student_account_page.dart';
@@ -152,6 +153,22 @@ class _AppShellState extends State<AppShell> {
   void initState() {
     super.initState();
     _restoreOfflineLease();
+    // Show the Android 13+ OS permission dialog on first launch. Permission
+    // alone does not enroll a device or enable server-side FCM delivery.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _requestNotificationsPermission();
+    });
+  }
+
+  Future<void> _requestNotificationsPermission() async {
+    try {
+      await const MethodChannel('smiunotes/push')
+        .invokeMethod<bool>('requestPermissionOnly');
+    } on MissingPluginException {
+      // Non-Android platforms do not register the channel.
+    } on PlatformException {
+      // A denial or unavailable permission never blocks app navigation.
+    }
   }
 
   Future<void> _restoreOfflineLease() async {
