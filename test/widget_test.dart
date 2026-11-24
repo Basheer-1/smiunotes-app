@@ -6,7 +6,7 @@ void main() {
   testWidgets('M1 loads home and navigates to Notes and Updates', (tester) async {
     await tester.pumpWidget(const SmiuNotesApp());
 
-    expect(find.text('Home & Browse Notes'), findsOneWidget);
+    expect(find.text('Study Notes'), findsOneWidget);
     await tester.tap(find.byKey(const Key('open-classic-home')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('home-page')), findsOneWidget);
@@ -14,7 +14,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('tab-1')));
     await tester.pumpAndSettle();
-    expect(find.text('Home & Browse Notes'), findsOneWidget);
+    expect(find.text('Study Notes'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('tab-2')));
     await tester.pumpAndSettle();
