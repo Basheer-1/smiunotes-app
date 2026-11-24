@@ -162,7 +162,7 @@ void main() {
     await tester.pumpAndSettle();
     final cardButton = find.byKey(const Key('update-apply-update-1'));
     await tester.ensureVisible(cardButton);
-    expect(tester.widget<FilledButton>(cardButton).onPressed, isNull);
+    expect(tester.widget<TextButton>(cardButton).onPressed, isNull);
     expect(find.text('Applications Closed'), findsOneWidget);
     await tester.ensureVisible(find.text('Exam timetable'));
     await tester.tap(find.text('Exam timetable'));
@@ -221,6 +221,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Introduction to Programming'), findsOneWidget);
     expect(find.textContaining('Computer Science'), findsWidgets);
+    await tester.tap(find.byKey(const Key('notes-advanced-filters')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('department-filter')), findsOneWidget);
     expect(find.byKey(const Key('subject-filter')), findsOneWidget);
   });
